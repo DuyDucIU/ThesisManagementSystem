@@ -11,16 +11,16 @@ import java.util.List;
 @Getter
 public class UserPrincipal implements UserDetails {
 
-    private final Integer userId;
+    private final Long userId;
     private final String username;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public UserPrincipal(Integer userId, String username, String password) {
+    public UserPrincipal(Long userId, String username, String password, Collection<? extends GrantedAuthority> authorities) {
         this.userId = userId;
         this.username = username;
         this.password = password;
-        this.authorities = List.of();
+        this.authorities = authorities;
     }
 
     @Override

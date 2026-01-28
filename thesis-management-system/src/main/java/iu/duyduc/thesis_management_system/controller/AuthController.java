@@ -1,6 +1,7 @@
 package iu.duyduc.thesis_management_system.controller;
 
 import iu.duyduc.thesis_management_system.dto.request.LoginRequest;
+import iu.duyduc.thesis_management_system.dto.response.AuthResponse;
 import iu.duyduc.thesis_management_system.service.AuthService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +17,8 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
-        String response = authService.login(loginRequest);
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest) {
+        AuthResponse response = authService.login(loginRequest);
         return ResponseEntity.ok().body(response);
     }
 }

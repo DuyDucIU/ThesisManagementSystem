@@ -1,7 +1,8 @@
 package iu.duyduc.thesis_management_system.service;
 
 import iu.duyduc.thesis_management_system.dto.request.LoginRequest;
+import iu.duyduc.thesis_management_system.dto.response.AuthResponse;
 
 public interface AuthService {
-    String login(LoginRequest loginRequest);
+    AuthResponse login(LoginRequest loginRequest);
 }

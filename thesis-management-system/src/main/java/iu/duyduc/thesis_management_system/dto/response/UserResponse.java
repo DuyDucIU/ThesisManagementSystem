@@ -2,13 +2,15 @@ package iu.duyduc.thesis_management_system.dto.response;
 
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AuthResponse {
-    private String token;
-    private boolean authenticated;
-    private UserResponse user;
+public class UserResponse {
+    private Long id;
+    private String username;
+    private List<String> roles;
 }
