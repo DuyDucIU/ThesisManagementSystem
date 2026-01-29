@@ -1,13 +1,12 @@
 package iu.duyduc.thesis_management_system.security;
 
 import io.jsonwebtoken.JwtException;
-import iu.duyduc.thesis_management_system.repository.UserRepo;
+import iu.duyduc.thesis_management_system.exception.JwtAuthenticationException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,7 +22,6 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtils jwtUtils;
-    private final UserRepo userRepo;
     private final UserDetailsService userDetailsService;
 
     @Override
@@ -49,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (JwtException e) {
             SecurityContextHolder.clearContext();
-            throw new BadCredentialsException(e.getMessage(), e);
+            throw new JwtAuthenticationException(e.getMessage(), e);
         }
     }
 }
