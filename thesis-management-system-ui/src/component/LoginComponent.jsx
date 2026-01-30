@@ -8,7 +8,7 @@ const LoginComponent = () => {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
-    // const navigator = useNavigate()
+    const navigator = useNavigate()
 
     async function handleLoginForm(e) {
         e.preventDefault()
@@ -23,8 +23,8 @@ const LoginComponent = () => {
             // storeToken(token)
             // saveLoggedInUser(username, role)
 
-            // navigator("/")
-            window.location.reload(false)
+            navigator("/importStudents")
+            // window.location.reload(false)
         }).catch(error => {
             console.error(error)
             const msg = error.response?.data?.message

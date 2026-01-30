@@ -1,21 +1,36 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8080/api/admin/students";
+const API_BASE = "http://localhost:8080/api/admin/students";
 
+// ======================
 // Upload & Preview
-export async function previewStudents(file) {
+// ======================
+export const previewStudents = async (file) => {
   const formData = new FormData();
   formData.append("file", file);
 
-  try {
-    const res = await axios.post(`${BASE_URL}/preview`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+  const response = await axios.post(`${API_BASE}/preview`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
-    return res.data;
-  } catch (err) {
-    throw new Error("Preview API failed");
-  }
-}
+  return response.data;
+};
+
+// ======================
+// Confirm Import
+// ======================
+export const importStudents = async (students) => {
+  const payload = {
+    students: students, 
+  };
+
+  const response = await axios.post(`${API_BASE}/import`, payload, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  return response.data; // { imported, skipped }
+};

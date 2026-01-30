@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { previewStudents } from "../service/StudentService";
+import { previewStudents, importStudents } from "../service/StudentService";
 
-export default function AdminImportStudents() {
+function AdminImportStudentsComponent() {
   const [file, setFile] = useState(null);
   const [previewData, setPreviewData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -12,7 +12,7 @@ export default function AdminImportStudents() {
   // ======================
   const handlePreview = async () => {
     if (!file) {
-      alert("Please select file");
+      alert("Please select an Excel file");
       return;
     }
 
@@ -22,36 +22,38 @@ export default function AdminImportStudents() {
     try {
       const data = await previewStudents(file);
       setPreviewData(data);
+
+      if (data.valid === 0) {
+        setMessage("No valid students found. Please fix errors before importing.");
+      }
     } catch (err) {
       console.error(err);
-      setMessage("Please try again");
+      setMessage("Failed to preview file. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+
   // ======================
   // Confirm Import
   // ======================
   const handleImport = async () => {
-    if (!previewData) return;
+    if (!previewData || !previewData.students?.length) {
+      return;
+    }
 
     setLoading(true);
     setMessage("");
 
     try {
-      const validStudents = previewData.students
-        .filter((s) => s.status === "VALID")
-        .map((s) => ({
-          studentCode: s.studentCode,
-          fullName: s.fullName,
-        }));
-
-      const result = await importStudents(validStudents);
+      const result = await importStudents(previewData.students);
 
       setMessage(
-        `Import successfully! Inserted: ${result.inserted}, Skipped: ${result.skipped}`
+        `Import completed! Imported: ${result.imported}, Skipped: ${result.skipped}`
       );
+
+      // reset state
       setPreviewData(null);
       setFile(null);
     } catch (err) {
@@ -108,7 +110,7 @@ export default function AdminImportStudents() {
                       s.status === "INVALID" ? "#f8d7da" : "#d4edda",
                   }}
                 >
-                  <td>{s.studentCode}</td>
+                  <td>{s.studentId}</td>
                   <td>{s.fullName}</td>
                   <td>{s.status}</td>
                   <td>{s.error || "-"}</td>
@@ -127,3 +129,5 @@ export default function AdminImportStudents() {
     </div>
   );
 }
+
+export default AdminImportStudentsComponent

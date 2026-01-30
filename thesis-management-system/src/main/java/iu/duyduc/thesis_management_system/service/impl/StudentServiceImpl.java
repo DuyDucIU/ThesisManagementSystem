@@ -39,7 +39,7 @@ public class StudentServiceImpl implements StudentService {
             Cell nameCell = row.getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
 
             String studentId = formatter.formatCellValue(idCell, evaluator).trim().toUpperCase();
-            String fullName = formatter.formatCellValue(nameCell, evaluator).trim().toUpperCase();
+            String fullName = formatter.formatCellValue(nameCell, evaluator).trim();
 
             // skip empty row
             if (studentId.isEmpty() && fullName.isEmpty()) return;
