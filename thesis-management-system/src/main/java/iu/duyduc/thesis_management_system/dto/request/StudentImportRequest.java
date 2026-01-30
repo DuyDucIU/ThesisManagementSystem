@@ -1,0 +1,14 @@
+package iu.duyduc.thesis_management_system.dto.request;
+
+import lombok.*;
+
+import java.util.List;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class StudentImportRequest {
+    List<StudentImportItem> students;
+}

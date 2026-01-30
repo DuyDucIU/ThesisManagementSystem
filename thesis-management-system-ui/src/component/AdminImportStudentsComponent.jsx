@@ -12,7 +12,7 @@ export default function AdminImportStudents() {
   // ======================
   const handlePreview = async () => {
     if (!file) {
-      alert("Chọn file Excel trước đã");
+      alert("Please select file");
       return;
     }
 
@@ -24,7 +24,7 @@ export default function AdminImportStudents() {
       setPreviewData(data);
     } catch (err) {
       console.error(err);
-      setMessage("Lỗi khi preview file");
+      setMessage("Please try again");
     } finally {
       setLoading(false);
     }
@@ -50,13 +50,13 @@ export default function AdminImportStudents() {
       const result = await importStudents(validStudents);
 
       setMessage(
-        `Import xong! Inserted: ${result.inserted}, Skipped: ${result.skipped}`
+        `Import successfully! Inserted: ${result.inserted}, Skipped: ${result.skipped}`
       );
       setPreviewData(null);
       setFile(null);
     } catch (err) {
       console.error(err);
-      setMessage("Lỗi khi import vào DB");
+      setMessage("Error importing data into database");
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,7 @@ export default function AdminImportStudents() {
           onChange={(e) => setFile(e.target.files[0])}
         />
         <button onClick={handlePreview} disabled={loading}>
-          {loading ? "Đang xử lý..." : "Upload & Preview"}
+          {loading ? "Processing..." : "Upload & Preview"}
         </button>
       </div>
 
@@ -120,7 +120,7 @@ export default function AdminImportStudents() {
           <br />
 
           <button onClick={handleImport} disabled={loading}>
-            {loading ? "Đang import..." : "Confirm Import"}
+            {loading ? "Processing..." : "Confirm Import"}
           </button>
         </>
       )}

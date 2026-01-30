@@ -1,5 +1,7 @@
 package iu.duyduc.thesis_management_system.controller;
 
+import iu.duyduc.thesis_management_system.dto.request.StudentImportRequest;
+import iu.duyduc.thesis_management_system.dto.response.StudentImportResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentFileResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentPreviewResponse;
 import iu.duyduc.thesis_management_system.service.StudentService;
@@ -25,5 +27,11 @@ public class StudentController {
         List<StudentFileResponse> fileResponses = studentService.parseStudentFromFile(file.getInputStream());
         StudentPreviewResponse previewResponse = studentService.validateStudentList(fileResponses);
         return new ResponseEntity<>(previewResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<StudentImportResponse> importStudents(@RequestBody StudentImportRequest request) {
+        StudentImportResponse response = studentService.importStudent(request.getStudents());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 }

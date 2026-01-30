@@ -1,19 +1,20 @@
 package iu.duyduc.thesis_management_system.service.impl;
 
+import iu.duyduc.thesis_management_system.dto.request.StudentImportItem;
+import iu.duyduc.thesis_management_system.dto.response.StudentImportResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentFileResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentPreviewResponse;
+import iu.duyduc.thesis_management_system.entity.Student;
 import iu.duyduc.thesis_management_system.repository.StudentRepo;
 import iu.duyduc.thesis_management_system.service.StudentService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @AllArgsConstructor
 @Service
@@ -37,8 +38,8 @@ public class StudentServiceImpl implements StudentService {
             Cell idCell = row.getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
             Cell nameCell = row.getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
 
-            String studentId = formatter.formatCellValue(idCell, evaluator).trim();
-            String fullName = formatter.formatCellValue(nameCell, evaluator).trim();
+            String studentId = formatter.formatCellValue(idCell, evaluator).trim().toUpperCase();
+            String fullName = formatter.formatCellValue(nameCell, evaluator).trim().toUpperCase();
 
             // skip empty row
             if (studentId.isEmpty() && fullName.isEmpty()) return;
@@ -62,23 +63,74 @@ public class StudentServiceImpl implements StudentService {
         int invalid = 0;
 
         for (StudentFileResponse response : studentList) {
-            if (response.getStudentId().toUpperCase().isEmpty()) {
+            String id = Optional.ofNullable(response.getStudentId())
+                    .orElse("")
+                    .trim()
+                    .toUpperCase();
+
+            if (id.isEmpty()) {
                 markInvalid(response, "Student ID is empty");
-            } else if (newStudents.contains(response.getStudentId().toUpperCase())) {
+            } else if (newStudents.contains(id)) {
                 markInvalid(response, "Duplicate in file");
-            } else if (existedStudents.contains(response.getStudentId().toUpperCase())) {
-                markInvalid(response, "Already exists in DB");
             } else if (response.getFullName().isEmpty()) {
                 markInvalid(response, "Full name is empty");
+            } else if (existedStudents.contains(id)) {
+                markInvalid(response, "Already exists in DB");
             } else {
                 response.setStatus("VALID");
                 valid++;
-                newStudents.add(response.getStudentId());
+                newStudents.add(id);
             }
             if ("INVALID".equals(response.getStatus())) invalid++;
         }
 
         return new StudentPreviewResponse(studentList.size(), valid, invalid, studentList);
+    }
+
+    @Transactional
+    @Override
+    public StudentImportResponse importStudent(List<StudentImportItem> studentImportItemList) {
+        List<Student> studentList = new ArrayList<>();
+
+        int imported = 0;
+        int skipped = 0;
+
+        for (StudentImportItem item : studentImportItemList) {
+            String id = Optional.ofNullable(item.getStudentId())
+                    .orElse("")
+                    .trim()
+                    .toUpperCase();
+
+            String name = Optional.ofNullable(item.getFullName())
+                    .orElse("")
+                    .trim();
+
+            if (!"VALID".equalsIgnoreCase(item.getStatus())) {
+                skipped++;
+                continue;
+            }
+
+            if (id.isEmpty() || name.isEmpty()) {
+                skipped++;
+                continue;
+            }
+
+            if (studentRepo.existsByStudentId(id)) {
+                skipped++;
+                continue;
+            }
+
+            Student student = Student.builder()
+                    .studentId(id)
+                    .fullName(item.getFullName())
+                    .build();
+
+            studentList.add(student);
+            imported++;
+        }
+
+        studentRepo.saveAll(studentList);
+        return new StudentImportResponse(imported, skipped);
     }
 
     private void markInvalid(StudentFileResponse response, String error) {

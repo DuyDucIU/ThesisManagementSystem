@@ -9,4 +9,6 @@ import java.util.Set;
 public interface StudentRepo extends JpaRepository<Student, Long> {
     @Query("SELECT s.studentId FROM Student s")
     Set<String> findAllStudentIds();
+
+    boolean existsByStudentId(String studentId);
 }
