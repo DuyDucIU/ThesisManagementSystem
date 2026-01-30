@@ -1,5 +1,7 @@
 package iu.duyduc.thesis_management_system.controller;
 
+import iu.duyduc.thesis_management_system.dto.response.StudentFileResponse;
+import iu.duyduc.thesis_management_system.dto.response.StudentPreviewResponse;
 import iu.duyduc.thesis_management_system.service.StudentService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @AllArgsConstructor
 @RestController
@@ -16,9 +19,10 @@ public class StudentController {
 
     private final StudentService studentService;
 
-    @PostMapping(value = "/upload", consumes = "multipart/form-data")
-    public ResponseEntity<String> uploadStudent(@RequestParam MultipartFile file) throws IOException {
-        studentService.saveStudentsFromFile(file.getInputStream());
-        return new ResponseEntity<>("Student uploaded successfully", HttpStatus.CREATED);
+    @PostMapping(value = "/preview", consumes = "multipart/form-data")
+    public ResponseEntity<StudentPreviewResponse> uploadStudent(@RequestParam MultipartFile file) throws IOException {
+        List<StudentFileResponse> fileResponses = studentService.parseStudentFromFile(file.getInputStream());
+        StudentPreviewResponse previewResponse = studentService.validateStudentList(fileResponses);
+        return new ResponseEntity<>(previewResponse, HttpStatus.OK);
     }
 }
