@@ -12,7 +12,6 @@ import iu.duyduc.thesis_management_system.dto.response.AuthResponse;
 import iu.duyduc.thesis_management_system.service.AuthService;
 import lombok.AllArgsConstructor;
 
-@CrossOrigin("*")
 @AllArgsConstructor
 @RestController
 @RequestMapping("/api/auth")
