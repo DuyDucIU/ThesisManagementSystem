@@ -35,63 +35,64 @@ const LoginComponent = () => {
     }
 
     return (
-        <div className='page-container'>
-            <div className='auth-container'>
-                <div className='auth-card'>
-                    <div className='auth-header'>
-                        <h2>Thesis Management System</h2>
-                        {/* <p>Sign in to continue to TaskFlow</p> */}
-                    </div>
+        <div className="container min-vh-100 d-flex justify-content-center align-items-center">
+            <div className="row w-100 justify-content-center">
+                <div className="col-md-5 col-lg-4">
+                    <div className="card shadow">
+                        <div className="card-body">
+                            <h3 className="text-center mb-4">
+                                Thesis Management System
+                            </h3>
 
-                    <div className='auth-body'>
-                        <form className='auth-form' onSubmit={handleLoginForm}>
                             {error && (
-                                <div className='form-group' style={{
-                                    padding: '0.75rem 1rem',
-                                    background: 'rgba(244, 63, 94, 0.1)',
-                                    border: '1px solid rgba(244, 63, 94, 0.3)',
-                                    borderRadius: '8px',
-                                    color: '#f43f5e',
-                                    fontSize: '0.9rem'
-                                }}>
+                                <div className="alert alert-danger" role="alert">
                                     {error}
                                 </div>
                             )}
 
-                            <div className='form-group'>
-                                <label className='form-label'>Username</label>
-                                <input
-                                    type='text'
-                                    name='username'
-                                    className='form-control'
-                                    placeholder='Enter your username'
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    required
-                                />
-                            </div>
+                            <form onSubmit={handleLoginForm}>
+                                <div className="mb-3">
+                                    <label className="form-label">
+                                        Username
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="username"
+                                        className="form-control"
+                                        placeholder="Enter your username"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        required
+                                    />
+                                </div>
 
-                            <div className='form-group'>
-                                <label className='form-label'>Password</label>
-                                <input
-                                    type='password'
-                                    name='password'
-                                    className='form-control'
-                                    placeholder='Enter your password'
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
-                            </div>
+                                <div className="mb-3">
+                                    <label className="form-label">
+                                        Password
+                                    </label>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        className="form-control"
+                                        placeholder="Enter your password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                    />
+                                </div>
 
-                            <button
-                                className='btn btn-primary'
-                                type='submit'
-                                disabled={loading}
-                            >
-                                {loading ? 'Signing in...' : 'Sign In'}
-                            </button>
-                        </form>
+                                <div className="d-grid">
+                                    <button
+                                        className="btn btn-primary"
+                                        type="submit"
+                                        disabled={loading}
+                                    >
+                                        {loading ? 'Signing in...' : 'Sign In'}
+                                    </button>
+                                </div>
+                            </form>
+
+                        </div>
                     </div>
                 </div>
             </div>

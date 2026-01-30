@@ -12,9 +12,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
+@CrossOrigin("*")
 @AllArgsConstructor
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/api/admin/students")
 public class StudentController {
 
     private final StudentService studentService;

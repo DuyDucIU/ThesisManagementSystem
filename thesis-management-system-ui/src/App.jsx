@@ -1,11 +1,12 @@
 import './App.css'
+import AdminImportStudents from './component/AdminImportStudentsComponent'
 import LoginComponent from './component/LoginComponent'
 
 function App() {
 
   return (
     <>
-      <LoginComponent />
+      <AdminImportStudents />
     </>
   )
 }
