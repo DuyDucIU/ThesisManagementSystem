@@ -1,15 +1,18 @@
 package iu.duyduc.thesis_management_system.controller;
 
-import iu.duyduc.thesis_management_system.dto.request.LoginRequest;
-import iu.duyduc.thesis_management_system.dto.response.AuthResponse;
-import iu.duyduc.thesis_management_system.service.AuthService;
-import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import iu.duyduc.thesis_management_system.dto.request.LoginRequest;
+import iu.duyduc.thesis_management_system.dto.response.AuthResponse;
+import iu.duyduc.thesis_management_system.service.AuthService;
+import lombok.AllArgsConstructor;
+
+@CrossOrigin("*")
 @AllArgsConstructor
 @RestController
 @RequestMapping("/api/auth")

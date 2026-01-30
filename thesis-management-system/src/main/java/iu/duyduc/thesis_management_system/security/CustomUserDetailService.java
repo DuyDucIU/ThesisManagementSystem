@@ -1,7 +1,6 @@
 package iu.duyduc.thesis_management_system.security;
 
 import iu.duyduc.thesis_management_system.entity.User;
-import iu.duyduc.thesis_management_system.exception.ResourceNotFoundException;
 import iu.duyduc.thesis_management_system.repository.UserRepo;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
