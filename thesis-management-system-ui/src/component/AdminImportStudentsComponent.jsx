@@ -63,71 +63,123 @@ function AdminImportStudentsComponent() {
       setLoading(false);
     }
   };
-
+  
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Import Students (Excel)</h2>
+    <div className="container py-4">
+      <div className="card shadow">
+        <div className="card-body">
+          <h3 className="card-title mb-4 text-primary">
+            Import Students (Excel)
+          </h3>
 
-      {/* Upload */}
-      <div style={{ marginBottom: 10 }}>
-        <input
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={(e) => setFile(e.target.files[0])}
-        />
-        <button onClick={handlePreview} disabled={loading}>
-          {loading ? "Processing..." : "Upload & Preview"}
-        </button>
-      </div>
+          {/* Upload */}
+          <div className="row g-2 align-items-center mb-3">
+            <div className="col-md-8">
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                className="form-control"
+                onChange={(e) => setFile(e.target.files[0])}
+              />
+            </div>
+            <div className="col-md-4 d-grid">
+              <button
+                className="btn btn-primary"
+                onClick={handlePreview}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" />
+                    Processing...
+                  </>
+                ) : (
+                  "Upload & Preview"
+                )}
+              </button>
+            </div>
+          </div>
 
-      {/* Message */}
-      {message && <p>{message}</p>}
+          {/* Message */}
+          {message && (
+            <div className="alert alert-info py-2">{message}</div>
+          )}
 
-      {/* Preview Table */}
-      {previewData && (
-        <>
-          <h3>Preview</h3>
-          <p>
-            Total: {previewData.total} | Valid: {previewData.valid} | Invalid:{" "}
-            {previewData.invalid}
-          </p>
+          {/* Preview Table */}
+          {previewData && (
+            <>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <h5 className="mb-0">Preview</h5>
+                <span className="badge bg-secondary">
+                  Total: {previewData.total} | Valid:{" "}
+                  <span className="text-success">{previewData.valid}</span> | Invalid:{" "}
+                  <span className="text-danger">{previewData.invalid}</span>
+                </span>
+              </div>
 
-          <table border="1" cellPadding="8" cellSpacing="0">
-            <thead>
-              <tr>
-                <th>MSSV</th>
-                <th>Full Name</th>
-                <th>Status</th>
-                <th>Error</th>
-              </tr>
-            </thead>
-            <tbody>
-              {previewData.students.map((s, idx) => (
-                <tr
-                  key={idx}
-                  style={{
-                    backgroundColor:
-                      s.status === "INVALID" ? "#f8d7da" : "#d4edda",
-                  }}
+              <div className="table-responsive">
+                <table className="table table-bordered table-hover align-middle">
+                  <thead className="table-dark">
+                    <tr>
+                      <th>MSSV</th>
+                      <th>Full Name</th>
+                      <th>Status</th>
+                      <th>Error</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewData.students.map((s, idx) => (
+                      <tr
+                        key={idx}
+                        className={
+                          s.status === "INVALID"
+                            ? "table-danger"
+                            : "table-success"
+                        }
+                      >
+                        <td>{s.studentId}</td>
+                        <td>{s.fullName}</td>
+                        <td>
+                          <span
+                            className={
+                              s.status === "INVALID"
+                                ? "badge bg-danger"
+                                : "badge bg-success"
+                            }
+                          >
+                            {s.status}
+                          </span>
+                        </td>
+                        <td>{s.error || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="d-grid mt-3">
+                <button
+                  className="btn btn-success btn-lg"
+                  onClick={handleImport}
+                  disabled={loading}
                 >
-                  <td>{s.studentId}</td>
-                  <td>{s.fullName}</td>
-                  <td>{s.status}</td>
-                  <td>{s.error || "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <br />
-
-          <button onClick={handleImport} disabled={loading}>
-            {loading ? "Processing..." : "Confirm Import"}
-          </button>
-        </>
-      )}
+                  {loading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Confirm Import"
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
+
 }
 
 export default AdminImportStudentsComponent
