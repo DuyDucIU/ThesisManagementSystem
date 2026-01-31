@@ -4,7 +4,9 @@ import iu.duyduc.thesis_management_system.dto.request.StudentImportItem;
 import iu.duyduc.thesis_management_system.dto.response.StudentImportResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentFileResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentPreviewResponse;
+import iu.duyduc.thesis_management_system.dto.response.StudentResponse;
 import iu.duyduc.thesis_management_system.entity.Student;
+import iu.duyduc.thesis_management_system.mapper.StudentMapper;
 import iu.duyduc.thesis_management_system.repository.StudentRepo;
 import iu.duyduc.thesis_management_system.service.StudentService;
 import jakarta.transaction.Transactional;
@@ -20,6 +22,7 @@ import java.util.*;
 @Service
 public class StudentServiceImpl implements StudentService {
     private final StudentRepo studentRepo;
+    private final StudentMapper studentMapper;
 
     @Override
     public List<StudentFileResponse> parseStudentFromFile(InputStream file) throws IOException {
@@ -131,6 +134,13 @@ public class StudentServiceImpl implements StudentService {
 
         studentRepo.saveAll(studentList);
         return new StudentImportResponse(imported, skipped);
+    }
+
+    @Override
+    public List<StudentResponse> getAllStudents() {
+        List<Student> studentList = studentRepo.findAll();
+
+        return studentMapper.toResponseList(studentList);
     }
 
     private void markInvalid(StudentFileResponse response, String error) {

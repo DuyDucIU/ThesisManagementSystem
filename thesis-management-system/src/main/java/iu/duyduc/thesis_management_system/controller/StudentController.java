@@ -4,6 +4,7 @@ import iu.duyduc.thesis_management_system.dto.request.StudentImportRequest;
 import iu.duyduc.thesis_management_system.dto.response.StudentImportResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentFileResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentPreviewResponse;
+import iu.duyduc.thesis_management_system.dto.response.StudentResponse;
 import iu.duyduc.thesis_management_system.service.StudentService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -32,5 +33,11 @@ public class StudentController {
     public ResponseEntity<StudentImportResponse> importStudents(@RequestBody StudentImportRequest request) {
         StudentImportResponse response = studentService.importStudent(request.getStudents());
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<StudentResponse>> getAllStudents() {
+        List<StudentResponse> studentResponseList = studentService.getAllStudents();
+        return ResponseEntity.ok(studentResponseList);
     }
 }
