@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { previewStudents, importStudents } from "../service/StudentService";
+import { useNavigate } from "react-router-dom";
 
 function AdminImportStudentsComponent() {
   const [file, setFile] = useState(null);
   const [previewData, setPreviewData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [importDone, setImportDone] = useState(false);
+  
+  const navigate = useNavigate(); 
 
   // ======================
   // Upload & Preview
@@ -26,6 +30,9 @@ function AdminImportStudentsComponent() {
       if (data.valid === 0) {
         setMessage("No valid students found. Please fix errors before importing.");
       }
+      else if (data.valid) {
+        setMessage(`Founded ${data.invalid} invalid students. Please fix errors before importing.`);
+      }
     } catch (err) {
       console.error(err);
       setMessage("Failed to preview file. Please try again.");
@@ -45,6 +52,7 @@ function AdminImportStudentsComponent() {
 
     setLoading(true);
     setMessage("");
+    setImportDone(false);
 
     try {
       const result = await importStudents(previewData.students);
@@ -53,7 +61,9 @@ function AdminImportStudentsComponent() {
         `Import completed! Imported: ${result.imported}, Skipped: ${result.skipped}`
       );
 
-      // reset state
+      setImportDone(true); // 👈 show button
+
+      // reset preview/file nếu m muốn
       setPreviewData(null);
       setFile(null);
     } catch (err) {
@@ -63,6 +73,7 @@ function AdminImportStudentsComponent() {
       setLoading(false);
     }
   };
+
   
   return (
     <div className="container py-4">
@@ -104,6 +115,19 @@ function AdminImportStudentsComponent() {
           {message && (
             <div className="alert alert-info py-2">{message}</div>
           )}
+          
+
+          {importDone && (
+          <div className="d-grid mb-3">
+            <button
+              className="btn btn-outline-primary"
+              onClick={() => navigate("/students")}
+            >
+              View Students
+            </button>
+          </div>
+        )}
+
 
           {/* Preview Table */}
           {previewData && (

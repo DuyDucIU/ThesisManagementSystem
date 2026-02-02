@@ -34,3 +34,11 @@ export const importStudents = async (students) => {
 
   return response.data; // { imported, skipped }
 };
+
+// ======================
+// Get All Students
+// ======================
+export const getAllStudents = async () => {
+  const response = await axios.get(API_BASE);
+  return response.data; // List<StudentResponse>
+};
