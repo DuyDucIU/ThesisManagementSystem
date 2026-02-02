@@ -24,6 +24,10 @@ public class Student {
     @Column(nullable = false)
     private String fullName;
 
+    @ManyToOne
+    @JoinColumn(name = "managed_by")
+    private User managedBy;
+
     @Builder
     public Student(String studentId, String fullName) {
         this.studentId = studentId;

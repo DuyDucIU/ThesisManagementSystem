@@ -72,6 +72,7 @@ const StudentList = () => {
                   <th>#</th>
                   <th>Student ID</th>
                   <th>Full Name</th>
+                  <th>Managed By</th>
                 </tr>
               </thead>
               <tbody>
@@ -89,6 +90,7 @@ const StudentList = () => {
                       <td>{index + 1}</td>
                       <td className="fw-bold">{s.studentId}</td>
                       <td>{s.fullName}</td>
+                      <td>{s.managedBy}</td>
                     </tr>
                   ))}
               </tbody>

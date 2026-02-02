@@ -1,13 +1,17 @@
 package iu.duyduc.thesis_management_system.service.impl;
 
+import iu.duyduc.thesis_management_system.dto.request.AssignStudentRequest;
 import iu.duyduc.thesis_management_system.dto.request.StudentImportItem;
 import iu.duyduc.thesis_management_system.dto.response.StudentImportResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentFileResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentPreviewResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentResponse;
 import iu.duyduc.thesis_management_system.entity.Student;
+import iu.duyduc.thesis_management_system.entity.User;
+import iu.duyduc.thesis_management_system.exception.ApiException;
 import iu.duyduc.thesis_management_system.mapper.StudentMapper;
 import iu.duyduc.thesis_management_system.repository.StudentRepo;
+import iu.duyduc.thesis_management_system.repository.UserRepo;
 import iu.duyduc.thesis_management_system.service.StudentService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -23,6 +27,7 @@ import java.util.*;
 public class StudentServiceImpl implements StudentService {
     private final StudentRepo studentRepo;
     private final StudentMapper studentMapper;
+    private final UserRepo userRepo;
 
     @Override
     public List<StudentFileResponse> parseStudentFromFile(InputStream file) throws IOException {
@@ -141,6 +146,35 @@ public class StudentServiceImpl implements StudentService {
         List<Student> studentList = studentRepo.findAll();
 
         return studentMapper.toResponseList(studentList);
+    }
+
+    @Override
+    public List<StudentResponse> getAllUnassignedStudents() {
+        List<Student> studentList = studentRepo.findByManagedByIsNull();
+        return studentMapper.toResponseList(studentList);
+    }
+
+    @Transactional
+    @Override
+    public String assignStudent(AssignStudentRequest requests, Long lecturerId) {
+        User lecturer = userRepo.findById(lecturerId)
+                .orElseThrow();
+
+        List<Long> studentIdList = requests.getId();
+
+        List<Student> lecturerStudents = lecturer.getStudent();
+
+        for(Long id : studentIdList) {
+            Student student = studentRepo.findById(id)
+                    .orElseThrow();
+            lecturerStudents.add(student);
+            student.setManagedBy(lecturer);
+        }
+        lecturer.setStudent(lecturerStudents);
+
+        userRepo.save(lecturer);
+
+        return "Assigned students successfully!";
     }
 
     private void markInvalid(StudentFileResponse response, String error) {
