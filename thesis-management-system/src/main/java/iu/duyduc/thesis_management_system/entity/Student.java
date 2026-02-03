@@ -28,9 +28,19 @@ public class Student {
     @JoinColumn(name = "managed_by")
     private User managedBy;
 
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private StudentStatus status; // VALID | INVALID
+
+    @Column(length = 255)
+    private String invalidReason;
+
     @Builder
-    public Student(String studentId, String fullName) {
+    public Student(String studentId, String fullName, User managedBy, StudentStatus status, String invalidReason) {
         this.studentId = studentId;
         this.fullName = fullName;
+        this.managedBy = managedBy;
+        this.status = status;
+        this.invalidReason = invalidReason;
     }
 }
