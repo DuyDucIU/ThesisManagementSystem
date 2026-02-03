@@ -145,7 +145,24 @@ public class StudentServiceImpl implements StudentService {
     public List<StudentResponse> getAllStudents() {
         List<Student> studentList = studentRepo.findAll();
 
-        return studentMapper.toResponseList(studentList);
+        List<StudentResponse> responseList = new ArrayList<>();
+
+        for (Student student : studentList) {
+            String managedByName = null;
+            if (student.getManagedBy() != null) {
+                managedByName = student.getManagedBy().getFullName();
+            }
+            StudentResponse response = StudentResponse.builder()
+                    .id(student.getId())
+                    .studentId(student.getStudentId())
+                    .fullName(student.getFullName())
+                    .lecturerName(managedByName)
+                    .build();
+
+            responseList.add(response);
+        }
+
+        return responseList;
     }
 
     @Override
@@ -169,10 +186,9 @@ public class StudentServiceImpl implements StudentService {
                     .orElseThrow();
             lecturerStudents.add(student);
             student.setManagedBy(lecturer);
+            studentRepo.save(student);
         }
         lecturer.setStudent(lecturerStudents);
-
-        userRepo.save(lecturer);
 
         return "Assigned students successfully!";
     }

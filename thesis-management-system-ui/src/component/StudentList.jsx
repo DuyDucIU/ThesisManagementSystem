@@ -90,7 +90,7 @@ const StudentList = () => {
                       <td>{index + 1}</td>
                       <td className="fw-bold">{s.studentId}</td>
                       <td>{s.fullName}</td>
-                      <td>{s.managedBy}</td>
+                      <td>{s.lecturerName}</td>
                     </tr>
                   ))}
               </tbody>

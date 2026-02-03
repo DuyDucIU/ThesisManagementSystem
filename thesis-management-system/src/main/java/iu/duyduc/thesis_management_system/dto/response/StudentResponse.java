@@ -12,5 +12,5 @@ public class StudentResponse {
     private Long id;
     private String studentId;
     private String fullName;
-    private User managedBy;
+    private String lecturerName;
 }
