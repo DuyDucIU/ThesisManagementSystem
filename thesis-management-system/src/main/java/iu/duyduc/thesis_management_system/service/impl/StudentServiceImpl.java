@@ -1,7 +1,7 @@
 package iu.duyduc.thesis_management_system.service.impl;
 
 import iu.duyduc.thesis_management_system.dto.request.AssignStudentRequest;
-import iu.duyduc.thesis_management_system.dto.request.StudentImportRequest;
+import iu.duyduc.thesis_management_system.dto.response.StudentImportItemResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentImportResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentResponse;
 import iu.duyduc.thesis_management_system.entity.Student;
@@ -139,92 +139,92 @@ public class StudentServiceImpl implements StudentService {
 //        return new StudentImportResponse(imported, skipped);
 //    }
 
-    @Transactional
-    @Override
-    public StudentImportResponse importStudentFromFile(InputStream file) throws IOException {
+        @Transactional
+        @Override
+        public StudentImportResponse importStudentFromFile(InputStream file) throws IOException {
 
-        List<StudentImportRequest> result = new ArrayList<>();
-        Set<String> newStudentsInFile = new HashSet<>();
-        Set<String> existedStudents = studentRepo.findAllStudentIds();
+            List<StudentImportItemResponse> result = new ArrayList<>();
+            Set<String> newStudentsInFile = new HashSet<>();
+            Set<String> existedStudents = studentRepo.findAllStudentIds();
 
-        int valid = 0;
-        int invalid = 0;
+            int valid = 0;
+            int invalid = 0;
 
-        Workbook workbook = WorkbookFactory.create(file);
-        Sheet sheet = workbook.getSheetAt(0);
+            Workbook workbook = WorkbookFactory.create(file);
+            Sheet sheet = workbook.getSheetAt(0);
 
-        DataFormatter formatter = new DataFormatter();
-        FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+            DataFormatter formatter = new DataFormatter();
+            FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
 
-        for (Row row : sheet) {
-            if (row.getRowNum() == 0) continue;
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0) continue;
 
-            String studentId = formatter.formatCellValue(
-                    row.getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL),
-                    evaluator
-            ).trim().toUpperCase();
+                String studentId = formatter.formatCellValue(
+                        row.getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL),
+                        evaluator
+                ).trim().toUpperCase();
 
-            String fullName = formatter.formatCellValue(
-                    row.getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL),
-                    evaluator
-            ).trim();
+                String fullName = formatter.formatCellValue(
+                        row.getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL),
+                        evaluator
+                ).trim();
 
-            StudentImportRequest request = new StudentImportRequest();
-            request.setStudentId(studentId);
-            request.setFullName(fullName);
+                StudentImportItemResponse item = new StudentImportItemResponse();
+                item.setStudentId(studentId);
+                item.setFullName(fullName);
 
-            StudentStatus status = StudentStatus.VALID;
-            String reason = null;
+                StudentStatus status = StudentStatus.VALID;
+                String reason = null;
 
-            // ===== VALIDATION =====
-            if (studentId.isEmpty()) {
-                status = StudentStatus.INVALID;
-                reason = "Student ID is empty";
+                // ===== VALIDATION =====
+                if (studentId.isEmpty()) {
+                    status = StudentStatus.INVALID;
+                    reason = "Student ID is empty";
+                }
+                else if (fullName.isEmpty()) {
+                    status = StudentStatus.INVALID;
+                    reason = "Full name is empty";
+                }
+                else if (newStudentsInFile.contains(studentId)) {
+                    status = StudentStatus.INVALID;
+                    reason = "Duplicate in file";
+                }
+                else if (existedStudents.contains(studentId)) {
+                    status = StudentStatus.INVALID;
+                    reason = "Already exists in DB";
+                }
+
+                Student student = Student.builder()
+                        .studentId(studentId)
+                        .fullName(fullName)
+                        .status(status)
+                        .invalidReason(reason)
+                        .build();
+
+                studentRepo.save(student);
+
+                if (status == StudentStatus.INVALID) {
+                    invalid++;
+                    item.setStatus(status);
+                    item.setMessage(reason);
+                } else {
+                    valid++;
+                    item.setStatus(status);
+                    item.setMessage("Imported");
+                    newStudentsInFile.add(studentId);
+                    existedStudents.add(studentId);
+                }
+
+                result.add(item);
             }
-            else if (fullName.isEmpty()) {
-                status = StudentStatus.INVALID;
-                reason = "Full name is empty";
-            }
-            else if (newStudentsInFile.contains(studentId)) {
-                status = StudentStatus.INVALID;
-                reason = "Duplicate in file";
-            }
-            else if (existedStudents.contains(studentId)) {
-                status = StudentStatus.INVALID;
-                reason = "Already exists in DB";
-            }
 
-            Student student = Student.builder()
-                    .studentId(studentId)
-                    .fullName(fullName)
-                    .status(status)
-                    .invalidReason(reason)
-                    .build();
-
-            studentRepo.save(student);
-
-            if (status == StudentStatus.INVALID) {
-                invalid++;
-                request.setStatus("INVALID");
-                request.setStatus(reason);
-            } else {
-                valid++;
-                request.setStatus("VALID");
-                request.setStatus("Imported");
-                newStudentsInFile.add(studentId);
-                existedStudents.add(studentId);
-            }
-
-            result.add(request);
+            return new StudentImportResponse(
+                    result.size(),
+                    valid,
+                    invalid,
+                    result
+            );
         }
-
-        return new StudentImportResponse(
-                result.size(),
-                valid,
-                invalid,
-                result
-        );
-    }
 
     @Override
     public List<StudentResponse> getAllStudents() {

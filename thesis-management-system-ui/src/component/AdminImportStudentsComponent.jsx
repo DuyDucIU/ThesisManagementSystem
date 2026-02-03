@@ -1,20 +1,19 @@
 import { useState } from "react";
-import { previewStudents, importStudents } from "../service/StudentService";
+import { importStudents } from "../service/StudentService";
 import { useNavigate } from "react-router-dom";
 
 function AdminImportStudentsComponent() {
   const [file, setFile] = useState(null);
-  const [previewData, setPreviewData] = useState(null);
+  const [resultData, setResultData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [importDone, setImportDone] = useState(false);
-  
-  const navigate = useNavigate(); 
+
+  const navigate = useNavigate();
 
   // ======================
-  // Upload & Preview
+  // Import 
   // ======================
-  const handlePreview = async () => {
+  const handleImport = async () => {
     if (!file) {
       alert("Please select an Excel file");
       return;
@@ -22,59 +21,25 @@ function AdminImportStudentsComponent() {
 
     setLoading(true);
     setMessage("");
+    setResultData(null);
 
     try {
-      const data = await previewStudents(file);
-      setPreviewData(data);
-
-      if (data.valid === 0) {
-        setMessage("No valid students found. Please fix errors before importing.");
-      }
-      else if (data.valid) {
-        setMessage(`Founded ${data.invalid} invalid students. Please fix errors before importing.`);
-      }
-    } catch (err) {
-      console.error(err);
-      setMessage("Failed to preview file. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  // ======================
-  // Confirm Import
-  // ======================
-  const handleImport = async () => {
-    if (!previewData || !previewData.students?.length) {
-      return;
-    }
-
-    setLoading(true);
-    setMessage("");
-    setImportDone(false);
-
-    try {
-      const result = await importStudents(previewData.students);
+      const data = await importStudents(file);
+      setResultData(data);
 
       setMessage(
-        `Import completed! Imported: ${result.imported}, Skipped: ${result.skipped}`
+        `Import completed! Total: ${data.total} | Valid: ${
+          data.total - data.invalid
+        } | Invalid: ${data.invalid}`
       );
-
-      setImportDone(true); // 👈 show button
-
-      // reset preview/file nếu m muốn
-      setPreviewData(null);
-      setFile(null);
     } catch (err) {
       console.error(err);
-      setMessage("Error importing data into database");
+      setMessage("Failed to import file. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  
   return (
     <div className="container py-4">
       <div className="card shadow">
@@ -91,21 +56,22 @@ function AdminImportStudentsComponent() {
                 accept=".xlsx,.xls"
                 className="form-control"
                 onChange={(e) => setFile(e.target.files[0])}
+                disabled={loading}
               />
             </div>
             <div className="col-md-4 d-grid">
               <button
                 className="btn btn-primary"
-                onClick={handlePreview}
+                onClick={handleImport}
                 disabled={loading}
               >
                 {loading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" />
-                    Processing...
+                    Importing...
                   </>
                 ) : (
-                  "Upload & Preview"
+                  "Import"
                 )}
               </button>
             </div>
@@ -115,29 +81,36 @@ function AdminImportStudentsComponent() {
           {message && (
             <div className="alert alert-info py-2">{message}</div>
           )}
-          
 
-          {importDone && (
-          <div className="d-grid mb-3">
-            <button
-              className="btn btn-outline-primary"
-              onClick={() => navigate("/students")}
-            >
-              View Students
-            </button>
-          </div>
-        )}
+          {resultData && resultData.valid === 0 && (
+            <div className="alert alert-danger py-2">
+              All records are invalid. Please review and fix them in Students Management.
+            </div>
+          )}
 
 
-          {/* Preview Table */}
-          {previewData && (
+          {/* View all students */}
+          {resultData && (
+            <div className="d-grid mb-3">
+              <button
+                className="btn btn-outline-primary"
+                onClick={() => navigate("/students")}
+              >
+                View All Students
+              </button>
+            </div>
+          )}
+
+          {/* Result Table */}
+          {resultData && (
             <>
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <h5 className="mb-0">Preview</h5>
+                <h5 className="mb-0">Imported Records</h5>
                 <span className="badge bg-secondary">
-                  Total: {previewData.total} | Valid:{" "}
-                  <span className="text-success">{previewData.valid}</span> | Invalid:{" "}
-                  <span className="text-danger">{previewData.invalid}</span>
+                  Total: {resultData.total} | Valid:{" "}
+                  <span className="text-success">{resultData.valid}</span>{" "}
+                  | Invalid:{" "}
+                  <span className="text-danger">{resultData.invalid}</span>
                 </span>
               </div>
 
@@ -145,14 +118,14 @@ function AdminImportStudentsComponent() {
                 <table className="table table-bordered table-hover align-middle">
                   <thead className="table-dark">
                     <tr>
-                      <th>MSSV</th>
+                      <th>MSSV</th> 
                       <th>Full Name</th>
                       <th>Status</th>
-                      <th>Error</th>
+                      <th>Message</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {previewData.students.map((s, idx) => (
+                    {(resultData.students || []).map((s, idx) => (
                       <tr
                         key={idx}
                         className={
@@ -161,8 +134,8 @@ function AdminImportStudentsComponent() {
                             : "table-success"
                         }
                       >
-                        <td>{s.studentId}</td>
-                        <td>{s.fullName}</td>
+                        <td>{s.studentId || "-"}</td>
+                        <td>{s.fullName || "-"}</td>
                         <td>
                           <span
                             className={
@@ -174,28 +147,11 @@ function AdminImportStudentsComponent() {
                             {s.status}
                           </span>
                         </td>
-                        <td>{s.error || "-"}</td>
+                        <td>{s.message || "-"}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
-
-              <div className="d-grid mt-3">
-                <button
-                  className="btn btn-success btn-lg"
-                  onClick={handleImport}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Confirm Import"
-                  )}
-                </button>
               </div>
             </>
           )}
@@ -203,7 +159,6 @@ function AdminImportStudentsComponent() {
       </div>
     </div>
   );
-
 }
 
-export default AdminImportStudentsComponent
+export default AdminImportStudentsComponent;
