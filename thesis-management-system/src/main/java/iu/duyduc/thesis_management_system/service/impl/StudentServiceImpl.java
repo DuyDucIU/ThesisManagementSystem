@@ -30,204 +30,92 @@ public class StudentServiceImpl implements StudentService {
     private final StudentMapper studentMapper;
     private final UserRepo userRepo;
 
-//    @Override
-//    public List<StudentFileResponse> parseStudentFromFile(InputStream file) throws IOException {
-//        List<StudentFileResponse> studentList = new ArrayList<>();
-//
-//        Workbook workbook = WorkbookFactory.create(file);
-//        Sheet sheet = workbook.getSheetAt(0);
-//
-//        DataFormatter formatter = new DataFormatter();
-//
-//        FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-//
-//        sheet.forEach(row -> {
-//            if (row.getRowNum() == 0) return; // skip header
-//
-//            Cell idCell = row.getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-//            Cell nameCell = row.getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-//
-//            String studentId = formatter.formatCellValue(idCell, evaluator).trim().toUpperCase();
-//            String fullName = formatter.formatCellValue(nameCell, evaluator).trim();
-//
-//            // skip empty row
-//            if (studentId.isEmpty() && fullName.isEmpty()) return;
-//
-//            StudentFileResponse student = new StudentFileResponse();
-//            student.setStudentId(studentId);
-//            student.setFullName(fullName);
-//
-//            studentList.add(student);
-//        });
-//
-//        return studentList;
-//    }
-//
-//    @Override
-//    public StudentPreviewResponse validateStudentList(List<StudentFileResponse> studentList) {
-//        Set<String> newStudents = new HashSet<>();
-//        Set<String> existedStudents = studentRepo.findAllStudentIds();
-//
-//        int valid = 0;
-//        int invalid = 0;
-//
-//        for (StudentFileResponse response : studentList) {
-//            String id = Optional.ofNullable(response.getStudentId())
-//                    .orElse("")
-//                    .trim()
-//                    .toUpperCase();
-//
-//            if (id.isEmpty()) {
-//                markInvalid(response, "Student ID is empty");
-//            } else if (newStudents.contains(id)) {
-//                markInvalid(response, "Duplicate in file");
-//            } else if (response.getFullName().isEmpty()) {
-//                markInvalid(response, "Full name is empty");
-//            } else if (existedStudents.contains(id)) {
-//                markInvalid(response, "Already exists in DB");
-//            } else {
-//                response.setStatus("VALID");
-//                valid++;
-//                newStudents.add(id);
-//            }
-//            if ("INVALID".equals(response.getStatus())) invalid++;
-//        }
-//
-//        return new StudentPreviewResponse(studentList.size(), valid, invalid, studentList);
-//    }
-//
-//    @Transactional
-//    @Override
-//    public StudentImportResponse importStudent(List<StudentImportItem> studentImportItemList) {
-//        List<Student> studentList = new ArrayList<>();
-//
-//        int imported = 0;
-//        int skipped = 0;
-//
-//        for (StudentImportItem item : studentImportItemList) {
-//            String id = Optional.ofNullable(item.getStudentId())
-//                    .orElse("")
-//                    .trim()
-//                    .toUpperCase();
-//
-//            String name = Optional.ofNullable(item.getFullName())
-//                    .orElse("")
-//                    .trim();
-//
-//            if (!"VALID".equalsIgnoreCase(item.getStatus())) {
-//                skipped++;
-//                continue;
-//            }
-//
-//            if (id.isEmpty() || name.isEmpty()) {
-//                skipped++;
-//                continue;
-//            }
-//
-//            if (studentRepo.existsByStudentId(id)) {
-//                skipped++;
-//                continue;
-//            }
-//
-//            Student student = Student.builder()
-//                    .studentId(id)
-//                    .fullName(item.getFullName())
-//                    .build();
-//
-//            studentList.add(student);
-//            imported++;
-//        }
-//
-//        studentRepo.saveAll(studentList);
-//        return new StudentImportResponse(imported, skipped);
-//    }
+    @Transactional
+    @Override
+    public StudentImportResponse importStudentFromFile(InputStream file) throws IOException {
 
-        @Transactional
-        @Override
-        public StudentImportResponse importStudentFromFile(InputStream file) throws IOException {
+        List<StudentImportItemResponse> result = new ArrayList<>();
+        Set<String> newStudentsInFile = new HashSet<>();
+        Set<String> existedStudents = studentRepo.findAllStudentIds();
 
-            List<StudentImportItemResponse> result = new ArrayList<>();
-            Set<String> newStudentsInFile = new HashSet<>();
-            Set<String> existedStudents = studentRepo.findAllStudentIds();
+        int valid = 0;
+        int invalid = 0;
 
-            int valid = 0;
-            int invalid = 0;
+        Workbook workbook = WorkbookFactory.create(file);
+        Sheet sheet = workbook.getSheetAt(0);
 
-            Workbook workbook = WorkbookFactory.create(file);
-            Sheet sheet = workbook.getSheetAt(0);
+        DataFormatter formatter = new DataFormatter();
+        FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
 
-            DataFormatter formatter = new DataFormatter();
-            FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+        for (Row row : sheet) {
+            if (row.getRowNum() == 0) continue;
 
-            for (Row row : sheet) {
-                if (row.getRowNum() == 0) continue;
+            String studentId = formatter.formatCellValue(
+                    row.getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL),
+                    evaluator
+            ).trim().toUpperCase();
 
-                String studentId = formatter.formatCellValue(
-                        row.getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL),
-                        evaluator
-                ).trim().toUpperCase();
+            String fullName = formatter.formatCellValue(
+                    row.getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL),
+                    evaluator
+            ).trim();
 
-                String fullName = formatter.formatCellValue(
-                        row.getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL),
-                        evaluator
-                ).trim();
+            StudentImportItemResponse item = new StudentImportItemResponse();
+            item.setStudentId(studentId);
+            item.setFullName(fullName);
 
-                StudentImportItemResponse item = new StudentImportItemResponse();
-                item.setStudentId(studentId);
-                item.setFullName(fullName);
+            StudentStatus status = StudentStatus.VALID;
+            String reason = null;
 
-                StudentStatus status = StudentStatus.VALID;
-                String reason = null;
-
-                // ===== VALIDATION =====
-                if (studentId.isEmpty()) {
-                    status = StudentStatus.INVALID;
-                    reason = "Student ID is empty";
-                }
-                else if (fullName.isEmpty()) {
-                    status = StudentStatus.INVALID;
-                    reason = "Full name is empty";
-                }
-                else if (newStudentsInFile.contains(studentId)) {
-                    status = StudentStatus.INVALID;
-                    reason = "Duplicate in file";
-                }
-                else if (existedStudents.contains(studentId)) {
-                    status = StudentStatus.INVALID;
-                    reason = "Already exists in DB";
-                }
-
-                Student student = Student.builder()
-                        .studentId(studentId)
-                        .fullName(fullName)
-                        .status(status)
-                        .invalidReason(reason)
-                        .build();
-
-                studentRepo.save(student);
-
-                if (status == StudentStatus.INVALID) {
-                    invalid++;
-                    item.setStatus(status);
-                    item.setMessage(reason);
-                } else {
-                    valid++;
-                    item.setStatus(status);
-                    item.setMessage("Imported");
-                    newStudentsInFile.add(studentId);
-                    existedStudents.add(studentId);
-                }
-
-                result.add(item);
+            // ===== VALIDATION =====
+            if (studentId.isEmpty()) {
+                status = StudentStatus.INVALID;
+                reason = "Student ID is empty";
+            }
+            else if (fullName.isEmpty()) {
+                status = StudentStatus.INVALID;
+                reason = "Full name is empty";
+            }
+            else if (newStudentsInFile.contains(studentId)) {
+                status = StudentStatus.INVALID;
+                reason = "Duplicate in file";
+            }
+            else if (existedStudents.contains(studentId)) {
+                status = StudentStatus.INVALID;
+                reason = "Already exists in DB";
             }
 
-            return new StudentImportResponse(
-                    result.size(),
-                    valid,
-                    invalid,
-                    result
-            );
+            Student student = Student.builder()
+                    .studentId(studentId)
+                    .fullName(fullName)
+                    .status(status)
+                    .invalidReason(reason)
+                    .build();
+
+            studentRepo.save(student);
+
+            if (status == StudentStatus.INVALID) {
+                invalid++;
+                item.setStatus(status);
+                item.setMessage(reason);
+            } else {
+                valid++;
+                item.setStatus(status);
+                item.setMessage("Imported");
+                newStudentsInFile.add(studentId);
+                existedStudents.add(studentId);
+            }
+
+            result.add(item);
         }
+
+        return new StudentImportResponse(
+                result.size(),
+                valid,
+                invalid,
+                result
+        );
+    }
 
     @Override
     public List<StudentResponse> getAllStudents() {
@@ -299,12 +187,16 @@ public class StudentServiceImpl implements StudentService {
 
     @Transactional
     @Override
-    public StudentResponse updateStudent(String studentId, StudentRequest request) {
-        Student student = studentRepo.findByStudentId(studentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Student ID not found: " + studentId));
+    public StudentResponse updateStudent(Long id, StudentRequest request) {
+        Student student = studentRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Student ID not found: " + id));
 
-        if (request.getStudentId() != null && !request.getStudentId().isBlank())
+        if (request.getStudentId() != null) {
+            if (studentRepo.existsByStudentId(request.getStudentId())) {
+                throw new ApiException("StudentId already exists");
+            }
             student.setStudentId(request.getStudentId());
+        }
 
         if (request.getFullName() != null && !request.getFullName().isBlank())
             student.setFullName(request.getFullName());
@@ -317,11 +209,15 @@ public class StudentServiceImpl implements StudentService {
 
         studentRepo.save(student);
 
+        String lecturerName = Optional.ofNullable(student.getManagedBy())
+                .map(User::getFullName)
+                .orElse(null);
+
         StudentResponse response = StudentResponse.builder()
                 .id(student.getId())
                 .studentId(student.getStudentId())
                 .fullName(student.getFullName())
-                .lecturerName(student.getManagedBy().getFullName())
+                .lecturerName(lecturerName)
                 .build();
 
         return response;
@@ -329,15 +225,11 @@ public class StudentServiceImpl implements StudentService {
 
     @Transactional
     @Override
-    public void deleteStudent(String studentId) {
-        Student student = studentRepo.findByStudentId(studentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Student id not found: " + studentId));
+    public void deleteStudent(Long id) {
+        Student student = studentRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Student id not found: " + id));
 
         studentRepo.delete(student);
     }
 
-//    private void markInvalid(StudentFileResponse response, String error) {
-//        response.setStatus("INVALID");
-//        response.setError(error);
-//    }
 }

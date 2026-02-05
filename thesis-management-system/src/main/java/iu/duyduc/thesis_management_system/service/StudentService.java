@@ -11,13 +11,10 @@ import java.util.List;
 
 public interface StudentService {
     StudentImportResponse importStudentFromFile(InputStream file) throws IOException;
-//    List<StudentFileResponse> parseStudentFromFile(InputStream file) throws IOException;
-//    StudentPreviewResponse validateStudentList(List<StudentFileResponse> studentList);
-//    StudentImportResponse importStudent(List<StudentImportItem> studentImportItemList);
     List<StudentResponse> getAllStudents();
     List<StudentResponse> getAllUnassignedStudents();
     String assignStudent(AssignStudentRequest requests, Long lecturerId);
     StudentResponse createStudent(StudentRequest request);
-    StudentResponse updateStudent(String studentId, StudentRequest request);
-    void deleteStudent(String studentId);
+    StudentResponse updateStudent(Long studentId, StudentRequest request);
+    void deleteStudent(Long studentId);
 }

@@ -21,14 +21,6 @@ public class AdminController {
     private final StudentService studentService;
 
 //    @PreAuthorize("hasRole('ADMIN')")
-//    @PostMapping(value = "/preview", consumes = "multipart/form-data")
-//    public ResponseEntity<StudentPreviewResponse> uploadStudent(@RequestParam MultipartFile file) throws IOException {
-//        List<StudentFileResponse> fileResponses = studentService.parseStudentFromFile(file.getInputStream());
-//        StudentPreviewResponse previewResponse = studentService.validateStudentList(fileResponses);
-//        return new ResponseEntity<>(previewResponse, HttpStatus.OK);
-//    }
-
-//    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/import")
     public ResponseEntity<StudentImportResponse> importStudents(@RequestParam MultipartFile file) throws IOException {
         StudentImportResponse response = studentService.importStudentFromFile(file.getInputStream());
@@ -48,15 +40,15 @@ public class AdminController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PatchMapping("/{studentId}")
-    public ResponseEntity<StudentResponse> updateStudent(@PathVariable String studentId , @RequestBody StudentRequest request) {
-        StudentResponse response = studentService.updateStudent(studentId, request);
+    @PatchMapping("/{id}")
+    public ResponseEntity<StudentResponse> updateStudent(@PathVariable Long id , @RequestBody StudentRequest request) {
+        StudentResponse response = studentService.updateStudent(id, request);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{studentId}")
-    public ResponseEntity<String> deleteStudent(@PathVariable String studentId) {
-        studentService.deleteStudent(studentId);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteStudent(@PathVariable Long id) {
+        studentService.deleteStudent(id);
         return new ResponseEntity<>("Student deleted successfully !" , HttpStatus.OK);
     }
 }
