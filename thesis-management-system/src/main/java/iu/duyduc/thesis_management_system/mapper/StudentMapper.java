@@ -10,5 +10,4 @@ import java.util.List;
 public interface StudentMapper {
     StudentResponse toStudentResponse(Student student);
     List<StudentResponse> toResponseList(List<Student> students);
-
 }

@@ -125,13 +125,16 @@ public class StudentServiceImpl implements StudentService {
 
         for (Student student : studentList) {
             String managedByName = null;
+            Long managedById = null;
             if (student.getManagedBy() != null) {
+                managedById = student.getManagedBy().getId();
                 managedByName = student.getManagedBy().getFullName();
             }
             StudentResponse response = StudentResponse.builder()
                     .id(student.getId())
                     .studentId(student.getStudentId())
                     .fullName(student.getFullName())
+                    .lecturerId(managedById)
                     .lecturerName(managedByName)
                     .build();
 
@@ -175,10 +178,21 @@ public class StudentServiceImpl implements StudentService {
         if (studentRepo.existsByStudentId(request.getStudentId()))
             throw new ApiException("Student already existed");
 
+        User lecturer = null;
+
+        if (request.getLecturerId() != null) {
+            lecturer = userRepo.findById(request.getLecturerId())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException("Lecturer not found: " + request.getLecturerId())
+                    );
+        }
+
+
         Student student = Student.builder()
                 .studentId(request.getStudentId())
                 .fullName(request.getFullName())
                 .status(StudentStatus.VALID)
+                .managedBy(lecturer)
                 .build();
 
         Student savedStudent = studentRepo.save(student);
@@ -191,8 +205,9 @@ public class StudentServiceImpl implements StudentService {
         Student student = studentRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student ID not found: " + id));
 
-        if (request.getStudentId() != null) {
-            if (studentRepo.existsByStudentId(request.getStudentId())) {
+        if (request.getStudentId() != null &&
+                !request.getStudentId().equals(student.getStudentId())) {
+            if (studentRepo.existsByStudentIdAndIdNot(request.getStudentId(), id)) {
                 throw new ApiException("StudentId already exists");
             }
             student.setStudentId(request.getStudentId());
@@ -213,10 +228,15 @@ public class StudentServiceImpl implements StudentService {
                 .map(User::getFullName)
                 .orElse(null);
 
+        Long lecturerId = Optional.ofNullable(student.getManagedBy())
+                .map(User::getId)
+                .orElse(null);
+
         StudentResponse response = StudentResponse.builder()
                 .id(student.getId())
                 .studentId(student.getStudentId())
                 .fullName(student.getFullName())
+                .lecturerId(lecturerId)
                 .lecturerName(lecturerName)
                 .build();
 

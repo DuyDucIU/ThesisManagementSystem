@@ -12,5 +12,6 @@ public class StudentResponse {
     private Long id;
     private String studentId;
     private String fullName;
+    private Long lecturerId;
     private String lecturerName;
 }

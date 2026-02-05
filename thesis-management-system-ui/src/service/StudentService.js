@@ -2,38 +2,6 @@ import axios from "axios";
 
 const API_BASE = "http://localhost:8080/api/admin/students";
 
-// ======================
-// Upload & Preview
-// ======================
-// export const previewStudents = async (file) => {
-//   const formData = new FormData();
-//   formData.append("file", file);
-
-//   const response = await axios.post(`${API_BASE}/preview`, formData, {
-//     headers: {
-//       "Content-Type": "multipart/form-data",
-//     },
-//   });
-
-//   return response.data;
-// };
-
-// ======================
-// Confirm Import
-// ======================
-// export const importStudents = async (students) => {
-//   const payload = {
-//     students: students, 
-//   };
-
-//   const response = await axios.post(`${API_BASE}/import`, payload, {
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//   });
-
-//   return response.data; // { imported, skipped }
-// };
 export async function importStudents(file) {
   const formData = new FormData();
   formData.append("file", file);
@@ -70,4 +38,20 @@ export async function importStudents(file) {
 export const getAllStudents = async () => {
   const response = await axios.get(API_BASE);
   return response.data; // List<StudentResponse>
+};
+
+export const createStudent = async (payload) => {
+  const res = await axios.post(API_BASE, payload);
+  return res.data;
+};
+
+
+export const updateStudent = async (id, payload) => {
+  const res = await axios.patch(`${API_BASE}/${id}`, payload);
+  return res.data;
+}
+
+export const deleteStudent = async (id) => {
+  const res = await axios.delete(`${API_BASE}/${id}`);
+  return res.data;
 };

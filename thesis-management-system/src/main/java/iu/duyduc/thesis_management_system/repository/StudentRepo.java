@@ -17,4 +17,6 @@ public interface StudentRepo extends JpaRepository<Student, Long> {
     boolean existsByStudentId(String studentId);
 
     List<Student> findByManagedByIsNull();
+
+    boolean existsByStudentIdAndIdNot(String studentId, Long id);
 }
