@@ -1,5 +1,6 @@
 package iu.duyduc.thesis_management_system.controller;
 
+import iu.duyduc.thesis_management_system.dto.request.StudentRequest;
 import iu.duyduc.thesis_management_system.dto.response.StudentImportResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentResponse;
 import iu.duyduc.thesis_management_system.service.StudentService;
@@ -39,5 +40,23 @@ public class AdminController {
     public ResponseEntity<List<StudentResponse>> getAllStudents() {
         List<StudentResponse> studentResponseList = studentService.getAllStudents();
         return ResponseEntity.ok(studentResponseList);
+    }
+
+    @PostMapping
+    public ResponseEntity<StudentResponse> createStudent(@RequestBody StudentRequest request) {
+        StudentResponse response = studentService.createStudent(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PatchMapping("/{studentId}")
+    public ResponseEntity<StudentResponse> updateStudent(@PathVariable String studentId , @RequestBody StudentRequest request) {
+        StudentResponse response = studentService.updateStudent(studentId, request);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{studentId}")
+    public ResponseEntity<String> deleteStudent(@PathVariable String studentId) {
+        studentService.deleteStudent(studentId);
+        return new ResponseEntity<>("Student deleted successfully !" , HttpStatus.OK);
     }
 }

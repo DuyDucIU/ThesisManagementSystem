@@ -1,12 +1,15 @@
 package iu.duyduc.thesis_management_system.service.impl;
 
 import iu.duyduc.thesis_management_system.dto.request.AssignStudentRequest;
+import iu.duyduc.thesis_management_system.dto.request.StudentRequest;
 import iu.duyduc.thesis_management_system.dto.response.StudentImportItemResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentImportResponse;
 import iu.duyduc.thesis_management_system.dto.response.StudentResponse;
 import iu.duyduc.thesis_management_system.entity.Student;
 import iu.duyduc.thesis_management_system.entity.StudentStatus;
 import iu.duyduc.thesis_management_system.entity.User;
+import iu.duyduc.thesis_management_system.exception.ApiException;
+import iu.duyduc.thesis_management_system.exception.ResourceNotFoundException;
 import iu.duyduc.thesis_management_system.mapper.StudentMapper;
 import iu.duyduc.thesis_management_system.repository.StudentRepo;
 import iu.duyduc.thesis_management_system.repository.UserRepo;
@@ -276,6 +279,61 @@ public class StudentServiceImpl implements StudentService {
         lecturer.setStudent(lecturerStudents);
 
         return "Assigned students successfully!";
+    }
+
+    @Transactional
+    @Override
+    public StudentResponse createStudent(StudentRequest request) {
+        if (studentRepo.existsByStudentId(request.getStudentId()))
+            throw new ApiException("Student already existed");
+
+        Student student = Student.builder()
+                .studentId(request.getStudentId())
+                .fullName(request.getFullName())
+                .status(StudentStatus.VALID)
+                .build();
+
+        Student savedStudent = studentRepo.save(student);
+        return studentMapper.toStudentResponse(savedStudent);
+    }
+
+    @Transactional
+    @Override
+    public StudentResponse updateStudent(String studentId, StudentRequest request) {
+        Student student = studentRepo.findByStudentId(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student ID not found: " + studentId));
+
+        if (request.getStudentId() != null && !request.getStudentId().isBlank())
+            student.setStudentId(request.getStudentId());
+
+        if (request.getFullName() != null && !request.getFullName().isBlank())
+            student.setFullName(request.getFullName());
+
+        if (request.getLecturerId() != null) {
+            User lecturer = userRepo.findById(request.getLecturerId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Lecturer not found: " + request.getLecturerId()));
+            student.setManagedBy(lecturer);
+        }
+
+        studentRepo.save(student);
+
+        StudentResponse response = StudentResponse.builder()
+                .id(student.getId())
+                .studentId(student.getStudentId())
+                .fullName(student.getFullName())
+                .lecturerName(student.getManagedBy().getFullName())
+                .build();
+
+        return response;
+    }
+
+    @Transactional
+    @Override
+    public void deleteStudent(String studentId) {
+        Student student = studentRepo.findByStudentId(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student id not found: " + studentId));
+
+        studentRepo.delete(student);
     }
 
 //    private void markInvalid(StudentFileResponse response, String error) {
