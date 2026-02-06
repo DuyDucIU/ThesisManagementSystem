@@ -1,6 +1,23 @@
 import { useState } from "react";
 import { importStudents } from "../service/StudentService";
 import { useNavigate } from "react-router-dom";
+import {
+  Card,
+  Upload,
+  Button,
+  Alert,
+  Table,
+  Tag,
+  Typography,
+  Space,
+} from "antd";
+import {
+  UploadOutlined,
+  InboxOutlined,
+  EyeOutlined,
+} from "@ant-design/icons";
+
+const { Title, Text } = Typography;
 
 function AdminImportStudentsComponent() {
   const [file, setFile] = useState(null);
@@ -11,11 +28,11 @@ function AdminImportStudentsComponent() {
   const navigate = useNavigate();
 
   // ======================
-  // Import 
+  // Import
   // ======================
   const handleImport = async () => {
     if (!file) {
-      alert("Please select an Excel file");
+      setMessage("Please select an Excel file");
       return;
     }
 
@@ -28,9 +45,7 @@ function AdminImportStudentsComponent() {
       setResultData(data);
 
       setMessage(
-        `Import completed! Total: ${data.total} | Valid: ${
-          data.total - data.invalid
-        } | Invalid: ${data.invalid}`
+        `Import completed! Total: ${data.total} | Valid: ${data.valid} | Invalid: ${data.invalid}`
       );
     } catch (err) {
       console.error(err);
@@ -40,123 +55,135 @@ function AdminImportStudentsComponent() {
     }
   };
 
+  // ======================
+  // Table config
+  // ======================
+  const columns = [
+    {
+      title: "Student ID",
+      dataIndex: "studentId",
+      render: (v) => v || "-",
+    },
+    {
+      title: "Full Name",
+      dataIndex: "fullName",
+      render: (v) => v || "-",
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      render: (status) =>
+        status === "INVALID" ? (
+          <Tag color="red">INVALID</Tag>
+        ) : (
+          <Tag color="green">VALID</Tag>
+        ),
+    },
+    {
+      title: "Message",
+      dataIndex: "message",
+      render: (v) => v || "-",
+    },
+  ];
+
   return (
-    <div className="container py-4">
-      <div className="card shadow">
-        <div className="card-body">
-          <h3 className="card-title mb-4 text-primary">
-            Import Students (Excel)
-          </h3>
+    <div
+      style={{
+        maxWidth: 1000,
+        margin: "0 auto",
+        padding: "24px",
+      }}
+    >
+      <Card bordered={false} style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}>
+        <Title level={3} style={{ color: "#1677ff" }}>
+          Import Students (Excel)
+        </Title>
 
-          {/* Upload */}
-          <div className="row g-2 align-items-center mb-3">
-            <div className="col-md-8">
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                className="form-control"
-                onChange={(e) => setFile(e.target.files[0])}
-                disabled={loading}
-              />
+        {/* Upload */}
+        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          <Upload.Dragger
+            accept=".xlsx,.xls"
+            maxCount={1}
+            beforeUpload={(file) => {
+              setFile(file);
+              return false; // prevent auto upload
+            }}
+            disabled={loading}
+          >
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined />
+            </p>
+            <p className="ant-upload-text">
+              Click or drag Excel file to this area
+            </p>
+            <p className="ant-upload-hint">
+              Only .xls / .xlsx files are supported
+            </p>
+          </Upload.Dragger>
+
+          <Button
+            type="primary"
+            size="large"
+            icon={<UploadOutlined />}
+            loading={loading}
+            onClick={handleImport}
+          >
+            Import
+          </Button>
+        </Space>
+
+        {/* Message */}
+        {message && (
+          <Alert
+            type={resultData ? "success" : "error"}
+            message={message}
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        )}
+
+        {resultData && resultData.valid === 0 && (
+          <Alert
+            type="error"
+            showIcon
+            message="All records are invalid"
+            description="Please review and fix them in Students Management."
+            style={{ marginTop: 16 }}
+          />
+        )}
+
+        {/* View students */}
+        {resultData && (
+          <Button
+            icon={<EyeOutlined />}
+            style={{ marginTop: 16 }}
+            onClick={() => navigate("/students")}
+          >
+            View All Students
+          </Button>
+        )}
+
+        {/* Result table */}
+        {resultData && (
+          <>
+            <div style={{ marginTop: 24, marginBottom: 8 }}>
+              <Text strong>
+                Imported Records — Total: {resultData.total} | Valid:{" "}
+                <Text type="success">{resultData.valid}</Text> | Invalid:{" "}
+                <Text type="danger">{resultData.invalid}</Text>
+              </Text>
             </div>
-            <div className="col-md-4 d-grid">
-              <button
-                className="btn btn-primary"
-                onClick={handleImport}
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" />
-                    Importing...
-                  </>
-                ) : (
-                  "Import"
-                )}
-              </button>
-            </div>
-          </div>
 
-          {/* Message */}
-          {message && (
-            <div className="alert alert-info py-2">{message}</div>
-          )}
-
-          {resultData && resultData.valid === 0 && (
-            <div className="alert alert-danger py-2">
-              All records are invalid. Please review and fix them in Students Management.
-            </div>
-          )}
-
-
-          {/* View all students */}
-          {resultData && (
-            <div className="d-grid mb-3">
-              <button
-                className="btn btn-outline-primary"
-                onClick={() => navigate("/students")}
-              >
-                View All Students
-              </button>
-            </div>
-          )}
-
-          {/* Result Table */}
-          {resultData && (
-            <>
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <h5 className="mb-0">Imported Records</h5>
-                <span className="badge bg-secondary">
-                  Total: {resultData.total} | Valid:{" "}
-                  <span className="text-success">{resultData.valid}</span>{" "}
-                  | Invalid:{" "}
-                  <span className="text-danger">{resultData.invalid}</span>
-                </span>
-              </div>
-
-              <div className="table-responsive">
-                <table className="table table-bordered table-hover align-middle">
-                  <thead className="table-dark">
-                    <tr>
-                      <th>MSSV</th> 
-                      <th>Full Name</th>
-                      <th>Status</th>
-                      <th>Message</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(resultData.students || []).map((s, idx) => (
-                      <tr
-                        key={idx}
-                        className={
-                          s.status === "INVALID"
-                            ? "table-danger"
-                            : "table-success"
-                        }
-                      >
-                        <td>{s.studentId || "-"}</td>
-                        <td>{s.fullName || "-"}</td>
-                        <td>
-                          <span
-                            className={
-                              s.status === "INVALID"
-                                ? "badge bg-danger"
-                                : "badge bg-success"
-                            }
-                          >
-                            {s.status}
-                          </span>
-                        </td>
-                        <td>{s.message || "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+            <Table
+              rowKey={(r, idx) => idx}
+              columns={columns}
+              dataSource={resultData.students || []}
+              pagination={{ pageSize: 10 }}
+              bordered
+            />
+          </>
+        )}
+      </Card>
     </div>
   );
 }

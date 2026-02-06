@@ -22,10 +22,8 @@ export async function importStudents(file) {
     console.error("Import students error:", err);
 
     if (err.response) {
-      // Backend trả lỗi
       throw new Error(err.response.data?.message || "Import failed");
     } else {
-      // Network / client error
       throw new Error("Network error while importing students");
     }
   }

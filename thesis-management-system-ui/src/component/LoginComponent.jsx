@@ -1,112 +1,119 @@
-import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { loginApi } from '../service/AuthService'
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, Form, Input, Button, Alert, Typography } from "antd";
+import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import { loginApi } from "../service/AuthService";
+
+const { Title } = Typography;
 
 const LoginComponent = () => {
-    const [username, setUsername] = useState('')
-    const [password, setPassword] = useState('')
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    const navigator = useNavigate()
+  const navigator = useNavigate();
 
-    async function handleLoginForm(e) {
-        e.preventDefault()
-        setError('')
-        setLoading(true)
+  async function handleLoginForm(values) {
+    setError("");
+    setLoading(true);
 
-        await loginApi(username, password).then(response => {
-            console.log(response.data)
+    await loginApi(values.username, values.password)
+      .then((response) => {
+        console.log(response.data);
 
-            // const token = 'Bearer ' + response.data.token
-            // const role = response.data.role
-            // storeToken(token)
-            // saveLoggedInUser(username, role)
+        navigator("/importStudents");
+      })
+      .catch((error) => {
+        console.error(error);
+        const msg = error.response?.data?.message || "Login failed";
+        setError(msg);
+        setLoading(false);
+      });
+  }
 
-            navigator("/importStudents")
-            // window.location.reload(false)
-        }).catch(error => {
-            console.error(error)
-            const msg = error.response?.data?.message
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "#f5f7fa",
+      }}
+    >
+      <Card
+        style={{ width: 420 }}
+        bordered={false}
+        hoverable
+      >
+        <Title
+          level={3}
+          style={{ textAlign: "center", color: "#1677ff" }}
+        >
+          Thesis Management System
+        </Title>
 
-            setError(msg)
-            setLoading(false)
-        })
-    }
+        {error && (
+          <Alert
+            type="error"
+            message={error}
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
-    return (
-        <div className="container min-vh-100 d-flex justify-content-center align-items-center">
-            <div className="row w-100 justify-content-center">
-            <div className="col-md-5 col-lg-4">
-                <div className="card shadow-lg border-0">
-                <div className="card-body p-4">
-                    <h3 className="text-center mb-4 text-primary fw-bold">
-                    Thesis Management System
-                    </h3>
+        <Form
+          layout="vertical"
+          onFinish={handleLoginForm}
+        >
+          <Form.Item
+            label="Username"
+            name="username"
+            rules={[
+              { required: true, message: "Please enter your username" },
+            ]}
+          >
+            <Input
+              size="large"
+              prefix={<UserOutlined />}
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </Form.Item>
 
-                    {error && (
-                    <div className="alert alert-danger d-flex align-items-center" role="alert">
-                        <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                        {error}
-                    </div>
-                    )}
+          <Form.Item
+            label="Password"
+            name="password"
+            rules={[
+              { required: true, message: "Please enter your password" },
+            ]}
+          >
+            <Input.Password
+              size="large"
+              prefix={<LockOutlined />}
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </Form.Item>
 
-                    <form onSubmit={handleLoginForm}>
-                    <div className="mb-3">
-                        <label className="form-label fw-semibold">
-                        Username
-                        </label>
-                        <input
-                        type="text"
-                        name="username"
-                        className="form-control form-control-lg"
-                        placeholder="Enter your username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                        />
-                    </div>
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              loading={loading}
+              block
+            >
+              Sign In
+            </Button>
+          </Form.Item>
+        </Form>
+      </Card>
+    </div>
+  );
+};
 
-                    <div className="mb-4">
-                        <label className="form-label fw-semibold">
-                        Password
-                        </label>
-                        <input
-                        type="password"
-                        name="password"
-                        className="form-control form-control-lg"
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        />
-                    </div>
-
-                    <div className="d-grid">
-                        <button
-                        className="btn btn-primary btn-lg"
-                        type="submit"
-                        disabled={loading}
-                        >
-                        {loading ? (
-                            <>
-                            <span className="spinner-border spinner-border-sm me-2" />
-                            Signing in...
-                            </>
-                        ) : (
-                            "Sign In"
-                        )}
-                        </button>
-                    </div>
-                    </form>
-
-                </div>
-                </div>
-            </div>
-            </div>
-        </div>
-        );
-
-}
-
-export default LoginComponent
+export default LoginComponent;

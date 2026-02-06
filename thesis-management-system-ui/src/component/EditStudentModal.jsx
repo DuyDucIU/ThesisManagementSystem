@@ -1,137 +1,85 @@
+import { Modal, Form, Input, Select, message } from "antd";
 import { useEffect, useState } from "react";
+import { updateStudent, createStudent } from "../service/StudentService";
 import { getAllLecturers } from "../service/LecturerService";
-import {
-  updateStudent,
-  deleteStudent,
-  createStudent,
-} from "../service/StudentService";
 
-const EditStudentModal = ({ show, onClose, student, onSuccess }) => {
-  const isEdit = !!student;
-
-  const [form, setForm] = useState({
-    studentId: "",
-    fullName: "",
-    lecturerId: "",
-  });
-  const [lecturers, setLecturers] = useState([]);
-  const [loading, setLoading] = useState(false);
+const EditStudentModal = ({ open, student, onCancel, onSuccess }) => {
+  const [form] = Form.useForm();
+  const [lecturers, setLecturers] = useState([]); // ✅ FIX
 
   useEffect(() => {
-    if (isEdit) {
-      setForm({
-        studentId: student.studentId,
-        fullName: student.fullName,
-        lecturerId: student.lecturerId || "",
-      });
-    } else {
-      setForm({
-        studentId: "",
-        fullName: "",
-        lecturerId: "",
-      });
-    }
-  }, [student, isEdit]);
-
-  useEffect(() => {
-    getAllLecturers().then(setLecturers);
+    getAllLecturers()
+      .then(setLecturers)
+      .catch(() => message.error("Failed to load lecturers"));
   }, []);
 
-  const handleSave = async () => {
-    setLoading(true);
-
-    const payload = {
-      studentId: form.studentId,
-      fullName: form.fullName,
-      lecturerId: form.lecturerId || null,
-    };
-
-    if (isEdit) {
-      await updateStudent(student.id, payload);
+  useEffect(() => {
+    if (student) {
+      form.setFieldsValue({
+        studentId: student.studentId,
+        fullName: student.fullName,
+        lecturerId: student.lecturerId ?? null, // 🔥 QUAN TRỌNG
+      });
     } else {
-      await createStudent(payload);
+      form.resetFields();
     }
+  }, [student, form]);
 
-    setLoading(false);
-    onSuccess();
+  const handleSubmit = async () => {
+    const values = await form.validateFields();
+
+    try {
+      if (student) {
+        await updateStudent(student.id, values);
+        message.success("Student updated");
+      } else {
+        await createStudent(values);
+        message.success("Student created");
+      }
+      onSuccess();
+    } catch (e) {
+      message.error("Save failed");
+    }
   };
-
-  const handleDelete = async () => {
-    if (!window.confirm("Delete this student?")) return;
-    await deleteStudent(student.id);
-    onSuccess();
-  };
-
-  if (!show) return null;
 
   return (
-    <div className="modal fade show d-block" style={{ background: "#00000055" }}>
-      <div className="modal-dialog">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5>{isEdit ? "Edit Student" : "Create Student"}</h5>
-            <button className="btn-close" onClick={onClose} />
-          </div>
+    <Modal
+      open={open}
+      title={student ? "Edit Student" : "Add Student"}
+      onCancel={onCancel}
+      onOk={handleSubmit}
+      okText="Save"
+      destroyOnHidden
+    >
+      <Form form={form} layout="vertical">
+        <Form.Item
+          label="Student ID"
+          name="studentId"
+          rules={[{ required: true }]}
+        >
+          <Input />
+        </Form.Item>
 
-          <div className="modal-body">
-            <div className="mb-3">
-              <label>Student ID</label>
-              <input
-                className="form-control"
-                value={form.studentId}
-                onChange={(e) =>
-                  setForm({ ...form, studentId: e.target.value })
-                }
-              />
-            </div>
+        <Form.Item
+          label="Full Name"
+          name="fullName"
+          rules={[{ required: true }]}
+        >
+          <Input />
+        </Form.Item>
 
-            <div className="mb-3">
-              <label>Full Name</label>
-              <input
-                className="form-control"
-                value={form.fullName}
-                onChange={(e) =>
-                  setForm({ ...form, fullName: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="mb-3">
-              <label>Managed By</label>
-              <select
-                className="form-select"
-                value={form.lecturerId}
-                onChange={(e) =>
-                  setForm({ ...form, lecturerId: e.target.value })
-                }
-              >
-                <option value="">-- Not Assigned --</option>
-                {lecturers.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.fullName}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="modal-footer d-flex justify-content-between">
-            {isEdit && (
-              <button className="btn btn-danger" onClick={handleDelete}>
-                Delete
-              </button>
-            )}
-            <button
-              className="btn btn-primary"
-              onClick={handleSave}
-              disabled={loading}
-            >
-              {isEdit ? "Save" : "Create"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+        <Form.Item label="Managed By" name="lecturerId">
+          <Select
+            allowClear
+            placeholder="Not assigned"
+            options={lecturers.map((l) => ({
+              label: l.fullName,
+              value: l.id,
+            }))}
+          />
+        </Form.Item>
+      </Form>
+    </Modal>
   );
 };
 
