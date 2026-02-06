@@ -22,7 +22,7 @@ const LoginComponent = () => {
       .then((response) => {
         console.log(response.data);
 
-        navigator("/importStudents");
+        navigator("/admin/import");
       })
       .catch((error) => {
         console.error(error);
@@ -57,7 +57,7 @@ const LoginComponent = () => {
         {error && (
           <Alert
             type="error"
-            message={error}
+            title={error}
             showIcon
             style={{ marginBottom: 16 }}
           />

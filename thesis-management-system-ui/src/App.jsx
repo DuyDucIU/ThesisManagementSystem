@@ -3,6 +3,8 @@ import './App.css'
 import LoginComponent from './component/LoginComponent'
 import AdminImportStudentsComponent from './component/AdminImportStudentsComponent'
 import StudentList from './component/StudentList'
+import MainLayout from './layout/MainLayout'
+import AdminLayout from './layout/AdminLayout'
 
 function App() {
 
@@ -10,9 +12,13 @@ function App() {
     <>
     <BrowserRouter>
       <Routes>
-        <Route path='/' element = {<LoginComponent />}></Route>
-        <Route path='/importStudents' element = {<AdminImportStudentsComponent />}></Route>
-        <Route path="/students" element={<StudentList />}></Route>
+        <Route element={<MainLayout/>}>
+          <Route path='/' element = {<LoginComponent />}></Route>
+          <Route  path="/admin" element={<AdminLayout/>}>
+            <Route path='import' element = {<AdminImportStudentsComponent />}></Route>
+            <Route path="students" element={<StudentList />}></Route>
+          </Route>
+        </Route>
       </Routes>
     </BrowserRouter>
     </>

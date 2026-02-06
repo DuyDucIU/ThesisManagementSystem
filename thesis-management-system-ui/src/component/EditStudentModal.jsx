@@ -5,7 +5,7 @@ import { getAllLecturers } from "../service/LecturerService";
 
 const EditStudentModal = ({ open, student, onCancel, onSuccess }) => {
   const [form] = Form.useForm();
-  const [lecturers, setLecturers] = useState([]); // ✅ FIX
+  const [lecturers, setLecturers] = useState([]); 
 
   useEffect(() => {
     getAllLecturers()
@@ -18,7 +18,7 @@ const EditStudentModal = ({ open, student, onCancel, onSuccess }) => {
       form.setFieldsValue({
         studentId: student.studentId,
         fullName: student.fullName,
-        lecturerId: student.lecturerId ?? null, // 🔥 QUAN TRỌNG
+        lecturerId: student.lecturerId ?? null, 
       });
     } else {
       form.resetFields();
