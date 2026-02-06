@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Form, Input, Button, Alert, Typography } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
-import { loginApi } from "../service/AuthService";
+import { loginApi, saveAuth, isAdmin, isLecturer } from "../service/AuthService";
 
 const { Title } = Typography;
 
@@ -20,9 +20,14 @@ const LoginComponent = () => {
 
     await loginApi(values.username, values.password)
       .then((response) => {
-        console.log(response.data);
+        const { token, user } = response.data;
+        saveAuth(token, user);
 
-        navigator("/admin/import");
+        if (isAdmin()) {
+            navigator("/admin/students");
+        } else if (isLecturer()) {
+            navigator("/lecturer/unassigned-students");
+        }
       })
       .catch((error) => {
         console.error(error);
@@ -44,7 +49,7 @@ const LoginComponent = () => {
     >
       <Card
         style={{ width: 420 }}
-        bordered={false}
+        variant={false}
         hoverable
       >
         <Title

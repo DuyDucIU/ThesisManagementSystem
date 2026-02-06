@@ -94,13 +94,13 @@ function AdminImportStudentsComponent() {
         padding: "24px",
       }}
     >
-      <Card bordered={false} style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}>
+      <Card variant={false} style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}>
         <Title level={3} style={{ color: "#1677ff" }}>
           Import Students (Excel)
         </Title>
 
         {/* Upload */}
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
           <Upload.Dragger
             accept=".xlsx,.xls"
             maxCount={1}

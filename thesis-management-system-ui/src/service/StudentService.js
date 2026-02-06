@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_BASE = "http://localhost:8080/api/admin/students";
+const ADMIN_API_BASE = "http://localhost:8080/api/admin/students";
+const LECTURER_API_BASE = "http://localhost:8080/api/lecturer/students";
 
 export async function importStudents(file) {
   const formData = new FormData();
@@ -8,7 +9,7 @@ export async function importStudents(file) {
 
   try {
     const res = await axios.post(
-      `${API_BASE}/import`,
+      `${ADMIN_API_BASE}/import`,
       formData,
       {
         headers: {
@@ -34,22 +35,32 @@ export async function importStudents(file) {
 // Get All Students
 // ======================
 export const getAllStudents = async () => {
-  const response = await axios.get(API_BASE);
+  const response = await axios.get(ADMIN_API_BASE);
   return response.data; // List<StudentResponse>
 };
 
 export const createStudent = async (payload) => {
-  const res = await axios.post(API_BASE, payload);
+  const res = await axios.post(ADMIN_API_BASE, payload);
   return res.data;
 };
 
 
 export const updateStudent = async (id, payload) => {
-  const res = await axios.patch(`${API_BASE}/${id}`, payload);
+  const res = await axios.patch(`${ADMIN_API_BASE}/${id}`, payload);
   return res.data;
 }
 
 export const deleteStudent = async (id) => {
-  const res = await axios.delete(`${API_BASE}/${id}`);
+  const res = await axios.delete(`${ADMIN_API_BASE}/${id}`);
   return res.data;
+};
+
+export const getUnassignedStudents = async () => {
+  const response = await axios.get(`${LECTURER_API_BASE}/unassigned`);
+  return response.data; 
+};
+
+export const assignStudents = async (studentIds) => {
+  const response = await axios.post(`${LECTURER_API_BASE}/assign`, { id: studentIds });
+  return response.data; 
 };

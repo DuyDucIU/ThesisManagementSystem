@@ -5,6 +5,8 @@ import AdminImportStudentsComponent from './component/AdminImportStudentsCompone
 import StudentList from './component/StudentList'
 import MainLayout from './layout/MainLayout'
 import AdminLayout from './layout/AdminLayout'
+import LecturerLayout from './layout/LecturerLayout'
+import UnassignedStudentList from './component/UnassignedStudentList'
 
 function App() {
 
@@ -14,9 +16,15 @@ function App() {
       <Routes>
         <Route element={<MainLayout/>}>
           <Route path='/' element = {<LoginComponent />}></Route>
+          {/* ADMIN */}
           <Route  path="/admin" element={<AdminLayout/>}>
             <Route path='import' element = {<AdminImportStudentsComponent />}></Route>
             <Route path="students" element={<StudentList />}></Route>
+          </Route>
+
+          {/* LECTURER */}
+          <Route path="/lecturer" element={<LecturerLayout />}>
+            <Route path="unassigned-students" element={<UnassignedStudentList />}/>
           </Route>
         </Route>
       </Routes>
