@@ -240,6 +240,8 @@ public class StudentServiceImpl implements StudentService {
                 .fullName(student.getFullName())
                 .lecturerId(lecturerId)
                 .lecturerName(lecturerName)
+                .status(student.getStatus())
+                .invalidReason(student.getInvalidReason())
                 .build();
 
         return response;

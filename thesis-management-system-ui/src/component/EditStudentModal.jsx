@@ -96,9 +96,6 @@ const EditStudentModal = ({ open, student, onCancel, onSuccess }) => {
         </div>
       }
     >
-
-
-
       <Form form={form} layout="vertical">
         <Form.Item
           label="Student ID"
@@ -119,12 +116,15 @@ const EditStudentModal = ({ open, student, onCancel, onSuccess }) => {
         <Form.Item label="Managed By" name="lecturerId">
           <Select
             allowClear
+            showSearch
             placeholder="Not assigned"
-            options={lecturers.map((l) => ({
-              label: l.fullName,
-              value: l.id,
-            }))}
-          />
+          >
+            {lecturers.map((l) => (
+              <Select.Option key={l.id} value={l.id}>
+                {l.fullName}
+              </Select.Option>
+            ))}
+          </Select>
         </Form.Item>
       </Form>
     </Modal>
