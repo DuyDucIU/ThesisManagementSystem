@@ -6,7 +6,7 @@ const { Header, Content, Footer } = Layout;
 const MainLayout = () => {
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Header style={{ background: "#fff", borderBottom: "1px solid #eee" }}>
+      <Header style={{color: "#fff" ,background: "black", borderBottom: "1px solid #eee" }}>
         <h3 style={{ margin: 0 }}>Thesis Management System</h3>
       </Header>
 
@@ -14,7 +14,7 @@ const MainLayout = () => {
         <Outlet />
       </Content>
 
-      <Footer style={{ textAlign: "center" }}>
+      <Footer style={{color: "#fff" ,background: "black", textAlign: "center" }}>
         © 2026 Thesis Management System
       </Footer>
     </Layout>
