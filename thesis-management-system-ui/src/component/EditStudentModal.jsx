@@ -1,6 +1,6 @@
-import { Modal, Form, Input, Select, message } from "antd";
+import { Modal, Form, Input, Select, message, Popconfirm, Button } from "antd";
 import { useEffect, useState } from "react";
-import { updateStudent, createStudent } from "../service/StudentService";
+import { updateStudent, createStudent, deleteStudent } from "../service/StudentService";
 import { getAllLecturers } from "../service/LecturerService";
 
 const EditStudentModal = ({ open, student, onCancel, onSuccess }) => {
@@ -42,15 +42,63 @@ const EditStudentModal = ({ open, student, onCancel, onSuccess }) => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!student) return;
+
+    try {
+      await deleteStudent(student.id);
+      message.success("Student deleted");
+      onSuccess();
+    } catch (e) {
+      message.error("Delete failed");
+    }
+  };
+
+
   return (
     <Modal
       open={open}
       title={student ? "Edit Student" : "Add Student"}
       onCancel={onCancel}
-      onOk={handleSubmit}
-      okText="Save"
       destroyOnHidden
+      footer={
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          {/* LEFT: Delete */}
+          <div>
+            {student && (
+              <Popconfirm
+                title="Delete this student?"
+                description="This action cannot be undone"
+                okText="Delete"
+                okButtonProps={{ danger: true }}
+                onConfirm={handleDelete}
+              >
+                <Button danger>Delete</Button>
+              </Popconfirm>
+            )}
+          </div>
+
+          {/* RIGHT: Cancel + Save */}
+          <div>
+            <Button onClick={onCancel} style={{ marginRight: 8 }}>
+              Cancel
+            </Button>
+            <Button type="primary" onClick={handleSubmit}>
+              Save
+            </Button>
+          </div>
+        </div>
+      }
     >
+
+
+
       <Form form={form} layout="vertical">
         <Form.Item
           label="Student ID"

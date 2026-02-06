@@ -148,7 +148,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public List<StudentResponse> getAllUnassignedStudents() {
-        List<Student> studentList = studentRepo.findByManagedByIsNull();
+        List<Student> studentList = studentRepo.findByManagedByIsNullAndStatus(StudentStatus.VALID);
         return studentMapper.toResponseList(studentList);
     }
 

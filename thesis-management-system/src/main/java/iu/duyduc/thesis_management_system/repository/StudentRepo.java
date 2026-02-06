@@ -1,6 +1,7 @@
 package iu.duyduc.thesis_management_system.repository;
 
 import iu.duyduc.thesis_management_system.entity.Student;
+import iu.duyduc.thesis_management_system.entity.StudentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -16,7 +17,7 @@ public interface StudentRepo extends JpaRepository<Student, Long> {
 
     boolean existsByStudentId(String studentId);
 
-    List<Student> findByManagedByIsNull();
+    List<Student> findByManagedByIsNullAndStatus(StudentStatus status);
 
     boolean existsByStudentIdAndIdNot(String studentId, Long id);
 }
