@@ -1,5 +1,6 @@
 package iu.duyduc.thesis_management_system.dto.response;
 
+import iu.duyduc.thesis_management_system.entity.StudentStatus;
 import iu.duyduc.thesis_management_system.entity.User;
 import lombok.*;
 
@@ -14,4 +15,6 @@ public class StudentResponse {
     private String fullName;
     private Long lecturerId;
     private String lecturerName;
+    private StudentStatus status;
+    private String invalidReason = null;
 }

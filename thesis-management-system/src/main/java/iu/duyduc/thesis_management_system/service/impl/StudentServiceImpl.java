@@ -136,6 +136,8 @@ public class StudentServiceImpl implements StudentService {
                     .fullName(student.getFullName())
                     .lecturerId(managedById)
                     .lecturerName(managedByName)
+                    .status(student.getStatus())
+                    .invalidReason(student.getInvalidReason())
                     .build();
 
             responseList.add(response);

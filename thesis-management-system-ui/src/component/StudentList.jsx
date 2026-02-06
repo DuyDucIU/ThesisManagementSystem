@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Input, Space, Typography, message } from "antd";
+import { Table, Button, Input, Space, Typography, message, Tag, Tooltip } from "antd";
 import { PlusOutlined, ReloadOutlined, EditOutlined } from "@ant-design/icons";
 import { getAllStudents } from "../service/StudentService";
 import EditStudentModal from "./EditStudentModal";
@@ -17,13 +17,20 @@ const StudentList = () => {
     setLoading(true);
     try {
       const data = await getAllStudents();
-      setStudents(data);
+
+      const sorted = [...data].sort((a, b) => {
+        if (a.status === b.status) return 0;
+        return a.status === "VALID" ? -1 : 1;
+      });
+
+      setStudents(sorted);
     } catch (e) {
       message.error("Failed to load students");
     } finally {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchStudents();
@@ -54,6 +61,21 @@ const StudentList = () => {
       title: "Managed By",
       dataIndex: "lecturerName",
       render: (text) => text || "-",
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      width: 120,
+      render: (status, record) =>
+        status === "VALID" ? (
+          <Tag color="green">VALID</Tag>
+        ) : (
+          <Tooltip title={record.invalidReason}>
+            <Tag color="red" style={{ cursor: "pointer" }}>
+              INVALID
+            </Tag>
+          </Tooltip>
+        ),
     },
     {
       title: "",
@@ -115,6 +137,15 @@ const StudentList = () => {
           dataSource={filteredStudents}
           loading={loading}
           pagination={{ pageSize: 10 }}
+          onRow={(record) => ({
+            style:
+              record.status === "INVALID"
+                ? {
+                    backgroundColor: "#fff1f0",
+                    color: "#cf1322",
+                  }
+                : {},
+          })}
         />
       </Space>
 

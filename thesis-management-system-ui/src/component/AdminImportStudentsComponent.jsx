@@ -157,7 +157,7 @@ function AdminImportStudentsComponent() {
           <Button
             icon={<EyeOutlined />}
             style={{ marginTop: 16 }}
-            onClick={() => navigate("/students")}
+            onClick={() => navigate("/admin/students")}
           >
             View All Students
           </Button>
