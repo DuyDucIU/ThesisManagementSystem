@@ -6,10 +6,9 @@ import iu.duyduc.thesis_management_system.service.SemesterService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @AllArgsConstructor
 @RestController
@@ -21,5 +20,24 @@ public class AdminSemesterController {
     public ResponseEntity<SemesterResponse> createSemester(@RequestBody SemesterRequest semesterRequest) {
         SemesterResponse response = semesterService.createSemester(semesterRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<SemesterResponse>> getAllSemester() {
+        List<SemesterResponse> responses = semesterService.getAllSemester();
+        return ResponseEntity.ok(responses);
+    }
+
+    @PatchMapping("/{semesterId}")
+    public ResponseEntity<SemesterResponse> updateSemester(@PathVariable Long semesterId,
+                                                           @RequestBody SemesterRequest semesterRequest) {
+        SemesterResponse response = semesterService.updateSemester(semesterId, semesterRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{semesterId}")
+    public ResponseEntity<String> deleteSemester(@PathVariable Long semesterId) {
+        semesterService.deleteSemester(semesterId);
+        return ResponseEntity.ok("Semester deleted successfully!");
     }
 }
