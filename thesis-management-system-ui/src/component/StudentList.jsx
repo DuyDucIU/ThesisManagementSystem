@@ -3,6 +3,7 @@ import { Table, Button, Input, Space, Typography, message, Tag, Tooltip } from "
 import { PlusOutlined, ReloadOutlined, EditOutlined } from "@ant-design/icons";
 import { getAllStudents } from "../service/StudentService";
 import EditStudentModal from "./EditStudentModal";
+import "../styles/StudentList.css";
 
 const { Title } = Typography;
 
@@ -80,8 +81,10 @@ const StudentList = () => {
     {
       title: "",
       width: 60,
+      className: "action-column",
       render: (_, record) => (
         <Button
+          className="edit-btn"
           type="text"
           icon={<EditOutlined />}
           onClick={() => {
@@ -94,7 +97,7 @@ const StudentList = () => {
   ];
 
   return (
-    <>
+    <div className="student-list">
       <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
         {/* Header */}
         <Space style={{ width: "100%", justifyContent: "space-between" }}>
@@ -137,15 +140,9 @@ const StudentList = () => {
           dataSource={filteredStudents}
           loading={loading}
           pagination={{ pageSize: 10 }}
-          onRow={(record) => ({
-            style:
-              record.status === "INVALID"
-                ? {
-                    backgroundColor: "#fff1f0",
-                    color: "#cf1322",
-                  }
-                : {},
-          })}
+          rowClassName={(record) =>
+            record.status === "INVALID" ? "row-invalid" : ""
+          }
         />
       </Space>
 
@@ -161,7 +158,7 @@ const StudentList = () => {
           }}
         />
       )}
-    </>
+    </div>
   );
 };
 

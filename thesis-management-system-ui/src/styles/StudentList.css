@@ -1,0 +1,30 @@
+/* ===== Base INVALID row ===== */
+.student-list .ant-table-tbody>tr.row-invalid>td {
+    background-color: #fff1f0;
+    color: #cf1322;
+}
+
+/* ===== Hover VALID row ===== */
+.student-list .ant-table-tbody>tr:not(.row-invalid):hover>td {
+    background-color: #ebebec;
+}
+
+/* ===== Hover INVALID row ===== */
+.student-list .ant-table-tbody>tr.row-invalid:hover>td {
+    background-color: #ffe7e6;
+}
+
+/* ===== Edit button hover ===== */
+.student-list .edit-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.student-list .ant-table-tbody>tr:hover .edit-btn {
+    opacity: 1;
+}
+
+/* Optional */
+.student-list .ant-table-tbody>tr {
+    cursor: pointer;
+}
