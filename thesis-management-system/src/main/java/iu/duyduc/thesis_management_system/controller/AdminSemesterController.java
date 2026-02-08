@@ -2,6 +2,7 @@ package iu.duyduc.thesis_management_system.controller;
 
 import iu.duyduc.thesis_management_system.dto.request.SemesterRequest;
 import iu.duyduc.thesis_management_system.dto.response.SemesterResponse;
+import iu.duyduc.thesis_management_system.entity.SemesterStatus;
 import iu.duyduc.thesis_management_system.service.SemesterService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -39,5 +40,12 @@ public class AdminSemesterController {
     public ResponseEntity<String> deleteSemester(@PathVariable Long semesterId) {
         semesterService.deleteSemester(semesterId);
         return ResponseEntity.ok("Semester deleted successfully!");
+    }
+
+    @PatchMapping("/{semesterId}/status")
+    public ResponseEntity<SemesterResponse> updateSemesterStatus(@PathVariable Long semesterId,
+                                                           @RequestParam("status") SemesterStatus status) {
+        SemesterResponse response = semesterService.updateStatus(semesterId, status);
+        return ResponseEntity.ok(response);
     }
 }

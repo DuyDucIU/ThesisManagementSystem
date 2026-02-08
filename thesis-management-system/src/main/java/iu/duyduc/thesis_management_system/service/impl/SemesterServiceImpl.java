@@ -9,6 +9,7 @@ import iu.duyduc.thesis_management_system.exception.ResourceNotFoundException;
 import iu.duyduc.thesis_management_system.mapper.SemesterMapper;
 import iu.duyduc.thesis_management_system.repository.SemesterRepo;
 import iu.duyduc.thesis_management_system.service.SemesterService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ public class SemesterServiceImpl implements SemesterService {
     private final SemesterRepo semesterRepo;
     private final SemesterMapper semesterMapper;
 
+    @Transactional
     @Override
     public SemesterResponse createSemester(SemesterRequest semesterRequest) {
         validateDateRequest(semesterRequest);
@@ -45,6 +47,7 @@ public class SemesterServiceImpl implements SemesterService {
         return semesterMapper.toResponseList(semesters);
     }
 
+    @Transactional
     @Override
     public SemesterResponse updateSemester(Long semesterId, SemesterRequest semesterRequest) {
         Semester semester = semesterRepo.findById(semesterId)
@@ -81,11 +84,26 @@ public class SemesterServiceImpl implements SemesterService {
         return semesterMapper.toSemesterResponse(updatedSemester);
     }
 
+    @Transactional
     @Override
     public void deleteSemester(Long semesterId) {
         Semester semester = semesterRepo.findById(semesterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Semester not found: " + semesterId));
         semesterRepo.delete(semester);
+    }
+
+    @Override
+    public SemesterResponse updateStatus(Long semesterId, SemesterStatus status) {
+        Semester semester = semesterRepo.findById(semesterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Semester not found: " + semesterId));
+        if (semesterRepo.existsByStatus(SemesterStatus.ACTIVE) && status.equals(SemesterStatus.ACTIVE))
+            throw new ApiException("Another semester is activing at the moment");
+
+        semester.setStatus(status);
+
+        Semester updatedSemester =  semesterRepo.save(semester);
+
+        return semesterMapper.toSemesterResponse(updatedSemester);
     }
 
     //    Validate start date and end date for CREATE
