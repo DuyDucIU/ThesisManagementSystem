@@ -1,0 +1,14 @@
+.semester-list {
+  padding: 24px;
+}
+
+.semester-list .action-column .action-btn,
+.semester-list .action-column .edit-btn {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.semester-list .ant-table-row:hover .action-btn,
+.semester-list .ant-table-row:hover .edit-btn {
+  opacity: 1;
+}

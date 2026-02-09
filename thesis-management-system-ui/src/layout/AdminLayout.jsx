@@ -2,6 +2,7 @@ import { Layout, Menu } from "antd";
 import {
   UserOutlined,
   UploadOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 
@@ -23,6 +24,11 @@ const AdminLayout = () => {
           selectedKeys={[location.pathname]}
           onClick={({ key }) => navigate(key)}
           items={[
+            {
+              key: "/admin/semesters",
+              icon: <CalendarOutlined />,
+              label: "View Semesters",
+            },
             {
               key: "/admin/students",
               icon: <UserOutlined />,
