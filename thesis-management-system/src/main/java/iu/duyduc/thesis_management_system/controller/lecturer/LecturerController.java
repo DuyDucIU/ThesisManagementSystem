@@ -1,4 +1,4 @@
-package iu.duyduc.thesis_management_system.controller;
+package iu.duyduc.thesis_management_system.controller.lecturer;
 
 import iu.duyduc.thesis_management_system.dto.request.AssignStudentRequest;
 import iu.duyduc.thesis_management_system.dto.response.StudentResponse;

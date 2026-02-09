@@ -1,4 +1,4 @@
-package iu.duyduc.thesis_management_system.controller;
+package iu.duyduc.thesis_management_system.controller.admin;
 
 import iu.duyduc.thesis_management_system.dto.response.LecturerResponse;
 import iu.duyduc.thesis_management_system.service.LecturerService;
