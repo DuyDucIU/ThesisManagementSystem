@@ -89,6 +89,9 @@ public class SemesterServiceImpl implements SemesterService {
     public void deleteSemester(Long semesterId) {
         Semester semester = semesterRepo.findById(semesterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Semester not found: " + semesterId));
+        if(semester.getStatus().equals(SemesterStatus.ACTIVE))
+            throw new ApiException("This semester is activating at the moment");
+
         semesterRepo.delete(semester);
     }
 
@@ -97,7 +100,7 @@ public class SemesterServiceImpl implements SemesterService {
         Semester semester = semesterRepo.findById(semesterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Semester not found: " + semesterId));
         if (semesterRepo.existsByStatus(SemesterStatus.ACTIVE) && status.equals(SemesterStatus.ACTIVE))
-            throw new ApiException("Another semester is activing at the moment");
+            throw new ApiException("Another semester is activating at the moment");
 
         semester.setStatus(status);
 
