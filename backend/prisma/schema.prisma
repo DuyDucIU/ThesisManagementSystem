@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ============================================
+// Enums
+// ============================================
+
+enum Role {
+  ADMIN
+  LECTURER
+  STUDENT
+}
+
+enum SemesterStatus {
+  INACTIVE
+  ACTIVE
+  CLOSED
+}
+
+enum SemesterStudentStatus {
+  AVAILABLE
+  ASSIGNED
+  COMPLETED
+  FAILED
+}
+
+enum TopicStatus {
+  OPEN
+  CLOSED
+  FULL
+}
+
+enum ThesisStatus {
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+  UNDER_REVIEW
+  REVIEWED
+}
+
+enum DocumentType {
+  REGISTRATION
+  CONFIRMATION
+  THESIS_REPORT
+}
+
+enum DocumentStatus {
+  PENDING
+  LECTURER_APPROVED
+  LECTURER_REJECTED
+  ADMIN_APPROVED
+  ADMIN_REJECTED
+}
+
+// ============================================
+// Models
+// ============================================
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  lecturer Lecturer?
+  student  Student?
+
+  // Documents reviewed by this user (as admin)
+  adminReviewedDocuments Document[] @relation("AdminReviewer")
+
+  // Notifications
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Semester {
+  id        Int            @id @default(autoincrement())
+  code      String         @unique
+  name      String
+  startDate DateTime       @map("start_date") @db.Date
+  endDate   DateTime       @map("end_date") @db.Date
+  status    SemesterStatus @default(INACTIVE)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  semesterStudents SemesterStudent[]
+  topics           Topic[]
+
+  @@map("semesters")
+}
+
+model Lecturer {
+  id          Int    @id @default(autoincrement())
+  userId      Int    @unique @map("user_id")
+  lecturerId  String @unique @map("lecturer_id")
+  fullName    String @map("full_name")
+  email       String @unique
+  title       String?
+  maxStudents Int    @default(5) @map("max_students")
+
+  user User @relation(fields: [userId], references: [id])
+
+  topics                   Topic[]
+  reviewedTheses           Thesis[]        @relation("Reviewer")
+  thesisReviews            ThesisReview[]
+  lecturerReviewedDocuments Document[]     @relation("LecturerReviewer")
+
+  @@map("lecturers")
+}
+
+model Student {
+  id        Int    @id @default(autoincrement())
+  userId    Int?   @unique @map("user_id")
+  studentId String @unique @map("student_id")
+  fullName  String @map("full_name")
+  email     String @unique
+
+  user User? @relation(fields: [userId], references: [id])
+
+  semesterStudents SemesterStudent[]
+
+  @@map("students")
+}
+
+model SemesterStudent {
+  id         Int                   @id @default(autoincrement())
+  studentId  Int                   @map("student_id")
+  semesterId Int                   @map("semester_id")
+  status     SemesterStudentStatus @default(AVAILABLE)
+
+  student  Student  @relation(fields: [studentId], references: [id])
+  semester Semester @relation(fields: [semesterId], references: [id])
+
+  thesis Thesis?
+
+  @@unique([studentId, semesterId])
+  @@map("semester_students")
+}
+
+model Topic {
+  id           Int         @id @default(autoincrement())
+  semesterId   Int         @map("semester_id")
+  lecturerId   Int         @map("lecturer_id")
+  title        String
+  description  String?     @db.Text
+  requirements String?     @db.Text
+  note         String?     @db.Text
+  status       TopicStatus @default(OPEN)
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  semester Semester @relation(fields: [semesterId], references: [id])
+  lecturer Lecturer @relation(fields: [lecturerId], references: [id])
+
+  theses Thesis[]
+
+  @@map("topics")
+}
+
+model Thesis {
+  id                Int          @id @default(autoincrement())
+  semesterStudentId Int          @unique @map("semester_student_id")
+  topicId           Int          @map("topic_id")
+  reviewerId        Int?         @map("reviewer_id")
+  title             String
+  description       String?      @db.Text
+  status            ThesisStatus @default(IN_PROGRESS)
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  semesterStudent SemesterStudent @relation(fields: [semesterStudentId], references: [id])
+  topic           Topic           @relation(fields: [topicId], references: [id])
+  reviewer        Lecturer?       @relation("Reviewer", fields: [reviewerId], references: [id])
+
+  documents    Document[]
+  thesisReview ThesisReview?
+
+  @@map("theses")
+}
+
+model Document {
+  id                Int            @id @default(autoincrement())
+  thesisId          Int            @map("thesis_id")
+  docType           DocumentType   @map("doc_type")
+  originalName      String         @map("original_name")
+  s3Key             String         @map("s3_key")
+  mimeType          String         @map("mime_type")
+  fileSize          Int            @map("file_size")
+  version           Int            @default(1)
+  status            DocumentStatus @default(PENDING)
+  lecturerFeedback  String?        @map("lecturer_feedback") @db.Text
+  lecturerReviewedBy Int?          @map("lecturer_reviewed_by")
+  lecturerReviewedAt DateTime?     @map("lecturer_reviewed_at")
+  adminFeedback     String?        @map("admin_feedback") @db.Text
+  adminReviewedBy   Int?           @map("admin_reviewed_by")
+  adminReviewedAt   DateTime?      @map("admin_reviewed_at")
+  createdAt         DateTime       @default(now()) @map("created_at")
+
+  thesis           Thesis    @relation(fields: [thesisId], references: [id])
+  lecturerReviewer Lecturer? @relation("LecturerReviewer", fields: [lecturerReviewedBy], references: [id])
+  adminReviewer    User?     @relation("AdminReviewer", fields: [adminReviewedBy], references: [id])
+
+  @@map("documents")
+}
+
+model ThesisReview {
+  id         Int      @id @default(autoincrement())
+  thesisId   Int      @unique @map("thesis_id")
+  reviewerId Int      @map("reviewer_id")
+  score      Decimal  @db.Decimal(4, 2)
+  comment    String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  thesis   Thesis   @relation(fields: [thesisId], references: [id])
+  reviewer Lecturer @relation(fields: [reviewerId], references: [id])
+
+  @@map("thesis_reviews")
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  type        String
+  title       String
+  message     String   @db.Text
+  isRead      Boolean  @default(false) @map("is_read")
+  relatedId   Int?     @map("related_id")
+  relatedType String?  @map("related_type")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
