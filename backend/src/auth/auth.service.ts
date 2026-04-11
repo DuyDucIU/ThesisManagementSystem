@@ -57,7 +57,7 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
 
-    if (!user || !user.refreshToken) {
+    if (!user || !user.isActive || !user.refreshToken) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
@@ -87,6 +87,9 @@ export class AuthService {
       where: { id: userId },
       include: { lecturer: true, student: true },
     });
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
     return this.buildProfile(user);
   }
 

@@ -214,5 +214,13 @@ describe('AuthService', () => {
       expect(result.fullName).toBeNull();
       expect(result.email).toBeNull();
     });
+
+    it('throws UnauthorizedException when user does not exist', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.getMe(99)).rejects.toThrow(
+        new UnauthorizedException('Invalid credentials'),
+      );
+    });
   });
 });
