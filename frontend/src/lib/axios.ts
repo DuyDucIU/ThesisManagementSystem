@@ -56,10 +56,7 @@ api.interceptors.response.use(
     try {
       const res = await api.post<{ accessToken: string }>('/auth/refresh')
       const { accessToken } = res.data
-      const { user } = useAuthStore.getState()
-      if (user) {
-        useAuthStore.getState().setAuth(user, accessToken)
-      }
+      useAuthStore.getState().setAccessToken(accessToken)
       original.headers.Authorization = `Bearer ${accessToken}`
       drainQueue(null, accessToken)
       return api(original)
