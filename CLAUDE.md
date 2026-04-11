@@ -10,6 +10,10 @@ A web application for managing academic theses — tracking submissions, reviews
 | ORM         | Prisma (MySQL)                | 6.x     |
 | Auth        | JWT + Passport.js + bcrypt    | —       |
 | Frontend    | React + Vite (TypeScript)     | 19.x    |
+| Styling     | Tailwind CSS v4 + shadcn/ui   | 4.x     |
+| State       | Zustand                       | 5.x     |
+| HTTP client | Axios                         | 1.x     |
+| Routing     | React Router                  | 7.x     |
 | Package     | pnpm                          | —       |
 | Testing     | Jest (backend)                | 30.x    |
 | Linting     | ESLint + Prettier             | 9.x     |

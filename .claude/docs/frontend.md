@@ -114,3 +114,10 @@ npx shadcn@latest add <component-name>
 ```
 
 Components use `@/lib/utils` (the `cn()` helper). Style: Default, Color: Violet (manually set).
+
+## Gotchas
+
+- **react-router v7** — import from `react-router`, not `react-router-dom`.
+- **Tailwind v4** — uses `@tailwindcss/vite` plugin; no `tailwind.config.js` needed. Enable with `@import "tailwindcss"` in CSS.
+- **shadcn init** — "Violet" is not a valid base color in shadcn v4 (only neutral tones). Use zinc, then manually set `--primary` to violet oklch in `index.css`. Also move `shadcn` from `dependencies` to `devDependencies` after init.
+- **react-refresh ESLint rule** — component files cannot mix component and non-component exports. Router guard components must live in a separate file (e.g. `guards.tsx`), not alongside the `router` config object.

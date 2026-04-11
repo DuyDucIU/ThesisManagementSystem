@@ -107,6 +107,13 @@ const module = await Test.createTestingModule({
 
 See [api.md](api.md) for endpoint design conventions and [security.md](security.md) for guard/decorator patterns.
 
+## Gotchas
+
+- **cookie-parser import** — use `import cookieParser = require('cookie-parser')`, not `import * as cookieParser`. Correct TypeScript pattern for CommonJS callable modules under NodeNext module resolution.
+- **`@Res` decorator** — always use `@Res({ passthrough: true })`, never bare `@Res()`, or NestJS skips automatic response serialization.
+- **Prisma relation types** — use `Prisma.UserGetPayload<{ include: { ... } }>` for service methods that receive Prisma results with relations, not `any`.
+- **`ConfigService.getOrThrow`** — prefer `configService.getOrThrow('KEY')` over `configService.get('KEY') || fallback` for required env vars so the app fails fast on misconfiguration.
+
 ## Configuration
 
 - **`nest-cli.json`**: source root `src/`, `deleteOutDir: true` on build
