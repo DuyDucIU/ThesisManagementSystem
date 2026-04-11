@@ -51,6 +51,7 @@ ThesisManagementSystem/
 
 ## Important Caveats
 
+- **No self-registration** — admins import students/lecturers via Excel (creates Student/Lecturer records, no User account yet). Activating an account is a separate admin action that creates the User record and credentials. No public registration endpoint exists or should be added.
 - **No shared workspace root** — `backend/` and `frontend/` are independent pnpm projects. Run commands from within each directory.
 - **Prisma generates into node_modules** — run `npx prisma generate` after schema changes; `npx prisma migrate dev` to create/apply migrations.
 - **pnpm build scripts** — after `pnpm install`, run `pnpm approve-builds` if native packages (bcrypt, prisma, @nestjs/core) fail to load. pnpm blocks build scripts by default.
