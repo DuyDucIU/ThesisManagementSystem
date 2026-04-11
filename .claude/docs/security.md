@@ -2,7 +2,7 @@
 
 ## Overview
 
-Authentication uses JWT access tokens + refresh tokens. There is no self-registration — users are imported by admins. Three roles: `ADMIN`, `LECTURER`, `STUDENT`.
+Authentication uses JWT access tokens + refresh tokens. No self-registration — admins import users via Excel, then activate accounts separately (activation creates the User record). Three roles: `ADMIN`, `LECTURER`, `STUDENT`.
 
 ## Token Design
 

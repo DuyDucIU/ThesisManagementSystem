@@ -89,7 +89,7 @@ Notification (notifications)
 
 ### Key Design Decisions
 
-- **Student ↔ User is optional** — students can be imported (e.g. from CSV) before they create an account
+- **Student/Lecturer ↔ User is deferred** — Excel import creates Student/Lecturer records with no User account. Admin activation is what creates the User record and credentials. Student.userId is optional for this reason; Lecturer.userId is required once activated.
 - **SemesterStudent is a join table with state** — tracks a student's status within a specific semester; thesis is linked here, not directly to Student
 - **Document has two-level review** — lecturer review + admin review, each with feedback, reviewer reference, and timestamp
 - **Files stored in S3** — Document stores `s3Key`, `originalName`, `mimeType`, `fileSize`
