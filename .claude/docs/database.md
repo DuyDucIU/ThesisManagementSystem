@@ -2,10 +2,11 @@
 
 ## Setup
 
-- **ORM**: Prisma 7.x with `prisma-client-js` generator
+- **ORM**: Prisma 6.x with `prisma-client-js` generator
 - **Database**: MySQL (connection via `DATABASE_URL` in `backend/.env`)
-- **Config**: `backend/prisma.config.ts` loads env vars via `dotenv/config`
-- **Prisma 7 note**: `datasource` block in schema has NO `url` — the URL is configured in `prisma.config.ts` only
+- **Config**: `DATABASE_URL` is set in `backend/.env`; the `datasource` block in schema reads it via `url = env("DATABASE_URL")`
+
+> **Why Prisma 6, not 7?** Prisma 7 dropped support for reading `DATABASE_URL` from env in the schema datasource block — it requires a driver adapter (`@prisma/adapter-*`) even for standard MySQL. This is incompatible with our straightforward setup. Prisma 6 works with the standard `url = env("DATABASE_URL")` pattern and was chosen over v7 for this reason.
 
 ### Connection String Format
 

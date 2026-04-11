@@ -7,7 +7,7 @@ A web application for managing academic theses — tracking submissions, reviews
 | Layer    | Technology                       | Version |
 |----------|----------------------------------|---------|
 | Backend  | NestJS (Node.js + TypeScript)    | 11.x    |
-| ORM      | Prisma (MySQL)                   | 7.x     |
+| ORM      | Prisma (MySQL)                   | 6.x     |
 | Frontend | React + Vite (TypeScript)        | 19.x    |
 | Package  | pnpm                             | —       |
 | Testing  | Jest (backend), —                | 30.x    |
@@ -54,7 +54,7 @@ ThesisManagementSystem/
 
 - **No shared workspace root** — `backend/` and `frontend/` are independent pnpm projects. Run commands from within each directory.
 - **Prisma generates into node_modules** — run `npx prisma generate` after schema changes. Run `npx prisma migrate dev` to create/apply migrations.
-- **No auth configured yet** — no authentication/authorization middleware exists.
+- **JWT auth is implemented** — global `JwtAuthGuard` protects all routes; use `@Public()` to opt out. See [backend.md](.claude/docs/backend.md) for guard/decorator patterns.
 - **TypeScript versions differ** — backend uses TS ~5.x, frontend uses TS ~6.x. Be aware of syntax differences.
 
 ## Additional Documentation

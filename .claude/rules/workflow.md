@@ -18,7 +18,7 @@ Superpowers workflow (brainstorming, planning, etc.) applies throughout all step
 
 - **Branch naming**: `<type>/<short-description>` — e.g., `feature/thesis-crud`, `fix/auth-redirect`, `chore/add-prisma`
 - **Commit messages**: imperative mood, concise — e.g., "Add thesis submission endpoint"
-- **Never commit automatically** — only commit when the user explicitly asks
+- **Commit after each approved task** — when using `subagent-driven-development`, the implementer subagent commits after each task passes both spec compliance and code quality review. In all other workflows, only commit when the user explicitly asks.
 - **Never force-push** without explicit user approval
 
 ## Documentation Maintenance
