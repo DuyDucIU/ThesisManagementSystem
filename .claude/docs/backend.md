@@ -4,23 +4,42 @@
 
 ```
 backend/src/
-├── main.ts               # Bootstrap — NestFactory, global pipes, port
-├── app.module.ts         # Root module — global guards, feature imports
-├── app.controller.ts     # Health/hello endpoint (@Public)
+├── main.ts                         # Bootstrap — NestFactory, global pipes, port
+├── app.module.ts                   # Root module — global guards, feature imports
+├── app.controller.ts               # Health/hello endpoint (@Public)
+├── app.controller.spec.ts
 ├── app.service.ts
-├── prisma/               # Global Prisma module
+├── prisma/                         # Global Prisma module (injected anywhere)
 │   ├── prisma.module.ts
 │   └── prisma.service.ts
-└── <feature>/            # One directory per feature module
+├── auth/                           # JWT authentication module
+│   ├── auth.module.ts
+│   ├── auth.controller.ts
+│   ├── auth.controller.spec.ts
+│   ├── auth.service.ts
+│   ├── auth.service.spec.ts
+│   ├── decorators/
+│   │   ├── public.decorator.ts     # @Public() — opt route out of JWT guard
+│   │   ├── roles.decorator.ts      # @Roles(...) — restrict by role
+│   │   └── current-user.decorator.ts  # @CurrentUser() — inject request.user
+│   ├── dto/
+│   │   ├── login.dto.ts
+│   │   └── refresh.dto.ts
+│   ├── guards/
+│   │   ├── jwt-auth.guard.ts       # Global guard — all routes protected by default
+│   │   └── roles.guard.ts          # Global guard — enforces @Roles()
+│   └── strategies/
+│       └── jwt.strategy.ts         # passport-jwt strategy
+└── <feature>/                      # Each feature module follows the same shape
     ├── <feature>.module.ts
     ├── <feature>.controller.ts
-    ├── <feature>.service.ts
     ├── <feature>.controller.spec.ts
+    ├── <feature>.service.ts
     ├── <feature>.service.spec.ts
     ├── dto/
     │   ├── create-<feature>.dto.ts
     │   └── update-<feature>.dto.ts
-    └── entities/         # (optional — response shape types)
+    └── entities/                   # Optional — response shape types
 ```
 
 ## NestJS Module Convention
@@ -32,13 +51,13 @@ Each feature is a self-contained module:
 - **Service** (`@Injectable`): business logic, injected via constructor DI
 - **DTOs**: plain classes with `class-validator` decorators for request validation
 
-Generate a new feature module:
+Generate a new feature module (creates module, controller, service, DTOs, and spec files):
 ```bash
 cd backend
-npx nest generate module <name>
-npx nest generate controller <name>
-npx nest generate service <name>
+npx nest g resource <name>
 ```
+
+Select "REST API" and "Yes" to generate CRUD entry points when prompted.
 
 ## Prisma
 

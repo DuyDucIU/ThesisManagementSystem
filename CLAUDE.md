@@ -18,40 +18,19 @@ A web application for managing academic theses — tracking submissions, reviews
 
 ```
 ThesisManagementSystem/
-├── backend/                  # NestJS API server
+├── backend/              # NestJS API server
 │   ├── src/
-│   │   ├── main.ts           # Bootstrap — NestFactory, global pipes, port
-│   │   ├── app.module.ts     # Root module — global guards, feature imports
-│   │   ├── app.controller.ts
-│   │   ├── app.service.ts
-│   │   ├── prisma/           # Global Prisma module (injected anywhere)
-│   │   │   ├── prisma.module.ts
-│   │   │   └── prisma.service.ts
-│   │   └── auth/             # JWT authentication module
-│   │       ├── auth.module.ts
-│   │       ├── auth.controller.ts
-│   │       ├── auth.service.ts
-│   │       ├── decorators/   # @Public(), @Roles(), @CurrentUser()
-│   │       ├── dto/          # LoginDto, RefreshDto
-│   │       ├── guards/       # JwtAuthGuard, RolesGuard
-│   │       └── strategies/   # JwtStrategy (passport-jwt)
-│   ├── prisma/
-│   │   ├── schema.prisma     # Database schema and models
-│   │   └── migrations/       # Applied migration SQL files
-│   ├── test/                 # E2E tests
-│   ├── .env                  # DB url, JWT secrets (gitignored)
-│   ├── package.json
-│   └── nest-cli.json
-├── frontend/                 # React SPA (Vite)
-│   ├── src/                  # Components, pages, assets
-│   ├── public/               # Static assets
-│   ├── index.html
-│   ├── vite.config.ts
-│   └── package.json
+│   │   ├── prisma/       # Global Prisma module — see database.md
+│   │   ├── auth/         # JWT auth — see security.md
+│   │   └── <feature>/    # Feature modules — see backend.md
+│   ├── prisma/           # schema.prisma + migrations/
+│   └── test/             # E2E tests
+├── frontend/             # React SPA (Vite) — see frontend.md
+│   └── src/
 ├── .claude/
-│   ├── docs/                 # Detailed documentation (consulted on demand)
-│   └── rules/                # Auto-loaded rules for every session
-└── CLAUDE.md                 # This file (always loaded)
+│   ├── docs/             # Detailed documentation (consulted on demand)
+│   └── rules/            # Auto-loaded rules for every session
+└── CLAUDE.md             # This file (always loaded)
 ```
 
 ## Key Commands
@@ -74,7 +53,6 @@ ThesisManagementSystem/
 
 - **No shared workspace root** — `backend/` and `frontend/` are independent pnpm projects. Run commands from within each directory.
 - **Prisma generates into node_modules** — run `npx prisma generate` after schema changes; `npx prisma migrate dev` to create/apply migrations.
-- **JWT auth is implemented** — global `JwtAuthGuard` protects all routes; use `@Public()` to opt out. See [security.md](.claude/docs/security.md).
 - **TypeScript versions differ** — backend uses TS ~5.x, frontend uses TS ~6.x.
 - **Jest + bcrypt spy** — ts-jest uses a CommonJS tsconfig override in `package.json` to allow `jest.spyOn` on bcrypt. Do not remove it.
 
