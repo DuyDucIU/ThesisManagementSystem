@@ -26,31 +26,49 @@ No new packages. Small changes to 3 existing auth endpoints to support httpOnly 
 
 ## 2. Source Structure
 
+Feature-based organization — each feature is a self-contained folder. Shared infrastructure lives at the top level.
+
 ```
 frontend/src/
+├── features/
+│   └── auth/
+│       ├── components/
+│       │   └── LoginPage.tsx      # Login page (split layout)
+│       ├── store/
+│       │   └── authStore.ts       # Zustand store — user + accessToken in memory
+│       └── api.ts                 # Auth API calls (login, refresh, logout, me)
 ├── components/
-│   └── ui/              # shadcn/ui generated components (Button, Input, Label, etc.)
+│   └── ui/                        # shadcn/ui generated components (Button, Input, Label, etc.)
 ├── layouts/
-│   └── AppLayout.tsx    # Authenticated shell — placeholder for now (sidebar + topbar added later)
-├── pages/
-│   └── LoginPage.tsx    # Login page (split layout)
+│   └── AppLayout.tsx              # Authenticated shell — placeholder (sidebar + topbar added later)
 ├── router/
-│   └── index.tsx        # RouterProvider, route definitions, ProtectedRoute wrapper
-├── store/
-│   └── authStore.ts     # Zustand store — user + accessToken in memory
+│   └── index.tsx                  # RouterProvider, route definitions, ProtectedRoute/PublicRoute
 ├── lib/
-│   ├── axios.ts         # Axios instance with request/response interceptors
-│   └── utils.ts         # shadcn cn() helper (tailwind-merge + clsx)
-├── App.tsx              # Renders <RouterProvider>
-├── main.tsx             # Entry point — unchanged
-└── index.css            # Extended with Tailwind @import directive
+│   ├── axios.ts                   # Axios instance with request/response interceptors
+│   └── utils.ts                   # shadcn cn() helper (tailwind-merge + clsx)
+├── App.tsx                        # Renders <RouterProvider>
+├── main.tsx                       # Entry point — unchanged
+└── index.css                      # Extended with Tailwind @import directive
+```
+
+Future features follow the same pattern:
+```
+features/
+├── auth/
+├── thesis/
+│   ├── components/
+│   ├── hooks/
+│   └── api.ts
+└── users/
+    ├── components/
+    └── api.ts
 ```
 
 ---
 
 ## 3. Auth State (Zustand)
 
-**Store: `src/store/authStore.ts`**
+**Store: `src/features/auth/store/authStore.ts`**
 
 ```ts
 interface AuthState {
@@ -131,7 +149,7 @@ In `App.tsx`, before rendering the router, attempt `POST /api/auth/refresh` once
 
 ## 7. Login Page
 
-**File: `src/pages/LoginPage.tsx`**
+**File: `src/features/auth/components/LoginPage.tsx`**
 
 ### Layout
 Two-column split layout (full viewport height):
