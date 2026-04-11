@@ -4,56 +4,113 @@
 
 ```
 frontend/src/
-├── main.tsx        # Entry point — renders <App /> into #root with StrictMode
-├── App.tsx         # Root component (currently starter template)
-├── App.css         # Component-scoped styles
-├── index.css       # Global styles and CSS custom properties
-└── assets/         # Static assets (images, SVGs)
+├── features/               # Feature-based modules
+│   └── auth/
+│       ├── components/
+│       │   └── LoginPage.tsx       # Split-layout login page
+│       ├── store/
+│       │   └── authStore.ts        # Zustand auth store (user + accessToken in memory)
+│       └── api.ts                  # Auth API calls (login, refresh, logout, me)
+├── components/
+│   └── ui/                         # shadcn/ui generated components (Button, Input, Label, etc.)
+├── layouts/
+│   └── AppLayout.tsx               # Authenticated shell (topbar + Outlet for child routes)
+├── router/
+│   ├── index.tsx                   # createBrowserRouter — route definitions
+│   └── guards.tsx                  # ProtectedRoute, PublicRoute wrappers
+├── lib/
+│   ├── axios.ts                    # Axios instance with Bearer token injection + 401 refresh interceptor
+│   └── utils.ts                    # shadcn cn() helper (clsx + tailwind-merge)
+├── App.tsx                         # Silent session restore on mount → RouterProvider
+├── main.tsx                        # Entry point — renders <App /> into #root with StrictMode
+└── index.css                       # Tailwind import + shadcn CSS variable theme
 ```
+
+**Pattern:** New features go under `src/features/<feature-name>/` with `components/`, `hooks/`, `api.ts` sub-folders.
 
 ## Build Tooling
 
-- **Vite 8.x** with `@vitejs/plugin-react` — fast HMR, ESM-based dev server
+- **Vite 8.x** with `@vitejs/plugin-react` and `@tailwindcss/vite` — fast HMR, ESM-based dev server
 - **TypeScript 6.x** — stricter than backend's TS 5.x
-- Config: `vite.config.ts` (minimal — just React plugin)
+- Config: `vite.config.ts` (React + Tailwind plugins, `/api` proxy)
 
 ## Naming Conventions
 
-- **Component files**: PascalCase — `ThesisForm.tsx`
-- **Non-component files**: camelCase — `apiClient.ts`, `useThesis.ts`
-- **CSS files**: match component name — `ThesisForm.css` or use CSS modules `ThesisForm.module.css`
+- **Component files**: PascalCase — `LoginPage.tsx`, `AppLayout.tsx`
+- **Non-component files**: camelCase — `axios.ts`, `authStore.ts`, `api.ts`
+- **CSS files**: match component name — `LoginPage.css` or CSS modules `LoginPage.module.css`
 - **Directories**: camelCase or kebab-case for feature folders
 
 ## Styling
 
-The project uses plain CSS with CSS custom properties (no CSS framework yet):
+Tailwind CSS v4 (via Vite plugin — no `tailwind.config.js` needed) + shadcn/ui.
 
-- **Light/dark theme**: via `prefers-color-scheme` media query in `index.css`
-- **CSS variables** defined on `:root`: `--text`, `--bg`, `--accent`, `--border`, etc.
-- **Fonts**: system font stacks (`--sans`, `--heading`, `--mono`)
+- `@import "tailwindcss"` in `index.css` enables all utilities
+- shadcn CSS variable theme is in `index.css` (violet primary color, oklch-based)
+- Light/dark theme via `.dark` class (shadcn convention) and `prefers-color-scheme`
+- `@/*` path alias maps to `src/` — both `@/components/ui/button` and relative imports work
 
-### Color Palette (from index.css)
+## Routing
 
-| Variable       | Light           | Dark             |
-|----------------|-----------------|------------------|
-| `--text`       | `#6b6375`       | `#9ca3af`        |
-| `--text-h`     | `#08060d`       | `#f3f4f6`        |
-| `--bg`         | `#fff`          | `#16171d`        |
-| `--accent`     | `#aa3bff`       | `#c084fc`        |
-| `--border`     | `#e5e4e7`       | `#2e303a`        |
+React Router v7 (`react-router` package):
 
-## Routing (Not Yet Configured)
+| Path | Component | Guard |
+|------|-----------|-------|
+| `/login` | `LoginPage` | `PublicRoute` — redirects to `/` if already authenticated |
+| `/` | `AppLayout` | `ProtectedRoute` — redirects to `/login` if not authenticated |
+| `*` | Redirect → `/login` | — |
 
-No router is installed yet. When adding one, use `react-router` v7+.
+Guards live in `src/router/guards.tsx` (separate from route config to satisfy react-refresh ESLint rule).
 
-## State Management (Not Yet Configured)
+## Auth State
 
-Currently just `useState`. As the app grows, consider:
-- React context for auth/user state
-- A data-fetching library like TanStack Query for server state
+Zustand store (`src/features/auth/store/authStore.ts`):
 
-## API Integration (Not Yet Configured)
+```typescript
+interface AuthState {
+  user: UserProfile | null      // in JS memory (lost on page refresh — intentional)
+  accessToken: string | null    // in JS memory
+  setAuth(user, accessToken)    // called on login or session restore
+  setAccessToken(token)         // called by Axios interceptor on silent refresh
+  clearAuth()                   // called on logout or refresh failure
+}
+```
 
-No HTTP client is configured. When connecting to the backend:
-- Configure Vite proxy in `vite.config.ts` to forward `/api` to backend
-- Use `fetch` or install `axios` / `ky`
+## HTTP Client
+
+Axios instance at `src/lib/axios.ts`:
+
+- **Base URL**: `/api` (proxied to `http://localhost:3000` by Vite in dev)
+- **Credentials**: `withCredentials: true` — sends httpOnly refresh token cookie automatically
+- **Request interceptor**: attaches `Authorization: Bearer <accessToken>` from store
+- **Response interceptor**: on 401, silently refreshes via `POST /api/auth/refresh`, updates store, retries original request once. On refresh failure: `clearAuth()` + redirect to `/login`.
+- Queues concurrent requests during an in-flight refresh (`waitQueue`).
+
+**App.tsx silent restore**: on mount, calls raw `axios` (not the custom instance) to `POST /api/auth/refresh` then `GET /api/auth/me`. Populates store on success. Shows loading spinner until complete so users don't see a flash of the login page.
+
+## API Integration
+
+All auth API calls go through `src/features/auth/api.ts` (`authApi.login/refresh/logout/me`). Future features add their own `src/features/<feature>/api.ts`.
+
+Vite proxy config (`vite.config.ts`):
+```typescript
+server: {
+  proxy: {
+    '/api': {
+      target: 'http://localhost:3000',
+      changeOrigin: true,
+      rewrite: (path) => path.replace(/^\/api/, ''),
+    },
+  },
+},
+```
+
+## shadcn/ui
+
+Components in `src/components/ui/`. Add new ones with:
+```bash
+cd frontend
+npx shadcn@latest add <component-name>
+```
+
+Components use `@/lib/utils` (the `cn()` helper). Style: Default, Color: Violet (manually set).
