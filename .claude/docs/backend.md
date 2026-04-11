@@ -1,38 +1,38 @@
 # Backend — NestJS API
 
-## Package Structure
-
-The backend follows standard NestJS conventions with a modular architecture:
+## Source Structure
 
 ```
 backend/src/
-├── main.ts               # Bootstrap — creates NestFactory, listens on PORT || 3000
-├── app.module.ts          # Root module — imports all feature modules
-├── app.controller.ts      # Root controller (health/hello endpoint)
-├── app.service.ts         # Root service
-└── <feature>/             # Feature modules (to be created)
+├── main.ts               # Bootstrap — NestFactory, global pipes, port
+├── app.module.ts         # Root module — global guards, feature imports
+├── app.controller.ts     # Health/hello endpoint (@Public)
+├── app.service.ts
+├── prisma/               # Global Prisma module
+│   ├── prisma.module.ts
+│   └── prisma.service.ts
+└── <feature>/            # One directory per feature module
     ├── <feature>.module.ts
     ├── <feature>.controller.ts
     ├── <feature>.service.ts
+    ├── <feature>.controller.spec.ts
+    ├── <feature>.service.spec.ts
     ├── dto/
     │   ├── create-<feature>.dto.ts
     │   └── update-<feature>.dto.ts
-    ├── entities/
-    │   └── <feature>.entity.ts
-    └── <feature>.controller.spec.ts
+    └── entities/         # (optional — response shape types)
 ```
 
 ## NestJS Module Convention
 
-Each feature should be a self-contained module following NestJS patterns:
+Each feature is a self-contained module:
 
 - **Module** (`@Module`): declares controllers, providers, imports, exports
 - **Controller** (`@Controller`): handles HTTP routes, delegates to service
 - **Service** (`@Injectable`): business logic, injected via constructor DI
-- **DTOs**: plain classes with validation decorators (when class-validator is added)
-- **Entities**: database models (when ORM is added)
+- **DTOs**: plain classes with `class-validator` decorators for request validation
 
-Generate new modules using the Nest CLI:
+Generate a new feature module:
 ```bash
 cd backend
 npx nest generate module <name>
@@ -40,35 +40,57 @@ npx nest generate controller <name>
 npx nest generate service <name>
 ```
 
+## Prisma
+
+`PrismaService` is a global module — inject it in any service without importing `PrismaModule`:
+
+```typescript
+@Injectable()
+export class ThesisService {
+  constructor(private prisma: PrismaService) {}
+
+  findAll() {
+    return this.prisma.thesis.findMany();
+  }
+}
+```
+
+See [database.md](database.md) for schema, migrations, and conventions.
+
 ## Naming Conventions
 
-- **Files**: kebab-case — `thesis-submission.controller.ts`
-- **Classes**: PascalCase — `ThesisSubmissionController`
-- **Methods**: camelCase — `findAll()`, `createThesis()`
-- **Route paths**: kebab-case — `/thesis-submissions`
-- **Test files**: co-located with source — `<name>.controller.spec.ts`
+| Thing | Convention | Example |
+|-------|-----------|---------|
+| Files | kebab-case | `thesis-submission.service.ts` |
+| Classes | PascalCase | `ThesisSubmissionService` |
+| Methods | camelCase | `findAll()`, `createThesis()` |
+| Route paths | kebab-case | `/thesis-submissions` |
+| Test files | co-located | `<name>.service.spec.ts` |
 
 ## Testing
 
 - **Unit tests**: Jest, files matching `*.spec.ts` in `src/`
-- **E2E tests**: Jest with Supertest, config in `test/jest-e2e.json`, files in `test/`
+- **E2E tests**: Supertest, config in `test/jest-e2e.json`, files in `test/`
 - Run: `pnpm run test` (unit), `pnpm run test:e2e` (e2e)
+
+Mock `PrismaService` in unit tests — never hit the real DB:
+
+```typescript
+const mockPrisma = { user: { findUnique: jest.fn(), update: jest.fn() } };
+
+const module = await Test.createTestingModule({
+  providers: [
+    MyService,
+    { provide: PrismaService, useValue: mockPrisma },
+  ],
+}).compile();
+```
+
+See [api.md](api.md) for endpoint design conventions and [security.md](security.md) for guard/decorator patterns.
 
 ## Configuration
 
-- **nest-cli.json**: source root is `src/`, `deleteOutDir: true` on build
-- **Prettier**: configured via `.prettierrc` in backend root
-- **ESLint**: configured via `eslint.config.mjs`
-
-## Database
-
-Prisma is configured as a global NestJS module — see [database.md](database.md) for schema, migrations, and usage details.
-
-## API Conventions (To Be Established)
-
-When building the API, follow these REST conventions:
-- `GET /resources` — list, `GET /resources/:id` — detail
-- `POST /resources` — create, `PATCH /resources/:id` — partial update
-- `DELETE /resources/:id` — remove
-- Return appropriate HTTP status codes (201 for create, 204 for delete)
-- Use DTOs for request validation, entity serialization for responses
+- **`nest-cli.json`**: source root `src/`, `deleteOutDir: true` on build
+- **`.env`**: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRY`, `JWT_REFRESH_EXPIRY`
+- **Prettier**: `.prettierrc` in backend root
+- **ESLint**: `eslint.config.mjs`
