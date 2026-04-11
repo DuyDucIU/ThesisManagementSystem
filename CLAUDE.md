@@ -74,3 +74,4 @@ ThesisManagementSystem/
 | [security.md](.claude/docs/security.md) | JWT flow, guards, decorators, roles | When touching auth or protecting routes |
 | [database.md](.claude/docs/database.md) | Prisma schema, migrations, DB config | When changing schema or running migrations |
 | [frontend.md](.claude/docs/frontend.md) | React/Vite structure, component conventions | When adding pages, components, or routes |
+| [design-system.md](.claude/docs/design-system.md) | Colors, typography, elevation, component rules | When building any UI — must follow for all frontend work |

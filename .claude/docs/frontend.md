@@ -41,6 +41,16 @@ frontend/src/
 - **CSS files**: match component name — `LoginPage.css` or CSS modules `LoginPage.module.css`
 - **Directories**: camelCase or kebab-case for feature folders
 
+## Design System
+
+All UI must follow the **Scholarly Editorial** design spec — see [design-system.md](design-system.md). Key rules:
+
+- **Colors**: Oxford Blue (`#00346d`) primary, tonal surface layering instead of borders
+- **Typography**: Newsreader (headings) + Manrope (body) + Inter (labels) — load via Google Fonts
+- **No borders**: Use background shifts between surface tiers to define structure
+- **No card shadows**: Use `surface_container_lowest` background shift instead
+- **CTA buttons**: 135° gradient from `#00346d` → `#004b97`
+
 ## Styling
 
 Tailwind CSS v4 (via Vite plugin — no `tailwind.config.js` needed) + shadcn/ui.
