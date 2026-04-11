@@ -1,10 +1,14 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+
+type UserWithRelations = Prisma.UserGetPayload<{
+  include: { lecturer: true; student: true };
+}>;
 
 @Injectable()
 export class AuthService {
@@ -119,7 +123,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private buildProfile(user: any) {
+  private buildProfile(user: UserWithRelations) {
     return {
       id: user.id,
       username: user.username,

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import axios from 'axios'
+import { Loader2 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { authApi } from '../api'
 import { Button } from '../../../components/ui/button'
@@ -99,6 +100,7 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="animate-spin" />}
               {loading ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
