@@ -40,6 +40,8 @@
   --sidebar-accent-foreground: #191c1d;
   --sidebar-border: oklch(0.145 0 0 / 20%);
   --sidebar-ring: #00346d;
+  --surface: #f8f9fa;
+  --tertiary: #003c3b;
 }
 
 body {
@@ -87,6 +89,8 @@ body {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-tertiary: var(--tertiary);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -97,13 +101,11 @@ body {
 }
 
 @theme {
-  --color-surface: #f8f9fa;
   --color-surface-container-low: #f3f4f5;
   --color-surface-container: #e8eaeb;
   --color-surface-container-high: #e1e3e4;
   --color-surface-container-highest: #d8dadb;
   --color-primary-container: #004b97;
-  --color-tertiary: #003c3b;
   --color-on-surface: #191c1d;
 }
 
