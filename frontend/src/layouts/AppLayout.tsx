@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router'
+import { useNavigate, Outlet } from 'react-router'
 import { useAuthStore } from '../features/auth/store/authStore'
 import { authApi } from '../features/auth/api'
 import { Button } from '../components/ui/button'
@@ -33,7 +33,7 @@ export default function AppLayout() {
         </div>
       </header>
       <main className="p-6">
-        <p className="text-gray-400 text-sm">Dashboard — coming soon</p>
+        <Outlet />
       </main>
     </div>
   )
