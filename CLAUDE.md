@@ -31,6 +31,11 @@ ThesisManagementSystem/
 │   └── test/             # E2E tests
 ├── frontend/             # React SPA (Vite) — see frontend.md
 │   └── src/
+│       ├── features/     # Feature modules (auth, ...) — components, store, api
+│       ├── components/   # Shared UI — shadcn/ui components under ui/
+│       ├── layouts/      # App shell (AppLayout)
+│       ├── router/       # Route config + guards
+│       └── lib/          # Axios instance, utilities
 ├── .claude/
 │   ├── docs/             # Detailed documentation (consulted on demand)
 │   └── rules/            # Auto-loaded rules for every session
@@ -57,10 +62,8 @@ ThesisManagementSystem/
 
 - **No self-registration** — admins import students/lecturers via Excel (creates Student/Lecturer records, no User account yet). Activating an account is a separate admin action that creates the User record and credentials. No public registration endpoint exists or should be added.
 - **No shared workspace root** — `backend/` and `frontend/` are independent pnpm projects. Run commands from within each directory.
-- **Prisma generates into node_modules** — run `npx prisma generate` after schema changes; `npx prisma migrate dev` to create/apply migrations.
 - **pnpm build scripts** — after `pnpm install`, run `pnpm approve-builds` if native packages (bcrypt, prisma, @nestjs/core) fail to load. pnpm blocks build scripts by default.
 - **TypeScript versions differ** — backend uses TS ~5.x, frontend uses TS ~6.x.
-- **Jest + bcrypt spy** — ts-jest uses a CommonJS tsconfig override in `package.json` to allow `jest.spyOn` on bcrypt. Do not remove it.
 
 ## Additional Documentation
 

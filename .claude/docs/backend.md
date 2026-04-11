@@ -23,8 +23,7 @@ backend/src/
 │   │   ├── roles.decorator.ts      # @Roles(...) — restrict by role
 │   │   └── current-user.decorator.ts  # @CurrentUser() — inject request.user
 │   ├── dto/
-│   │   ├── login.dto.ts
-│   │   └── refresh.dto.ts
+│   │   └── login.dto.ts        # refresh reads from cookie — no DTO needed
 │   ├── guards/
 │   │   ├── jwt-auth.guard.ts       # Global guard — all routes protected by default
 │   │   └── roles.guard.ts          # Global guard — enforces @Roles()
@@ -113,10 +112,12 @@ See [api.md](api.md) for endpoint design conventions and [security.md](security.
 - **`@Res` decorator** — always use `@Res({ passthrough: true })`, never bare `@Res()`, or NestJS skips automatic response serialization.
 - **Prisma relation types** — use `Prisma.UserGetPayload<{ include: { ... } }>` for service methods that receive Prisma results with relations, not `any`.
 - **`ConfigService.getOrThrow`** — prefer `configService.getOrThrow('KEY')` over `configService.get('KEY') || fallback` for required env vars so the app fails fast on misconfiguration.
+- **Jest + bcrypt spy** — ts-jest uses a CommonJS tsconfig override in `backend/package.json` (`ts-jest` → `tsconfig: tsconfig.cjs.json`) to allow `jest.spyOn` on bcrypt. Do not remove it — removing it breaks spying on bcrypt methods in unit tests.
 
 ## Configuration
 
 - **`nest-cli.json`**: source root `src/`, `deleteOutDir: true` on build
-- **`.env`**: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRY`, `JWT_REFRESH_EXPIRY`
+- **`.env`**: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRY`, `JWT_REFRESH_EXPIRY`, `ALLOWED_ORIGIN` (optional, defaults to `http://localhost:5173`)
+- **`NODE_ENV`**: set to `production` to enable `secure` flag on the refresh token cookie
 - **Prettier**: `.prettierrc` in backend root
 - **ESLint**: `eslint.config.mjs`

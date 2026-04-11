@@ -8,13 +8,14 @@ Authentication uses JWT access tokens + refresh tokens. No self-registration —
 
 | Token | Lifetime | Payload | Storage |
 |-------|----------|---------|---------|
-| Access token | 30 min | `{ sub, username, role }` | Client memory |
-| Refresh token | 7 days | `{ sub, jti }` | Client (e.g. httpOnly cookie or local storage) |
+| Access token | 30 min | `{ sub, username, role }` | JS memory (Zustand) — intentionally lost on refresh |
+| Refresh token | 7 days | `{ sub, jti }` | httpOnly cookie (`refreshToken`, `path=/`) |
 
 - `jti` is a `randomUUID()` — the actual revocation key
 - Only the bcrypt hash of `jti` is stored in `User.refreshToken`
 - On refresh: verify JWT signature → extract `jti` → `bcrypt.compare(jti, storedHash)`
 - On logout: set `User.refreshToken = null`
+- Cookie attributes: `httpOnly`, `sameSite: strict`, `secure` in production only
 
 ## Global Guard
 
@@ -72,8 +73,8 @@ getMe(@CurrentUser() user: User) {
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/auth/login` | Public | Returns access + refresh tokens |
-| POST | `/auth/refresh` | Public | Rotates token pair (old refresh revoked) |
+| POST | `/auth/login` | Public | Returns access token; sets refresh token cookie |
+| POST | `/auth/refresh` | Public | Rotates tokens; reads/sets refresh token via cookie |
 | POST | `/auth/logout` | Any role | Revokes refresh token (204) |
 | GET | `/auth/me` | Any role | Returns current user profile |
 
@@ -84,26 +85,22 @@ getMe(@CurrentUser() user: User) {
 // Request
 { "username": "admin", "password": "admin123" }
 
-// Response 201
+// Response 201 — refresh token set as httpOnly cookie, NOT in body
 {
   "accessToken": "<jwt>",
-  "refreshToken": "<jwt>",
   "user": { "id": 1, "username": "admin", "role": "ADMIN", "fullName": null, "email": null }
 }
 ```
 
-**POST /auth/refresh**
+**POST /auth/refresh** — refresh token read from `req.cookies.refreshToken` (no body needed)
 ```json
-// Request
-{ "refreshToken": "<jwt>" }
-
-// Response 201
-{ "accessToken": "<jwt>", "refreshToken": "<jwt>" }
+// Response 201 — new refresh token set as httpOnly cookie
+{ "accessToken": "<jwt>" }
 ```
 
 **POST /auth/logout** — `Authorization: Bearer <accessToken>`
 ```
-Response 204 (no body)
+Response 204 — clears refreshToken cookie; service nulls DB token before cookie is cleared
 ```
 
 **GET /auth/me** — `Authorization: Bearer <accessToken>`

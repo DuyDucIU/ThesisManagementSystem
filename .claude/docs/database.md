@@ -126,3 +126,7 @@ export class ThesisService {
 - Always commit migration files (`prisma/migrations/`) to git
 - Never edit migration SQL files after they've been applied
 - Use `@map` and `@@map` for custom table/column names if needed
+
+## Gotchas
+
+- **`npx prisma generate` after schema changes** — Prisma generates the client into `node_modules`; changes to `schema.prisma` are not reflected in code until you run `generate`. `migrate dev` runs it automatically, but if you edit the schema without migrating (e.g. `db push` or manual edits), run it manually.
