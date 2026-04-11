@@ -53,6 +53,7 @@ ThesisManagementSystem/
 
 - **No shared workspace root** — `backend/` and `frontend/` are independent pnpm projects. Run commands from within each directory.
 - **Prisma generates into node_modules** — run `npx prisma generate` after schema changes; `npx prisma migrate dev` to create/apply migrations.
+- **pnpm build scripts** — after `pnpm install`, run `pnpm approve-builds` if native packages (bcrypt, prisma, @nestjs/core) fail to load. pnpm blocks build scripts by default.
 - **TypeScript versions differ** — backend uses TS ~5.x, frontend uses TS ~6.x.
 - **Jest + bcrypt spy** — ts-jest uses a CommonJS tsconfig override in `package.json` to allow `jest.spyOn` on bcrypt. Do not remove it.
 
