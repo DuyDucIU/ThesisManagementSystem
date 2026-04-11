@@ -37,10 +37,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-surface">
       {/* Left branding panel — hidden on mobile */}
-      <div className="hidden md:flex md:w-2/5 bg-violet-700 flex-col items-center justify-center text-white p-12 gap-4">
-        {/* Placeholder logo */}
+      <div className="hidden md:flex md:w-2/5 bg-primary flex-col items-center justify-center text-white p-12 gap-4">
         <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center mb-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -57,22 +56,28 @@ export default function LoginPage() {
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-center">International University</h1>
-        <p className="text-violet-200 text-center">Faculty of Information Technology</p>
-        <p className="text-violet-300 text-sm text-center mt-1">Thesis Management System</p>
+        <h1 className="font-display text-2xl font-semibold text-center">International University</h1>
+        <p className="font-sans text-white/80 text-center">Faculty of Information Technology</p>
+        <p className="font-sans text-white/60 text-sm text-center mt-1">Thesis Management System</p>
       </div>
 
       {/* Right login panel */}
       <div className="flex flex-1 items-center justify-center p-8">
         <div className="w-full max-w-sm space-y-6">
           <div className="space-y-1">
-            <h2 className="text-2xl font-semibold text-gray-900">Welcome back</h2>
-            <p className="text-sm text-gray-500">Sign in to your account to continue</p>
+            <h2 className="font-display text-[2.5rem] font-semibold text-on-surface leading-tight">
+              Welcome back
+            </h2>
+            <p className="font-sans text-base text-muted-foreground">
+              Sign in to your account to continue
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username" className="font-label text-xs font-medium">
+                Username
+              </Label>
               <Input
                 id="username"
                 type="text"
@@ -84,7 +89,9 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="font-label text-xs font-medium">
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -96,10 +103,15 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="font-sans text-sm text-destructive">{error}</p>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              type="submit"
+              variant="gradient"
+              className="w-full font-sans"
+              disabled={loading}
+            >
               {loading && <Loader2 className="animate-spin" />}
               {loading ? 'Signing in…' : 'Sign in'}
             </Button>
