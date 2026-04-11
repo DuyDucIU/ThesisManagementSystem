@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { UnauthorizedException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 
@@ -18,6 +19,11 @@ describe('AuthController', () => {
     refreshToken: 'refresh.token',
     user: mockProfile,
   };
+
+  const mockRes = () => ({
+    cookie: jest.fn(),
+    clearCookie: jest.fn(),
+  });
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -39,31 +45,65 @@ describe('AuthController', () => {
     authService = module.get(AuthService);
   });
 
-  it('login calls authService.login and returns result', async () => {
+  it('login sets refreshToken cookie and returns accessToken + user', async () => {
     authService.login.mockResolvedValue(mockLoginResult as any);
+    const res = mockRes();
 
-    const result = await controller.login({ username: 'john.doe', password: 'secret' });
+    const result = await controller.login(
+      { username: 'john.doe', password: 'secret' },
+      res as any,
+    );
 
     expect(authService.login).toHaveBeenCalledWith('john.doe', 'secret');
-    expect(result).toBe(mockLoginResult);
+    expect(res.cookie).toHaveBeenCalledWith(
+      'refreshToken',
+      'refresh.token',
+      expect.objectContaining({ httpOnly: true }),
+    );
+    expect(result).toEqual({ accessToken: 'access.token', user: mockProfile });
   });
 
-  it('refresh calls authService.refresh and returns new tokens', async () => {
+  it('refresh reads cookie, rotates it, and returns new accessToken', async () => {
     const tokens = { accessToken: 'new.access', refreshToken: 'new.refresh' };
     authService.refresh.mockResolvedValue(tokens);
+    const res = mockRes();
+    const req = { cookies: { refreshToken: 'old.refresh.token' } };
 
-    const result = await controller.refresh({ refreshToken: 'old.refresh.token' });
+    const result = await controller.refresh(req as any, res as any);
 
     expect(authService.refresh).toHaveBeenCalledWith('old.refresh.token');
-    expect(result).toBe(tokens);
+    expect(res.cookie).toHaveBeenCalledWith(
+      'refreshToken',
+      'new.refresh',
+      expect.objectContaining({ httpOnly: true }),
+    );
+    expect(result).toEqual({ accessToken: 'new.access' });
   });
 
-  it('logout calls authService.logout with userId', async () => {
-    authService.logout.mockResolvedValue(undefined);
+  it('refresh throws 401 when cookie is missing', async () => {
+    const res = mockRes();
+    const req = { cookies: {} };
 
-    await controller.logout({ id: 42 } as any);
+    await expect(controller.refresh(req as any, res as any)).rejects.toThrow(
+      new UnauthorizedException('Missing refresh token'),
+    );
+  });
+
+  it('logout clears cookie and calls authService.logout', async () => {
+    const callOrder: string[] = [];
+    authService.logout.mockImplementation(async () => {
+      callOrder.push('logout');
+    });
+    const res = mockRes() as any;
+    res.clearCookie.mockImplementation(() => {
+      callOrder.push('clearCookie');
+    });
+
+    await controller.logout({ id: 42 } as any, res);
 
     expect(authService.logout).toHaveBeenCalledWith(42);
+    expect(res.clearCookie).toHaveBeenCalledWith('refreshToken', { path: '/' });
+    expect(callOrder).toEqual(['logout', 'clearCookie']);
   });
 
   it('getMe calls authService.getMe with userId and returns profile', async () => {
