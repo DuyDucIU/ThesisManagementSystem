@@ -31,7 +31,6 @@ export default function LoginPage() {
       } else {
         setError('Something went wrong. Please try again.')
       }
-    } finally {
       setLoading(false)
     }
   }
@@ -74,6 +73,10 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <p className="font-sans text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{error}</p>
+            )}
+
             <div className="space-y-1">
               <Label htmlFor="username" className="font-label text-xs font-medium">
                 Username
@@ -101,10 +104,6 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-
-            {error && (
-              <p className="font-sans text-sm text-destructive">{error}</p>
-            )}
 
             <Button
               type="submit"

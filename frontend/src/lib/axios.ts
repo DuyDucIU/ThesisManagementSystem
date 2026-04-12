@@ -33,10 +33,10 @@ api.interceptors.response.use(
     const original = error.config
 
     const is401 = error.response?.status === 401
-    const isRefreshEndpoint = original?.url?.includes('/auth/refresh')
+    const isAuthEndpoint = original?.url?.includes('/auth/refresh') || original?.url?.includes('/auth/login')
     const alreadyRetried = original?._retry === true
 
-    if (!is401 || isRefreshEndpoint || alreadyRetried) {
+    if (!is401 || isAuthEndpoint || alreadyRetried) {
       return Promise.reject(error)
     }
 
