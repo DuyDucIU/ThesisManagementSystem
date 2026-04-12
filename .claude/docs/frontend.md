@@ -93,7 +93,7 @@ Axios instance at `src/lib/axios.ts`:
 - **Base URL**: `/api` (proxied to `http://localhost:3000` by Vite in dev)
 - **Credentials**: `withCredentials: true` — sends httpOnly refresh token cookie automatically
 - **Request interceptor**: attaches `Authorization: Bearer <accessToken>` from store
-- **Response interceptor**: on 401, silently refreshes via `POST /api/auth/refresh`, updates store, retries original request once. On refresh failure: `clearAuth()` + redirect to `/login`.
+- **Response interceptor**: on 401, silently refreshes via `POST /api/auth/refresh`, updates store, retries original request once. On refresh failure: `clearAuth()` + redirect to `/login`. **Exclusions**: `/auth/login` and `/auth/refresh` are skipped — otherwise a bad-credential login 401 triggers a hard redirect to `/login` before the error can be shown.
 - Queues concurrent requests during an in-flight refresh (`waitQueue`).
 
 **App.tsx silent restore**: on mount, calls raw `axios` (not the custom instance) to `POST /api/auth/refresh` then `GET /api/auth/me`. Populates store on success. Shows loading spinner until complete so users don't see a flash of the login page.

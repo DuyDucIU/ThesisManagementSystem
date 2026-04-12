@@ -60,6 +60,7 @@ ThesisManagementSystem/
 
 ## Important Caveats
 
+- **`backend/.env` required** — the backend will not start without it. Required variables: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRY`, `JWT_REFRESH_EXPIRY`. See [backend.md](.claude/docs/backend.md) for full details.
 - **No self-registration** — admins import students/lecturers via Excel (creates Student/Lecturer records, no User account yet). Activating an account is a separate admin action that creates the User record and credentials. No public registration endpoint exists or should be added.
 - **No shared workspace root** — `backend/` and `frontend/` are independent pnpm projects. Run commands from within each directory.
 - **pnpm build scripts** — after `pnpm install`, run `pnpm approve-builds` if native packages (bcrypt, prisma, @nestjs/core) fail to load. pnpm blocks build scripts by default.
@@ -75,3 +76,4 @@ ThesisManagementSystem/
 | [database.md](.claude/docs/database.md) | Prisma schema, migrations, DB config | When changing schema or running migrations |
 | [frontend.md](.claude/docs/frontend.md) | React/Vite structure, component conventions | When adding pages, components, or routes |
 | [design-system.md](.claude/docs/design-system.md) | Colors, typography, elevation, component rules | When building any UI — must follow for all frontend work |
+| [workflow.md](.claude/rules/workflow.md) | Feature development sequence, git rules, doc maintenance | Always — governs all feature and bug-fix work |
