@@ -42,6 +42,12 @@
   --sidebar-ring: #00346d;
   --surface: #f8f9fa;
   --tertiary: #003c3b;
+  --surface-container-low: #f3f4f5;
+  --surface-container: #e8eaeb;
+  --surface-container-high: #e1e3e4;
+  --surface-container-highest: #d8dadb;
+  --primary-container: #004b97;
+  --on-surface: #191c1d;
 }
 
 body {
@@ -91,6 +97,12 @@ body {
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-tertiary: var(--tertiary);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-primary-container: var(--primary-container);
+  --color-on-surface: var(--on-surface);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -100,14 +112,6 @@ body {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@theme {
-  --color-surface-container-low: #f3f4f5;
-  --color-surface-container: #e8eaeb;
-  --color-surface-container-high: #e1e3e4;
-  --color-surface-container-highest: #d8dadb;
-  --color-primary-container: #004b97;
-  --color-on-surface: #191c1d;
-}
 
 .dark {
   --background: oklch(0.145 0 0);
