@@ -107,9 +107,7 @@ export class SemesterService {
         e instanceof Prisma.PrismaClientKnownRequestError &&
         e.code === 'P2002'
       ) {
-        throw new ConflictException(
-          `Semester code '${dto.code}' already exists`,
-        );
+        throw new ConflictException('Semester code already exists');
       }
       throw e;
     }

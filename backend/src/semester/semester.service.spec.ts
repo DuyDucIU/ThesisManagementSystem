@@ -25,7 +25,6 @@ describe('SemesterService', () => {
     semester: {
       findMany: jest.Mock;
       findUnique: jest.Mock;
-      findFirst: jest.Mock;
       create: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
@@ -44,7 +43,6 @@ describe('SemesterService', () => {
             semester: {
               findMany: jest.fn(),
               findUnique: jest.fn(),
-              findFirst: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
               delete: jest.fn(),
@@ -244,7 +242,7 @@ describe('SemesterService', () => {
       prisma.semester.update.mockRejectedValue(prismaError);
 
       await expect(service.update(1, { code: 'DUPLICATE' })).rejects.toThrow(
-        new ConflictException("Semester code 'DUPLICATE' already exists"),
+        new ConflictException('Semester code already exists'),
       );
     });
   });
@@ -273,6 +271,8 @@ describe('SemesterService', () => {
       await expect(service.remove(1)).rejects.toThrow(
         new ConflictException('Only INACTIVE semesters can be deleted'),
       );
+      expect(prisma.semesterStudent.count).not.toHaveBeenCalled();
+      expect(prisma.topic.count).not.toHaveBeenCalled();
     });
 
     it('throws ConflictException when semester has linked students', async () => {
