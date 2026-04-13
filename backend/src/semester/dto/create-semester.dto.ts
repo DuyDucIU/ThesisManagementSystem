@@ -9,9 +9,11 @@ export class CreateSemesterDto {
   @IsNotEmpty()
   name: string;
 
+  @IsNotEmpty()
   @IsDateString()
   startDate: string;
 
+  @IsNotEmpty()
   @IsDateString()
   endDate: string;
 }
