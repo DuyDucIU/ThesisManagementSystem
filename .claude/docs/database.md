@@ -95,21 +95,6 @@ Notification (notifications)
 - **Files stored in S3** — Document stores `s3Key`, `originalName`, `mimeType`, `fileSize`
 - **All table names use `@@map` for snake_case** — Prisma model names are PascalCase, DB tables are snake_case
 
-## Prisma Service
-
-`PrismaService` (`src/prisma/prisma.module.ts`) is a **global module** — no need to import it in feature modules. Just inject `PrismaService` directly:
-
-```typescript
-@Injectable()
-export class ThesisService {
-  constructor(private prisma: PrismaService) {}
-
-  findAll() {
-    return this.prisma.thesis.findMany();
-  }
-}
-```
-
 ## Key Commands
 
 | Command | Purpose |

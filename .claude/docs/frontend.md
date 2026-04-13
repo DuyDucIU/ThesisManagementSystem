@@ -43,21 +43,14 @@ frontend/src/
 
 ## Design System
 
-All UI must follow the **Scholarly Editorial** design spec — see [design-system.md](design-system.md). Key rules:
-
-- **Colors**: Oxford Blue (`#00346d`) primary, tonal surface layering instead of borders
-- **Typography**: Newsreader (headings) + Manrope (body) + Inter (labels) — load via Google Fonts
-- **No borders**: Use background shifts between surface tiers to define structure
-- **No card shadows**: Use `surface_container_lowest` background shift instead
-- **CTA buttons**: 135° gradient from `#00346d` → `#004b97`
+All UI follows the **Scholarly Editorial** spec — see [design-system.md](design-system.md).
 
 ## Styling
 
 Tailwind CSS v4 (via Vite plugin — no `tailwind.config.js` needed) + shadcn/ui.
 
 - `@import "tailwindcss"` in `index.css` enables all utilities
-- shadcn CSS variable theme is in `index.css` (violet primary color, oklch-based)
-- Light/dark theme via `.dark` class (shadcn convention) and `prefers-color-scheme`
+- CSS variable theme in `index.css` — Oxford Blue primary (`#00346d`), all design tokens in `@theme inline`
 - `@/*` path alias maps to `src/` — both `@/components/ui/button` and relative imports work
 
 ## Routing
@@ -123,11 +116,11 @@ cd frontend
 npx shadcn@latest add <component-name>
 ```
 
-Components use `@/lib/utils` (the `cn()` helper). Style: Default, Color: Violet (manually set).
+Components use `@/lib/utils` (the `cn()` helper). Style: Default, Color: Oxford Blue (set manually in `index.css`).
 
 ## Gotchas
 
 - **react-router v7** — import from `react-router`, not `react-router-dom`.
 - **Tailwind v4** — uses `@tailwindcss/vite` plugin; no `tailwind.config.js` needed. Enable with `@import "tailwindcss"` in CSS.
-- **shadcn init** — "Violet" is not a valid base color in shadcn v4 (only neutral tones). Use zinc, then manually set `--primary` to violet oklch in `index.css`. Also move `shadcn` from `dependencies` to `devDependencies` after init.
+- **shadcn init** — only neutral base colors are valid in shadcn v4. Use zinc, then manually set `--primary` to `#00346d` (Oxford Blue) in `index.css`. Also move `shadcn` from `dependencies` to `devDependencies` after init.
 - **react-refresh ESLint rule** — component files cannot mix component and non-component exports. Router guard components must live in a separate file (e.g. `guards.tsx`), not alongside the `router` config object.
