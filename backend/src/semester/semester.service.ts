@@ -133,4 +133,51 @@ export class SemesterService {
 
     return this.prisma.semester.delete({ where: { id } });
   }
+
+  async activate(id: number) {
+    const semester = await this.findOne(id);
+
+    if (semester.status !== SemesterStatus.INACTIVE) {
+      throw new ConflictException('Only INACTIVE semesters can be activated');
+    }
+
+    const activeSemester = await this.prisma.semester.findFirst({
+      where: { status: SemesterStatus.ACTIVE },
+    });
+
+    if (activeSemester) {
+      throw new ConflictException('Another semester is already active');
+    }
+
+    return this.prisma.semester.update({
+      where: { id },
+      data: { status: SemesterStatus.ACTIVE },
+    });
+  }
+
+  async deactivate(id: number) {
+    const semester = await this.findOne(id);
+
+    if (semester.status !== SemesterStatus.ACTIVE) {
+      throw new ConflictException('Only ACTIVE semesters can be deactivated');
+    }
+
+    return this.prisma.semester.update({
+      where: { id },
+      data: { status: SemesterStatus.INACTIVE },
+    });
+  }
+
+  async close(id: number) {
+    const semester = await this.findOne(id);
+
+    if (semester.status !== SemesterStatus.ACTIVE) {
+      throw new ConflictException('Only ACTIVE semesters can be closed');
+    }
+
+    return this.prisma.semester.update({
+      where: { id },
+      data: { status: SemesterStatus.CLOSED },
+    });
+  }
 }

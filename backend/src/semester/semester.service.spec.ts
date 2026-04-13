@@ -25,6 +25,7 @@ describe('SemesterService', () => {
     semester: {
       findMany: jest.Mock;
       findUnique: jest.Mock;
+      findFirst: jest.Mock;
       create: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
@@ -43,6 +44,7 @@ describe('SemesterService', () => {
             semester: {
               findMany: jest.fn(),
               findUnique: jest.fn(),
+              findFirst: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
               delete: jest.fn(),
@@ -296,6 +298,137 @@ describe('SemesterService', () => {
         new ConflictException(
           'Cannot delete a semester with associated students or topics',
         ),
+      );
+    });
+  });
+
+  // ─── activate ───────────────────────────────────────────────────────────────
+
+  describe('activate', () => {
+    it('transitions INACTIVE semester to ACTIVE when no other is active', async () => {
+      prisma.semester.findUnique.mockResolvedValue(mockSemester);
+      prisma.semester.findFirst.mockResolvedValue(null);
+      prisma.semester.update.mockResolvedValue({
+        ...mockSemester,
+        status: SemesterStatus.ACTIVE,
+      });
+
+      const result = await service.activate(1);
+
+      expect(prisma.semester.findFirst).toHaveBeenCalledWith({
+        where: { status: SemesterStatus.ACTIVE },
+      });
+      expect(prisma.semester.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { status: SemesterStatus.ACTIVE },
+      });
+      expect(result.status).toBe(SemesterStatus.ACTIVE);
+    });
+
+    it('throws ConflictException when another semester is already ACTIVE', async () => {
+      prisma.semester.findUnique.mockResolvedValue(mockSemester);
+      prisma.semester.findFirst.mockResolvedValue({
+        ...mockSemester,
+        id: 2,
+        status: SemesterStatus.ACTIVE,
+      });
+
+      await expect(service.activate(1)).rejects.toThrow(
+        new ConflictException('Another semester is already active'),
+      );
+    });
+
+    it('throws ConflictException when semester is not INACTIVE', async () => {
+      prisma.semester.findUnique.mockResolvedValue({
+        ...mockSemester,
+        status: SemesterStatus.CLOSED,
+      });
+
+      await expect(service.activate(1)).rejects.toThrow(
+        new ConflictException('Only INACTIVE semesters can be activated'),
+      );
+    });
+
+    it('throws NotFoundException when semester does not exist', async () => {
+      prisma.semester.findUnique.mockResolvedValue(null);
+
+      await expect(service.activate(99)).rejects.toThrow(
+        new NotFoundException('Semester #99 not found'),
+      );
+    });
+  });
+
+  // ─── deactivate ─────────────────────────────────────────────────────────────
+
+  describe('deactivate', () => {
+    it('transitions ACTIVE semester to INACTIVE', async () => {
+      prisma.semester.findUnique.mockResolvedValue({
+        ...mockSemester,
+        status: SemesterStatus.ACTIVE,
+      });
+      prisma.semester.update.mockResolvedValue(mockSemester);
+
+      const result = await service.deactivate(1);
+
+      expect(prisma.semester.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { status: SemesterStatus.INACTIVE },
+      });
+      expect(result.status).toBe(SemesterStatus.INACTIVE);
+    });
+
+    it('throws ConflictException when semester is not ACTIVE', async () => {
+      prisma.semester.findUnique.mockResolvedValue(mockSemester); // INACTIVE
+
+      await expect(service.deactivate(1)).rejects.toThrow(
+        new ConflictException('Only ACTIVE semesters can be deactivated'),
+      );
+    });
+
+    it('throws NotFoundException when semester does not exist', async () => {
+      prisma.semester.findUnique.mockResolvedValue(null);
+
+      await expect(service.deactivate(99)).rejects.toThrow(
+        new NotFoundException('Semester #99 not found'),
+      );
+    });
+  });
+
+  // ─── close ──────────────────────────────────────────────────────────────────
+
+  describe('close', () => {
+    it('transitions ACTIVE semester to CLOSED', async () => {
+      prisma.semester.findUnique.mockResolvedValue({
+        ...mockSemester,
+        status: SemesterStatus.ACTIVE,
+      });
+      prisma.semester.update.mockResolvedValue({
+        ...mockSemester,
+        status: SemesterStatus.CLOSED,
+      });
+
+      const result = await service.close(1);
+
+      expect(prisma.semester.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { status: SemesterStatus.CLOSED },
+      });
+      expect(result.status).toBe(SemesterStatus.CLOSED);
+    });
+
+    it('throws ConflictException when semester is not ACTIVE', async () => {
+      prisma.semester.findUnique.mockResolvedValue(mockSemester); // INACTIVE
+
+      await expect(service.close(1)).rejects.toThrow(
+        new ConflictException('Only ACTIVE semesters can be closed'),
+      );
+    });
+
+    it('throws NotFoundException when semester does not exist', async () => {
+      prisma.semester.findUnique.mockResolvedValue(null);
+
+      await expect(service.close(99)).rejects.toThrow(
+        new NotFoundException('Semester #99 not found'),
       );
     });
   });
