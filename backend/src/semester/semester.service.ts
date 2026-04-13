@@ -81,6 +81,10 @@ export class SemesterService {
       throw new ConflictException('Only INACTIVE semesters can be edited');
     }
 
+    if (!dto.code && !dto.name && !dto.startDate && !dto.endDate) {
+      throw new BadRequestException('At least one field must be provided for update');
+    }
+
     const startDate = dto.startDate
       ? new Date(dto.startDate)
       : semester.startDate;

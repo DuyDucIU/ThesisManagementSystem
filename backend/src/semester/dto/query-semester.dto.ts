@@ -11,13 +11,13 @@ export class QuerySemesterDto {
   @IsEnum(SemesterStatus)
   status?: SemesterStatus;
 
-  @Transform(({ value }) => value || undefined)
   @IsOptional()
+  @Transform(({ value }) => value || undefined)
   @IsDateString()
   startDateFrom?: string;
 
-  @Transform(({ value }) => value || undefined)
   @IsOptional()
+  @Transform(({ value }) => value || undefined)
   @IsDateString()
   startDateTo?: string;
 }

@@ -205,6 +205,27 @@ describe('SemesterService', () => {
       expect(result.name).toBe('Updated');
     });
 
+    it('updates multiple fields simultaneously', async () => {
+      prisma.semester.findUnique.mockResolvedValue(mockSemester);
+      prisma.semester.update.mockResolvedValue({
+        ...mockSemester,
+        name: 'Updated Name',
+        code: 'HK2-2025',
+      });
+
+      const result = await service.update(1, {
+        name: 'Updated Name',
+        code: 'HK2-2025',
+      });
+
+      expect(prisma.semester.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { name: 'Updated Name', code: 'HK2-2025' },
+      });
+      expect(result.name).toBe('Updated Name');
+      expect(result.code).toBe('HK2-2025');
+    });
+
     it('throws ConflictException when semester is ACTIVE', async () => {
       prisma.semester.findUnique.mockResolvedValue({
         ...mockSemester,
@@ -224,6 +245,14 @@ describe('SemesterService', () => {
 
       await expect(service.update(1, { name: 'x' })).rejects.toThrow(
         new ConflictException('Only INACTIVE semesters can be edited'),
+      );
+    });
+
+    it('throws BadRequestException when body is empty', async () => {
+      prisma.semester.findUnique.mockResolvedValue(mockSemester);
+
+      await expect(service.update(1, {})).rejects.toThrow(
+        new BadRequestException('At least one field must be provided for update'),
       );
     });
 
@@ -268,6 +297,19 @@ describe('SemesterService', () => {
       prisma.semester.findUnique.mockResolvedValue({
         ...mockSemester,
         status: SemesterStatus.ACTIVE,
+      });
+
+      await expect(service.remove(1)).rejects.toThrow(
+        new ConflictException('Only INACTIVE semesters can be deleted'),
+      );
+      expect(prisma.semesterStudent.count).not.toHaveBeenCalled();
+      expect(prisma.topic.count).not.toHaveBeenCalled();
+    });
+
+    it('throws ConflictException when semester is CLOSED', async () => {
+      prisma.semester.findUnique.mockResolvedValue({
+        ...mockSemester,
+        status: SemesterStatus.CLOSED,
       });
 
       await expect(service.remove(1)).rejects.toThrow(

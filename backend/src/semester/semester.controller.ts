@@ -47,6 +47,7 @@ export class SemesterController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.semesterService.remove(id);
   }
