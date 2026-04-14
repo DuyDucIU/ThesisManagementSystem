@@ -1,4 +1,4 @@
-import { useNavigate, Outlet } from 'react-router'
+import { NavLink, useNavigate, Outlet } from 'react-router'
 import { useAuthStore } from '../features/auth/store/authStore'
 import { authApi } from '../features/auth/api'
 import { Button } from '../components/ui/button'
@@ -24,8 +24,11 @@ export default function AppLayout() {
     navigate('/login')
   }
 
+  const isAdmin = user?.role === 'ADMIN'
+
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-surface flex flex-col">
+      {/* Topbar */}
       <header className="sticky top-0 z-50 backdrop-blur-[12px] bg-surface/80 px-6 py-4 flex items-center justify-between">
         <span className="font-display text-xl font-semibold text-primary">
           Thesis Management System
@@ -44,9 +47,36 @@ export default function AppLayout() {
           </Button>
         </div>
       </header>
-      <main className="p-6">
-        <Outlet />
-      </main>
+
+      <div className="flex flex-1">
+        {/* Admin sidebar */}
+        {isAdmin && (
+          <aside className="w-56 bg-surface-container-highest shrink-0 px-3 py-6">
+            <p className="font-label text-xs font-medium text-muted-foreground uppercase tracking-widest px-3 mb-3">
+              Administration
+            </p>
+            <nav className="space-y-0.5">
+              <NavLink
+                to="/admin/semesters"
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
+                    isActive
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-on-surface hover:bg-surface-container'
+                  }`
+                }
+              >
+                Semesters
+              </NavLink>
+            </nav>
+          </aside>
+        )}
+
+        {/* Main content */}
+        <main className="flex-1 p-6 min-w-0">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }

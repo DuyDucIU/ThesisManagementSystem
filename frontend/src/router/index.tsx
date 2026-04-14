@@ -1,7 +1,8 @@
 import { createBrowserRouter, Navigate } from 'react-router'
-import { ProtectedRoute, PublicRoute } from './guards'
+import { ProtectedRoute, PublicRoute, AdminRoute } from './guards'
 import LoginPage from '../features/auth/components/LoginPage'
 import AppLayout from '../layouts/AppLayout'
+import SemesterListPage from '../features/semester/components/SemesterListPage'
 
 const router = createBrowserRouter([
   {
@@ -10,7 +11,20 @@ const router = createBrowserRouter([
   },
   {
     element: <ProtectedRoute />,
-    children: [{ path: '/', element: <AppLayout /> }],
+    children: [
+      {
+        element: <AppLayout />,
+        children: [
+          { path: '/', element: <Navigate to="/admin/semesters" replace /> },
+          {
+            element: <AdminRoute />,
+            children: [
+              { path: '/admin/semesters', element: <SemesterListPage /> },
+            ],
+          },
+        ],
+      },
+    ],
   },
   { path: '*', element: <Navigate to="/login" replace /> },
 ])

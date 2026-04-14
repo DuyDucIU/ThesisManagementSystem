@@ -12,3 +12,10 @@ export function PublicRoute() {
   if (user) return <Navigate to="/" replace />
   return <Outlet />
 }
+
+export function AdminRoute() {
+  const user = useAuthStore((s) => s.user)
+  if (!user) return <Navigate to="/login" replace />
+  if (user.role !== 'ADMIN') return <Navigate to="/" replace />
+  return <Outlet />
+}
