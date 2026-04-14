@@ -2,11 +2,10 @@
 
 ## Feature Development Process
 
-Every new feature follows three staged cycles. **Do not write any code before the spec is approved.**
+Every new feature follows three stages. **Do not write any code before the spec is approved.**
 **Hard rule: frontend work never begins until the user has verified the backend independently.**
 
 ---
-
 
 ### Stage 1 — Brainstorm
 
@@ -18,22 +17,21 @@ Design the feature before any code is written. Cover all of the following during
 4. **Approaches** — Propose 2-3 implementation approaches with trade-offs. Get user agreement on direction.
 5. **Edge cases & constraints** — Business rules, error scenarios, access control.
 
+After spec is approved, the user will request both plans separately — backend first, then frontend.
 
 ---
 
-### Stage 2 — Backend Cycle 
+### Stage 2 — Backend Cycle
 
 1. **Plan** — write a backend plan scoped to backend only (NestJS module, service, controller, DTOs, unit tests).
 2. **Implement** — execute the plan.
 3. **API Verification** — test all endpoints thoroughly: happy paths, edge cases, validation errors, auth scenarios. User verifies independently with Postman.
-4. **Backend locked** — do not start frontend until backend verification passes.
-
 
 ---
 
-### Stage 3 — Frontend Cycle 
+### Stage 3 — Frontend Cycle
 
-1. **Plan** — write a frontend plan scoped to frontend only (components, store, API client, routing). Written with full knowledge of real API behavior from Stage 2.
+1. **Plan** — write a frontend plan scoped to frontend only (components, store, API client, routing). Before executing, review the plan against actual API behavior from Stage 2 and update any tasks that drifted.
 2. **Implement** — execute the plan.
 3. **E2E Verification** — test with Playwright (Claude) and manual browser testing (user). Confirm the full user journey works end-to-end.
 
