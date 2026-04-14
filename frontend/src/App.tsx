@@ -4,6 +4,7 @@ import axios from 'axios'
 import router from './router'
 import { useAuthStore } from './features/auth/store/authStore'
 import type { UserProfile } from './features/auth/store/authStore'
+import { Toaster } from './components/ui/sonner'
 
 export default function App() {
   const [ready, setReady] = useState(false)
@@ -12,7 +13,6 @@ export default function App() {
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        // Use raw axios so we don't go through the store interceptor during init
         const refreshRes = await axios.post<{ accessToken: string }>(
           '/api/auth/refresh',
           {},
@@ -44,5 +44,10 @@ export default function App() {
     )
   }
 
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster position="top-right" richColors />
+    </>
+  )
 }
