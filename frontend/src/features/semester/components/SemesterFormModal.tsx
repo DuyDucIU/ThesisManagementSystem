@@ -115,7 +115,7 @@ export default function SemesterFormModal({ open, onClose, onSuccess, semester }
               name="code"
               value={form.code}
               onChange={handleChange}
-              placeholder="e.g. HK1-2025"
+              placeholder="e.g. S1 25-26"
               className="font-sans bg-surface-container-low border-0 focus-visible:ring-1 focus-visible:ring-primary/30"
             />
           </div>
@@ -129,7 +129,7 @@ export default function SemesterFormModal({ open, onClose, onSuccess, semester }
               name="name"
               value={form.name}
               onChange={handleChange}
-              placeholder="e.g. Học kỳ 1 năm 2025-2026"
+              placeholder="e.g. Semester 1 Year 2025-2026"
               className="font-sans bg-surface-container-low border-0 focus-visible:ring-1 focus-visible:ring-primary/30"
             />
           </div>
