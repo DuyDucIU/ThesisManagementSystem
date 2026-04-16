@@ -31,11 +31,15 @@ ThesisManagementSystem/
 │   └── test/             # E2E tests
 ├── frontend/             # React SPA (Vite) — see frontend.md
 │   └── src/
-│       ├── features/     # Feature modules (auth, ...) — components, store, api
+│       ├── features/     # Feature modules (auth, semester, ...) — components, store, api
 │       ├── components/   # Shared UI — shadcn/ui components under ui/
 │       ├── layouts/      # App shell (AppLayout)
 │       ├── router/       # Route config + guards
 │       └── lib/          # Axios instance, utilities
+├── docs/
+│   └── superpowers/      # Brainstorm specs and implementation plans
+│       ├── plans/
+│       └── specs/
 ├── .claude/
 │   ├── docs/             # Detailed documentation (consulted on demand)
 │   └── rules/            # Auto-loaded rules for every session
@@ -55,6 +59,7 @@ ThesisManagementSystem/
 | Format       | `pnpm run format`                  | —                        |
 | DB migrate   | `npx prisma migrate dev --name x`  | —                        |
 | DB generate  | `npx prisma generate`              | —                        |
+| Approve builds | `pnpm approve-builds`            | —                        |
 
 **Ports:** Backend `3000`, Frontend dev server `5173`.
 

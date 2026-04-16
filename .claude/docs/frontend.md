@@ -5,19 +5,27 @@
 ```
 frontend/src/
 ├── features/               # Feature-based modules
-│   └── auth/
+│   ├── auth/
+│   │   ├── components/
+│   │   │   └── LoginPage.tsx       # Split-layout login page
+│   │   ├── store/
+│   │   │   └── authStore.ts        # Zustand auth store (user + accessToken in memory)
+│   │   └── api.ts                  # Auth API calls (login, refresh, logout, me)
+│   └── semester/
 │       ├── components/
-│       │   └── LoginPage.tsx       # Split-layout login page
+│       │   ├── SemesterListPage.tsx    # Admin list page with filters, table, action dialogs
+│       │   ├── SemesterFormModal.tsx   # Create/edit modal (Dialog)
+│       │   └── SemesterStatusBadge.tsx # Status badge component
 │       ├── store/
-│       │   └── authStore.ts        # Zustand auth store (user + accessToken in memory)
-│       └── api.ts                  # Auth API calls (login, refresh, logout, me)
+│       │   └── semesterStore.ts        # Zustand store for semester state
+│       └── api.ts                      # Semester CRUD + status-transition API calls
 ├── components/
-│   └── ui/                         # shadcn/ui generated components (Button, Input, Label, etc.)
+│   └── ui/                         # shadcn/ui generated components (Button, Input, Label, Dialog, Select, AlertDialog, Sonner, etc.)
 ├── layouts/
-│   └── AppLayout.tsx               # Authenticated shell (topbar + Outlet for child routes)
+│   └── AppLayout.tsx               # Authenticated shell (topbar + conditional admin sidebar + Outlet)
 ├── router/
 │   ├── index.tsx                   # createBrowserRouter — route definitions
-│   └── guards.tsx                  # ProtectedRoute, PublicRoute wrappers
+│   └── guards.tsx                  # ProtectedRoute, PublicRoute, AdminRoute wrappers
 ├── lib/
 │   ├── axios.ts                    # Axios instance with Bearer token injection + 401 refresh interceptor
 │   └── utils.ts                    # shadcn cn() helper (clsx + tailwind-merge)
@@ -26,7 +34,7 @@ frontend/src/
 └── index.css                       # Tailwind import + shadcn CSS variable theme
 ```
 
-**Pattern:** New features go under `src/features/<feature-name>/` with `components/`, `hooks/`, `api.ts` sub-folders.
+**Pattern:** New features go under `src/features/<feature-name>/` with `components/`, `store/`, `api.ts` sub-folders.
 
 ## Build Tooling
 
@@ -60,10 +68,17 @@ React Router v7 (`react-router` package):
 | Path | Component | Guard |
 |------|-----------|-------|
 | `/login` | `LoginPage` | `PublicRoute` — redirects to `/` if already authenticated |
-| `/` | `AppLayout` | `ProtectedRoute` — redirects to `/login` if not authenticated |
+| `/` | Redirect → `/admin/semesters` | `ProtectedRoute` |
+| `/admin/semesters` | `SemesterListPage` | `ProtectedRoute` → `AdminRoute` |
 | `*` | Redirect → `/login` | — |
 
-Guards live in `src/router/guards.tsx` (separate from route config to satisfy react-refresh ESLint rule).
+Guards live in `src/router/guards.tsx` (separate from route config to satisfy react-refresh ESLint rule):
+
+- **`ProtectedRoute`** — redirects to `/login` if no authenticated user
+- **`PublicRoute`** — redirects to `/` if already authenticated
+- **`AdminRoute`** — requires `user.role === 'ADMIN'`; redirects to `/` otherwise. Nest inside `ProtectedRoute` so the user check runs first.
+
+Admin routes are nested: `ProtectedRoute` → `AppLayout` → `AdminRoute` → page component.
 
 ## Auth State
 
@@ -118,9 +133,16 @@ npx shadcn@latest add <component-name>
 
 Components use `@/lib/utils` (the `cn()` helper). Style: Default, Color: Oxford Blue (set manually in `index.css`).
 
+## AppLayout
+
+`AppLayout` renders the authenticated shell: a sticky topbar (app name, username, role badge, sign-out button) and a two-column body. When `user.role === 'ADMIN'`, a fixed-width left sidebar (`w-56`) is shown with role-specific nav links using `NavLink` (active state via `isActive` callback). Non-admin users see no sidebar.
+
+Add new admin nav entries to the sidebar's `<nav>` block in `AppLayout.tsx`.
+
 ## Gotchas
 
 - **react-router v7** — import from `react-router`, not `react-router-dom`.
 - **Tailwind v4** — uses `@tailwindcss/vite` plugin; no `tailwind.config.js` needed. Enable with `@import "tailwindcss"` in CSS.
 - **shadcn init** — only neutral base colors are valid in shadcn v4. Use zinc, then manually set `--primary` to `#00346d` (Oxford Blue) in `index.css`. Also move `shadcn` from `dependencies` to `devDependencies` after init.
 - **react-refresh ESLint rule** — component files cannot mix component and non-component exports. Router guard components must live in a separate file (e.g. `guards.tsx`), not alongside the `router` config object.
+- **Sonner toasts** — use `import { toast } from 'sonner'` for success/error feedback. The `<Toaster />` provider is mounted in `App.tsx`.
