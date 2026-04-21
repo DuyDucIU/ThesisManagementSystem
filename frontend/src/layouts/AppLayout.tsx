@@ -68,6 +68,18 @@ export default function AppLayout() {
               >
                 Semesters
               </NavLink>
+              <NavLink
+                to="/admin/students/import"
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
+                    isActive
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-on-surface hover:bg-surface-container'
+                  }`
+                }
+              >
+                Import Students
+              </NavLink>
             </nav>
           </aside>
         )}

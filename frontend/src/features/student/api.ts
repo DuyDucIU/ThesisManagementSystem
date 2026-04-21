@@ -1,0 +1,57 @@
+// frontend/src/features/student/api.ts
+import api from '../../lib/axios'
+
+export interface ParseRowError {
+  row: number
+  reason: string
+}
+
+export interface AlreadyEnrolledDetail {
+  row: number
+  studentId: string
+  reason: string
+}
+
+export interface ParseImportResult {
+  total: number
+  valid: number
+  alreadyEnrolled: number
+  invalid: number
+  errors: ParseRowError[]
+  alreadyEnrolledDetails: AlreadyEnrolledDetail[]
+}
+
+export interface SkippedDetail {
+  row: number
+  studentId: string | null
+  reason: string
+}
+
+export interface ImportStudentsResult {
+  imported: number
+  skipped: number
+  skippedDetails: SkippedDetail[]
+}
+
+export function extractErrorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const data = (err as { response: { data: { message: unknown } } }).response?.data
+    if (Array.isArray(data?.message)) return data.message.join(', ')
+    if (typeof data?.message === 'string') return data.message
+  }
+  return 'An unexpected error occurred.'
+}
+
+export const studentApi = {
+  parseImport: (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post<ParseImportResult>('/students/import?action=parse', form)
+  },
+
+  importStudents: (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post<ImportStudentsResult>('/students/import?action=import', form)
+  },
+}
