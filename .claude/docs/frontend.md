@@ -11,18 +11,14 @@ frontend/src/
 │   │   ├── store/
 │   │   │   └── authStore.ts        # Zustand auth store (user + accessToken in memory)
 │   │   └── api.ts                  # Auth API calls (login, refresh, logout, me)
-│   ├── semester/
-│   │   ├── components/
-│   │   │   ├── SemesterListPage.tsx    # Admin list page with filters, table, action dialogs
-│   │   │   ├── SemesterFormModal.tsx   # Create/edit modal (Dialog)
-│   │   │   └── SemesterStatusBadge.tsx # Status badge component
-│   │   ├── store/
-│   │   │   └── semesterStore.ts        # Zustand store for semester state
-│   │   └── api.ts                      # Semester CRUD + status-transition API calls
-│   └── student/
+│   └── semester/
 │       ├── components/
-│       │   └── StudentImportPage.tsx   # Three-state import page (upload → parsed → imported)
-│       └── api.ts                      # Student import API (parseImport, importStudents)
+│       │   ├── SemesterListPage.tsx    # Admin list page with filters, table, action dialogs
+│       │   ├── SemesterFormModal.tsx   # Create/edit modal (Dialog)
+│       │   └── SemesterStatusBadge.tsx # Status badge component
+│       ├── store/
+│       │   └── semesterStore.ts        # Zustand store for semester state
+│       └── api.ts                      # Semester CRUD + status-transition API calls
 ├── components/
 │   └── ui/                         # shadcn/ui generated components (Button, Input, Label, Dialog, Select, AlertDialog, Sonner, etc.)
 ├── layouts/
@@ -38,7 +34,7 @@ frontend/src/
 └── index.css                       # Tailwind import + shadcn CSS variable theme
 ```
 
-**Pattern:** New features go under `src/features/<feature-name>/` with `components/`, `store/`, `api.ts` sub-folders. The `store/` sub-folder is optional — use local React state when data is page-scoped and not shared across the app (e.g. `StudentImportPage` uses no Zustand store).
+**Pattern:** New features go under `src/features/<feature-name>/` with `components/`, `store/`, `api.ts` sub-folders.
 
 ## Build Tooling
 
@@ -74,7 +70,6 @@ React Router v7 (`react-router` package):
 | `/login` | `LoginPage` | `PublicRoute` — redirects to `/` if already authenticated |
 | `/` | Redirect → `/admin/semesters` | `ProtectedRoute` |
 | `/admin/semesters` | `SemesterListPage` | `ProtectedRoute` → `AdminRoute` |
-| `/admin/students/import` | `StudentImportPage` | `ProtectedRoute` → `AdminRoute` |
 | `*` | Redirect → `/login` | — |
 
 Guards live in `src/router/guards.tsx` (separate from route config to satisfy react-refresh ESLint rule):
@@ -114,16 +109,6 @@ Axios instance at `src/lib/axios.ts`:
 ## API Integration
 
 All auth API calls go through `src/features/auth/api.ts` (`authApi.login/refresh/logout/me`). Future features add their own `src/features/<feature>/api.ts`.
-
-**Multipart file uploads:** Pass a `FormData` object directly to `api.post<T>()`. Axios automatically sets the correct `multipart/form-data` boundary — do not set `Content-Type` manually.
-
-```typescript
-const form = new FormData()
-form.append('file', file)
-return api.post<ParseImportResult>('/students/import?action=parse', form)
-```
-
-**`extractErrorMessage` helper:** Each feature's `api.ts` exports an `extractErrorMessage(err: unknown): string` function that safely unwraps NestJS error shapes (both `string` and `string[]` message variants). This is currently duplicated across feature modules — a future cleanup should extract it to `src/lib/errors.ts`.
 
 Vite proxy config (`vite.config.ts`):
 ```typescript

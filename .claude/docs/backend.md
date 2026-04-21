@@ -107,34 +107,6 @@ const module = await Test.createTestingModule({
 
 See [api.md](api.md) for endpoint design conventions and [security.md](security.md) for guard/decorator patterns.
 
-## File Upload Pattern (Multer)
-
-Use `FileInterceptor` from `@nestjs/platform-express` for `multipart/form-data` endpoints. Store files in memory (not disk) and access them as `Buffer` in the service:
-
-```typescript
-import { FileInterceptor } from '@nestjs/platform-express';
-import * as multer from 'multer';
-
-@Post('import')
-@UseInterceptors(
-  FileInterceptor('file', {
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 },  // 5 MB
-  }),
-)
-async importFile(@UploadedFile() file: Express.Multer.File) {
-  // file.buffer, file.originalname, file.mimetype
-}
-```
-
-Add `multer` and `@types/multer` as explicit direct dependencies — they are peer deps of `@nestjs/platform-express` but may not be hoisted in pnpm workspaces:
-
-```bash
-cd backend
-pnpm add multer
-pnpm add -D @types/multer
-```
-
 ## Gotchas
 
 - **cookie-parser import** — use `import cookieParser = require('cookie-parser')`, not `import * as cookieParser`. Correct TypeScript pattern for CommonJS callable modules under NodeNext module resolution.
@@ -143,10 +115,6 @@ pnpm add -D @types/multer
 - **`ConfigService.getOrThrow`** — prefer `configService.getOrThrow('KEY')` over `configService.get('KEY') || fallback` for required env vars so the app fails fast on misconfiguration.
 - **Jest + bcrypt spy** — ts-jest uses a CommonJS tsconfig override in `backend/package.json` (`ts-jest` → `tsconfig: tsconfig.cjs.json`) to allow `jest.spyOn` on bcrypt. Do not remove it — removing it breaks spying on bcrypt methods in unit tests.
 - **`@Roles()` at controller level** — apply `@Roles(Role.ADMIN)` on the controller class to protect every route in it. Individual methods can still override with their own `@Roles()`. This is cleaner than repeating the decorator on every handler.
-- **`multer` import style** — use `import * as multer from 'multer'` (not default import). Required because multer ships as a CommonJS module.
-- **`?action=` query param for multi-action endpoints** — when one URL handles logically related but distinct operations (e.g. parse-then-import), use `@Query('action') action: 'parse' | 'import'` rather than separate routes. Validate the action value explicitly and throw `BadRequestException` for unknown values.
-- **Hardcoded email domain in student import** — `StudentService` constructs student emails as `${username}@student.hcmiu.edu.vn` via the `EMAIL_DOMAIN` constant at the top of `student.service.ts`. If the university's student email domain changes, update that constant.
-- **DTO files can be plain TypeScript interfaces** — `dto/import-student.dto.ts` uses `interface` declarations (not class-validator decorated classes) because these types describe response shapes and internal data, not incoming request bodies. Class-validator is only needed for DTOs that go through `ValidationPipe`.
 - **Query DTO with `@Transform`** — when a query param can arrive as an empty string (e.g. from a cleared filter), use `@Transform(({ value }) => value || undefined)` before the validator so empty strings don't fail `@IsDateString()` or similar. Requires `enableImplicitConversion: false` (the default) — explicit transforms run regardless.
 
 ## Configuration

@@ -12,38 +12,6 @@
 
 Use kebab-case for multi-word resources: `/semester-students`, `/thesis-reviews`.
 
-**`?action=` pattern** — when a single endpoint handles logically related but distinct operations (e.g. a dry-run parse then the real import), use a query parameter instead of separate routes:
-
-```
-POST /students/import?action=parse   # dry-run: validate and return preview
-POST /students/import?action=import  # commit: write to DB
-```
-
-Both operations share the same auth guard, file upload config, and URL — the action param selects the code path. Validate the action value explicitly and throw `400` for unknown values.
-
-## File Upload Endpoints
-
-File uploads use `multipart/form-data`. The controller receives a `Buffer` via Multer's memory storage. Always validate file extension and enforce a size limit (5 MB for Excel imports):
-
-```
-POST /students/import?action=parse|import
-Content-Type: multipart/form-data
-Body: file (field name) — .xlsx or .xls only, max 5 MB
-```
-
-Response shapes follow the same plain-object convention as JSON endpoints — no special wrapping.
-
-**Expected Excel column format for student import** (positional — matched by column index, not header name):
-
-| Column | Field |
-|--------|-------|
-| 0 | Last Name |
-| 1 | First Name |
-| 2 | Username (used to construct email) |
-| 3 | Student ID |
-
-Row 1 is treated as a header and skipped. All subsequent non-empty rows are validated.
-
 ## HTTP Status Codes
 
 | Code | When |
