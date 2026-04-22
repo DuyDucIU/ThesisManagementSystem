@@ -196,7 +196,7 @@ export class StudentService {
     if (hasAccount === true) where.userId = { not: null };
     else if (hasAccount === false) where.userId = null;
 
-    if (semesterId) {
+    if (semesterId !== undefined) {
       where.semesterStudents = { some: { semesterId } };
     }
 
@@ -233,11 +233,10 @@ export class StudentService {
         hasAccount: s.userId !== null,
       };
       if (semesterId !== undefined) {
+        const status = enrollmentMap.get(s.id);
         return {
           ...base,
-          semesterStudent: enrollmentMap.has(s.id)
-            ? { status: enrollmentMap.get(s.id) }
-            : null,
+          semesterStudent: status !== undefined ? { status } : null,
         };
       }
       return base;
