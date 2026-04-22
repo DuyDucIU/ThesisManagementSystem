@@ -115,6 +115,7 @@ See [api.md](api.md) for endpoint design conventions and [security.md](security.
 - **`ConfigService.getOrThrow`** — prefer `configService.getOrThrow('KEY')` over `configService.get('KEY') || fallback` for required env vars so the app fails fast on misconfiguration.
 - **Jest + bcrypt spy** — ts-jest uses a CommonJS tsconfig override in `backend/package.json` (`ts-jest` → `tsconfig: tsconfig.cjs.json`) to allow `jest.spyOn` on bcrypt. Do not remove it — removing it breaks spying on bcrypt methods in unit tests.
 - **`@Roles()` at controller level** — apply `@Roles(Role.ADMIN)` on the controller class to protect every route in it. Individual methods can still override with their own `@Roles()`. This is cleaner than repeating the decorator on every handler.
+- **Prisma P2002 field detection** — when catching a unique-constraint violation, identify *which* field caused it via `e.meta?.target`. The value can be a string or an array depending on the Prisma version; normalise before checking: `const target = Array.isArray(rawTarget) ? rawTarget.join(',') : String(rawTarget ?? '')`. Then `target.includes('student_id')` / `target.includes('email')` to throw the right `BadRequestException`.
 - **Query DTO with `@Transform`** — when a query param can arrive as an empty string (e.g. from a cleared filter), use `@Transform(({ value }) => value || undefined)` before the validator so empty strings don't fail `@IsDateString()` or similar. Requires `enableImplicitConversion: false` (the default) — explicit transforms run regardless.
 
 ## Configuration
