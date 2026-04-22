@@ -265,8 +265,10 @@ export class StudentService {
       );
     }
 
-    await this.prisma.semesterStudent.deleteMany({ where: { studentId: id } });
-    await this.prisma.student.delete({ where: { id } });
+    await this.prisma.$transaction([
+      this.prisma.semesterStudent.deleteMany({ where: { studentId: id } }),
+      this.prisma.student.delete({ where: { id } }),
+    ]);
   }
 
   async update(id: number, dto: UpdateStudentDto) {

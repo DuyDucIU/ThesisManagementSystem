@@ -45,6 +45,7 @@ describe('StudentService', () => {
       deleteMany: jest.Mock;
     };
     thesis: { count: jest.Mock };
+    $transaction: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -70,6 +71,7 @@ describe('StudentService', () => {
               deleteMany: jest.fn(),
             },
             thesis: { count: jest.fn() },
+            $transaction: jest.fn((queries) => Promise.resolve(queries)),
           },
         },
       ],
