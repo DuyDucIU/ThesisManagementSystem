@@ -43,6 +43,7 @@ export default function StudentListPage() {
   const [deleteLoading, setDeleteLoading] = useState(false)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isFirstRender = useRef(true)
 
   const buildQuery = useCallback(
     (p: number) => ({
@@ -62,19 +63,26 @@ export default function StudentListPage() {
 
   // Load semesters for filter dropdown once
   useEffect(() => {
-    semesterApi.list().then((res) => setSemesters(res.data)).catch(() => {})
+    semesterApi.list().then((res) => setSemesters(res.data)).catch(() => {
+      toast.error('Failed to load semesters.')
+    })
   }, [])
 
   // Debounced re-fetch when filters change
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      void fetchAll(buildQuery(1))
+      return
+    }
     debounceRef.current = setTimeout(() => {
       void fetchAll(buildQuery(1))
     }, 300)
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [search, hasAccountFilter, semesterIdFilter, fetchAll, buildQuery])
+  }, [fetchAll, buildQuery])
 
   function handlePageChange(newPage: number) {
     void fetchAll(buildQuery(newPage))
@@ -87,7 +95,8 @@ export default function StudentListPage() {
       await studentApi.remove(deleteTarget.id)
       toast.success(`"${deleteTarget.fullName}" deleted.`)
       setDeleteTarget(null)
-      void fetchAll(buildQuery(page))
+      const nextPage = Math.max(1, Math.min(page, Math.ceil((total - 1) / PAGE_LIMIT)))
+      void fetchAll(buildQuery(nextPage))
     } catch (err) {
       const msg = extractErrorMessage(err)
       toast.error(msg)
