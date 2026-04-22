@@ -3,7 +3,7 @@
 ## Feature Development Process
 
 Every new feature follows three stages. **Do not write any code before the spec is approved.**
-**Hard rule: frontend work never begins until the user has verified the backend independently.**
+**Hard rule: the frontend implementation cycle never begins until the user has verified the backend independently.** Writing the frontend plan upfront (alongside the backend plan) is allowed — planning is design, not implementation.
 
 ---
 
@@ -17,7 +17,7 @@ Design the feature before any code is written. Cover all of the following during
 4. **Approaches** — Propose 2-3 implementation approaches with trade-offs. Get user agreement on direction.
 5. **Edge cases & constraints** — Business rules, error scenarios, access control.
 
-After spec is approved, the user will request both plans separately — backend first, then frontend. Each plan is written before its implementation cycle begins.
+After spec is approved, the user may request both plans upfront (backend and frontend together) or one at a time. Either way, each implementation cycle still runs sequentially — backend cycle must complete and be verified before the frontend implementation cycle starts.
 
 ---
 
