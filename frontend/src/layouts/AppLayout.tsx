@@ -58,6 +58,7 @@ export default function AppLayout() {
             <nav className="space-y-0.5">
               <NavLink
                 to="/admin/semesters"
+                end
                 className={({ isActive }) =>
                   `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
                     isActive
