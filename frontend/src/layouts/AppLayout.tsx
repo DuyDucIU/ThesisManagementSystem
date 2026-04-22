@@ -58,6 +58,7 @@ export default function AppLayout() {
             <nav className="space-y-0.5">
               <NavLink
                 to="/admin/semesters"
+                end
                 className={({ isActive }) =>
                   `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
                     isActive
@@ -67,6 +68,19 @@ export default function AppLayout() {
                 }
               >
                 Semesters
+              </NavLink>
+              <NavLink
+                to="/admin/students"
+                end
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
+                    isActive
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-on-surface hover:bg-surface-container'
+                  }`
+                }
+              >
+                Students
               </NavLink>
               <NavLink
                 to="/admin/students/import"

@@ -82,7 +82,9 @@ export class SemesterService {
     }
 
     if (!dto.code && !dto.name && !dto.startDate && !dto.endDate) {
-      throw new BadRequestException('At least one field must be provided for update');
+      throw new BadRequestException(
+        'At least one field must be provided for update',
+      );
     }
 
     const startDate = dto.startDate

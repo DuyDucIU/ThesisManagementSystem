@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
-import { SemesterStatus } from '@prisma/client';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
+import { Prisma, SemesterStatus } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import { StudentService } from './student.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -30,8 +34,23 @@ describe('StudentService', () => {
   let service: StudentService;
   let prisma: {
     semester: { findFirst: jest.Mock };
-    student: { findUnique: jest.Mock; upsert: jest.Mock };
-    semesterStudent: { findUnique: jest.Mock; create: jest.Mock };
+    student: {
+      findUnique: jest.Mock;
+      upsert: jest.Mock;
+      findMany: jest.Mock;
+      count: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
+      create: jest.Mock;
+    };
+    semesterStudent: {
+      findUnique: jest.Mock;
+      create: jest.Mock;
+      findMany: jest.Mock;
+      deleteMany: jest.Mock;
+    };
+    thesis: { count: jest.Mock };
+    $transaction: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -42,8 +61,23 @@ describe('StudentService', () => {
           provide: PrismaService,
           useValue: {
             semester: { findFirst: jest.fn() },
-            student: { findUnique: jest.fn(), upsert: jest.fn() },
-            semesterStudent: { findUnique: jest.fn(), create: jest.fn() },
+            student: {
+              findUnique: jest.fn(),
+              upsert: jest.fn(),
+              findMany: jest.fn(),
+              count: jest.fn(),
+              update: jest.fn(),
+              delete: jest.fn(),
+              create: jest.fn(),
+            },
+            semesterStudent: {
+              findUnique: jest.fn(),
+              create: jest.fn(),
+              findMany: jest.fn(),
+              deleteMany: jest.fn(),
+            },
+            thesis: { count: jest.fn() },
+            $transaction: jest.fn((queries) => Promise.resolve(queries)),
           },
         },
       ],
@@ -60,7 +94,9 @@ describe('StudentService', () => {
   describe('parseImport', () => {
     it('throws BadRequestException when no active semester exists', async () => {
       prisma.semester.findFirst.mockResolvedValue(null);
-      const buffer = buildExcelBuffer([['VO GIA', 'KIET', 'ititwe22055', 'ITITWE22055']]);
+      const buffer = buildExcelBuffer([
+        ['VO GIA', 'KIET', 'ititwe22055', 'ITITWE22055'],
+      ]);
 
       await expect(service.parseImport(buffer)).rejects.toThrow(
         new BadRequestException('No active semester found'),
@@ -98,9 +134,7 @@ describe('StudentService', () => {
     it('reports error for row missing studentId', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
 
-      const buffer = buildExcelBuffer([
-        ['VO GIA', 'KIET', 'ititwe22055', ''],
-      ]);
+      const buffer = buildExcelBuffer([['VO GIA', 'KIET', 'ititwe22055', '']]);
 
       const result = await service.parseImport(buffer);
 
@@ -133,15 +167,16 @@ describe('StudentService', () => {
       const result = await service.parseImport(buffer);
 
       expect(result.invalid).toBe(1);
-      expect(result.errors[0]).toEqual({ row: 2, reason: 'Missing first name' });
+      expect(result.errors[0]).toEqual({
+        row: 2,
+        reason: 'Missing first name',
+      });
     });
 
     it('reports error for row missing username', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
 
-      const buffer = buildExcelBuffer([
-        ['VO GIA', 'KIET', '', 'ITITWE22055'],
-      ]);
+      const buffer = buildExcelBuffer([['VO GIA', 'KIET', '', 'ITITWE22055']]);
 
       const result = await service.parseImport(buffer);
 
@@ -171,7 +206,10 @@ describe('StudentService', () => {
 
     it('flags already-enrolled students in alreadyEnrolledDetails', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
-      prisma.student.findUnique.mockResolvedValue({ id: 10, studentId: 'ITITWE22055' });
+      prisma.student.findUnique.mockResolvedValue({
+        id: 10,
+        studentId: 'ITITWE22055',
+      });
       prisma.semesterStudent.findUnique.mockResolvedValue({ id: 5 });
 
       const buffer = buildExcelBuffer([
@@ -210,7 +248,9 @@ describe('StudentService', () => {
   describe('importStudents', () => {
     it('throws BadRequestException when no active semester exists', async () => {
       prisma.semester.findFirst.mockResolvedValue(null);
-      const buffer = buildExcelBuffer([['VO GIA', 'KIET', 'ititwe22055', 'ITITWE22055']]);
+      const buffer = buildExcelBuffer([
+        ['VO GIA', 'KIET', 'ititwe22055', 'ITITWE22055'],
+      ]);
 
       await expect(service.importStudents(buffer)).rejects.toThrow(
         new BadRequestException('No active semester found'),
@@ -228,7 +268,12 @@ describe('StudentService', () => {
 
     it('creates student and semesterStudent for a new valid row', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
-      const createdStudent = { id: 1, studentId: 'ITITWE22055', fullName: 'VO GIA KIET', email: 'ititwe22055@student.hcmiu.edu.vn' };
+      const createdStudent = {
+        id: 1,
+        studentId: 'ITITWE22055',
+        fullName: 'VO GIA KIET',
+        email: 'ititwe22055@student.hcmiu.edu.vn',
+      };
       prisma.student.upsert.mockResolvedValue(createdStudent);
       prisma.semesterStudent.findUnique.mockResolvedValue(null);
       prisma.semesterStudent.create.mockResolvedValue({ id: 1 });
@@ -257,7 +302,10 @@ describe('StudentService', () => {
 
     it('skips already-enrolled student and adds to skippedDetails', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
-      prisma.student.upsert.mockResolvedValue({ id: 10, studentId: 'ITITWE22055' });
+      prisma.student.upsert.mockResolvedValue({
+        id: 10,
+        studentId: 'ITITWE22055',
+      });
       prisma.semesterStudent.findUnique.mockResolvedValue({ id: 5 });
 
       const buffer = buildExcelBuffer([
@@ -279,9 +327,7 @@ describe('StudentService', () => {
     it('skips invalid row and adds to skippedDetails with null studentId', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
 
-      const buffer = buildExcelBuffer([
-        ['VO GIA', 'KIET', 'ititwe22055', ''],
-      ]);
+      const buffer = buildExcelBuffer([['VO GIA', 'KIET', 'ititwe22055', '']]);
 
       const result = await service.importStudents(buffer);
 
@@ -319,6 +365,316 @@ describe('StudentService', () => {
       expect(result.imported).toBe(1);
       expect(result.skipped).toBe(2);
       expect(result.skippedDetails).toHaveLength(2);
+    });
+  });
+
+  // ─── findAll ─────────────────────────────────────────────────────────────────
+
+  describe('findAll', () => {
+    const mockStudents = [
+      {
+        id: 1,
+        studentId: 'ITITWE22055',
+        fullName: 'Vo Gia Kiet',
+        email: 'ititwe22055@student.hcmiu.edu.vn',
+        userId: null,
+      },
+      {
+        id: 2,
+        studentId: 'ITIT22001',
+        fullName: 'Nguyen Van An',
+        email: 'itit22001@student.hcmiu.edu.vn',
+        userId: 5,
+      },
+    ];
+
+    it('returns paginated students with default page and limit', async () => {
+      prisma.student.findMany.mockResolvedValue(mockStudents);
+      prisma.student.count.mockResolvedValue(2);
+
+      const result = await service.findAll({});
+
+      expect(prisma.student.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 0, take: 20 }),
+      );
+      expect(result.total).toBe(2);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+      expect(result.data).toHaveLength(2);
+    });
+
+    it('maps userId presence to hasAccount boolean', async () => {
+      prisma.student.findMany.mockResolvedValue(mockStudents);
+      prisma.student.count.mockResolvedValue(2);
+
+      const result = await service.findAll({});
+
+      expect(result.data[0].hasAccount).toBe(false);
+      expect(result.data[1].hasAccount).toBe(true);
+    });
+
+    it('applies page and limit to skip/take', async () => {
+      prisma.student.findMany.mockResolvedValue([]);
+      prisma.student.count.mockResolvedValue(0);
+
+      await service.findAll({ page: 3, limit: 10 });
+
+      expect(prisma.student.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 20, take: 10 }),
+      );
+    });
+
+    it('does not include semesterStudent in data when semesterId is not provided', async () => {
+      prisma.student.findMany.mockResolvedValue([mockStudents[0]]);
+      prisma.student.count.mockResolvedValue(1);
+
+      const result = await service.findAll({});
+
+      expect('semesterStudent' in result.data[0]).toBe(false);
+      expect(prisma.semesterStudent.findMany).not.toHaveBeenCalled();
+    });
+
+    it('fetches and attaches semesterStudent when semesterId is provided', async () => {
+      prisma.student.findMany.mockResolvedValue([mockStudents[0]]);
+      prisma.student.count.mockResolvedValue(1);
+      prisma.semesterStudent.findMany.mockResolvedValue([
+        { studentId: 1, status: 'AVAILABLE' },
+      ]);
+
+      const result = await service.findAll({ semesterId: 7 });
+
+      expect(prisma.semesterStudent.findMany).toHaveBeenCalledWith({
+        where: { semesterId: 7, studentId: { in: [1] } },
+        select: { studentId: true, status: true },
+      });
+      expect(result.data[0].semesterStudent).toEqual({ status: 'AVAILABLE' });
+    });
+
+    it('sets semesterStudent to null for students not found in enrollment query', async () => {
+      prisma.student.findMany.mockResolvedValue([mockStudents[0]]);
+      prisma.student.count.mockResolvedValue(1);
+      prisma.semesterStudent.findMany.mockResolvedValue([]);
+
+      const result = await service.findAll({ semesterId: 7 });
+
+      expect(result.data[0].semesterStudent).toBeNull();
+    });
+  });
+
+  // ─── update ──────────────────────────────────────────────────────────────────
+
+  describe('update', () => {
+    const mockStudent = {
+      id: 1,
+      studentId: 'ITITWE22055',
+      fullName: 'Vo Gia Kiet',
+      email: 'ititwe22055@student.hcmiu.edu.vn',
+      userId: null,
+    };
+
+    it('throws NotFoundException when student does not exist', async () => {
+      prisma.student.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.update(999, { fullName: 'New Name' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException when no fields are provided', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+
+      await expect(service.update(1, {})).rejects.toThrow(
+        new BadRequestException('At least one field must be provided'),
+      );
+    });
+
+    it('updates fullName and returns student shape with hasAccount', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      prisma.student.update.mockResolvedValue({
+        ...mockStudent,
+        fullName: 'Updated Name',
+      });
+
+      const result = await service.update(1, { fullName: 'Updated Name' });
+
+      expect(prisma.student.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { fullName: 'Updated Name' },
+      });
+      expect(result).toEqual({
+        id: 1,
+        studentId: 'ITITWE22055',
+        fullName: 'Updated Name',
+        email: 'ititwe22055@student.hcmiu.edu.vn',
+        hasAccount: false,
+      });
+    });
+
+    it('throws BadRequestException on studentId duplicate (P2002)', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      const p2002 = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+          meta: { target: 'students_student_id_key' },
+        },
+      );
+      prisma.student.update.mockRejectedValue(p2002);
+
+      await expect(
+        service.update(1, { studentId: 'DUPLICATE' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException on email duplicate (P2002)', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      const p2002 = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+          meta: { target: 'students_email_key' },
+        },
+      );
+      prisma.student.update.mockRejectedValue(p2002);
+
+      await expect(
+        service.update(1, { email: 'dup@student.hcmiu.edu.vn' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // ─── remove ──────────────────────────────────────────────────────────────────
+
+  describe('remove', () => {
+    const mockStudent = {
+      id: 1,
+      studentId: 'ITITWE22055',
+      fullName: 'Vo Gia Kiet',
+      email: 'ititwe22055@student.hcmiu.edu.vn',
+      userId: null,
+    };
+
+    it('throws NotFoundException when student does not exist', async () => {
+      prisma.student.findUnique.mockResolvedValue(null);
+
+      await expect(service.remove(999)).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ConflictException when student has thesis records', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      prisma.thesis.count.mockResolvedValue(1);
+
+      await expect(service.remove(1)).rejects.toThrow(
+        new ConflictException('Cannot delete student with active thesis work'),
+      );
+      expect(prisma.semesterStudent.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.student.delete).not.toHaveBeenCalled();
+    });
+
+    it('deletes semesterStudent records then student when no thesis exists', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      prisma.thesis.count.mockResolvedValue(0);
+      prisma.semesterStudent.deleteMany.mockResolvedValue({ count: 1 });
+      prisma.student.delete.mockResolvedValue(mockStudent);
+
+      await service.remove(1);
+
+      expect(prisma.semesterStudent.deleteMany).toHaveBeenCalledWith({
+        where: { studentId: 1 },
+      });
+      expect(prisma.student.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+    });
+
+    it('deletes student with no semesterStudent records', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      prisma.thesis.count.mockResolvedValue(0);
+      prisma.semesterStudent.deleteMany.mockResolvedValue({ count: 0 });
+      prisma.student.delete.mockResolvedValue(mockStudent);
+
+      await service.remove(1);
+
+      expect(prisma.semesterStudent.deleteMany).toHaveBeenCalledWith({
+        where: { studentId: 1 },
+      });
+      expect(prisma.student.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+    });
+  });
+
+  // ─── create ──────────────────────────────────────────────────────────────────
+
+  describe('create', () => {
+    it('creates and returns a student with hasAccount: false', async () => {
+      const dto = {
+        studentId: 'ITITIU21001',
+        fullName: 'Nguyen Van A',
+        email: 'nvana@student.hcmiu.edu.vn',
+      };
+      prisma.student.create.mockResolvedValue({
+        id: 10,
+        studentId: dto.studentId,
+        fullName: dto.fullName,
+        email: dto.email,
+        userId: null,
+      });
+
+      const result = await service.create(dto);
+
+      expect(prisma.student.create).toHaveBeenCalledWith({
+        data: {
+          studentId: dto.studentId,
+          fullName: dto.fullName,
+          email: dto.email,
+        },
+      });
+      expect(result).toEqual({
+        id: 10,
+        studentId: dto.studentId,
+        fullName: dto.fullName,
+        email: dto.email,
+        hasAccount: false,
+      });
+    });
+
+    it('throws BadRequestException on studentId duplicate (P2002)', async () => {
+      const p2002 = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+          meta: { target: 'students_student_id_key' },
+        },
+      );
+      prisma.student.create.mockRejectedValue(p2002);
+
+      await expect(
+        service.create({
+          studentId: 'DUP',
+          fullName: 'Name',
+          email: 'a@b.com',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException on email duplicate (P2002)', async () => {
+      const p2002 = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+          meta: { target: 'students_email_key' },
+        },
+      );
+      prisma.student.create.mockRejectedValue(p2002);
+
+      await expect(
+        service.create({
+          studentId: 'NEW001',
+          fullName: 'Name',
+          email: 'dup@student.hcmiu.edu.vn',
+        }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

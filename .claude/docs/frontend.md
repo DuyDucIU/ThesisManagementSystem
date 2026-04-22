@@ -21,8 +21,13 @@ frontend/src/
 │   │   └── api.ts                      # Semester CRUD + status-transition API calls
 │   └── student/
 │       ├── components/
-│       │   └── StudentImportPage.tsx   # Three-state import page (upload → parsed → imported)
-│       └── api.ts                      # Student import API (parseImport, importStudents)
+│       │   ├── StudentListPage.tsx     # Admin list page with filters, table, action dialogs
+│       │   ├── StudentEditModal.tsx    # Edit modal (Dialog)
+│       │   ├── StudentCreateModal.tsx  # Create modal (Dialog)
+│       │   └── StudentImportPage.tsx   # Excel import flow (parse → confirm → import)
+│       ├── store/
+│       │   └── studentStore.ts         # Zustand store for student state
+│       └── api.ts                      # Student CRUD + import API calls
 ├── components/
 │   └── ui/                         # shadcn/ui generated components (Button, Input, Label, Dialog, Select, AlertDialog, Sonner, etc.)
 ├── layouts/
@@ -74,6 +79,7 @@ React Router v7 (`react-router` package):
 | `/login` | `LoginPage` | `PublicRoute` — redirects to `/` if already authenticated |
 | `/` | Redirect → `/admin/semesters` | `ProtectedRoute` |
 | `/admin/semesters` | `SemesterListPage` | `ProtectedRoute` → `AdminRoute` |
+| `/admin/students` | `StudentListPage` | `ProtectedRoute` → `AdminRoute` |
 | `/admin/students/import` | `StudentImportPage` | `ProtectedRoute` → `AdminRoute` |
 | `*` | Redirect → `/login` | — |
 
@@ -84,6 +90,36 @@ Guards live in `src/router/guards.tsx` (separate from route config to satisfy re
 - **`AdminRoute`** — requires `user.role === 'ADMIN'`; redirects to `/` otherwise. Nest inside `ProtectedRoute` so the user check runs first.
 
 Admin routes are nested: `ProtectedRoute` → `AppLayout` → `AdminRoute` → page component.
+
+## Zustand Store Pattern
+
+Every feature store follows this shape (modelled on `semesterStore.ts` / `studentStore.ts`):
+
+```typescript
+interface FeatureState {
+  items: ItemType[]
+  total: number
+  page: number
+  loading: boolean
+  error: string | null          // REQUIRED — do not omit; reviewers will catch it
+  fetchAll: (query?: QueryType) => Promise<void>
+}
+
+export const useFeatureStore = create<FeatureState>((set) => ({
+  items: [], total: 0, page: 1, loading: false, error: null,
+  fetchAll: async (query) => {
+    set({ loading: true, error: null })
+    try {
+      const res = await featureApi.list(query)
+      set({ items: res.data.data, total: res.data.total, page: res.data.page, loading: false })
+    } catch {
+      set({ error: 'Failed to load items.', loading: false })
+    }
+  },
+}))
+```
+
+Key invariants: clear `error` at fetch start, set it on failure, never leave `loading: true` in the error path.
 
 ## Auth State
 
@@ -161,3 +197,16 @@ Add new admin nav entries to the sidebar's `<nav>` block in `AppLayout.tsx`.
 - **shadcn init** — only neutral base colors are valid in shadcn v4. Use zinc, then manually set `--primary` to `#00346d` (Oxford Blue) in `index.css`. Also move `shadcn` from `dependencies` to `devDependencies` after init.
 - **react-refresh ESLint rule** — component files cannot mix component and non-component exports. Router guard components must live in a separate file (e.g. `guards.tsx`), not alongside the `router` config object.
 - **Sonner toasts** — use `import { toast } from 'sonner'` for success/error feedback. The `<Toaster />` provider is mounted in `App.tsx`.
+- **shadcn Dialog accessibility warning** — `DialogContent` logs `Warning: Missing Description or aria-describedby={undefined}` unless you add `<DialogDescription>` or pass `aria-describedby={undefined}` on `DialogContent`. The warning fires at runtime (Vite console) but doesn't break behaviour. Silence it with `<DialogContent aria-describedby={undefined}>` when no visible description is needed.
+- **shadcn form accessibility** — form modals must use a `<form onSubmit={handleSubmit}>` wrapper with `e.preventDefault()`. Labels need `htmlFor`, inputs need matching `id`. Buttons need explicit `type="submit"` or `type="button"` — otherwise the browser defaults to submit and double-fires the handler.
+- **Debounce + immediate mount fetch** — a bare `setTimeout(..., 300)` in a `useEffect` delays the first render by 300ms. Fix with an `isFirstRender` ref: fire immediately the first time, debounce on subsequent changes:
+  ```typescript
+  const isFirstRender = useRef(true)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (isFirstRender.current) { isFirstRender.current = false; void fetch(); return }
+    debounceRef.current = setTimeout(() => void fetch(), 300)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [deps])
+  ```
+- **Post-delete pagination clamp** — after deleting the last item on the last page, clamp to the new valid last page before re-fetching: `Math.max(1, Math.min(page, Math.ceil((total - 1) / PAGE_LIMIT)))`. Without this the user lands on an empty page.

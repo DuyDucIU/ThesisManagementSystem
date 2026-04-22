@@ -100,7 +100,7 @@ For lists with pagination (when needed):
   "data": [...],
   "total": 42,
   "page": 1,
-  "pageSize": 20
+  "limit": 20
 }
 ```
 

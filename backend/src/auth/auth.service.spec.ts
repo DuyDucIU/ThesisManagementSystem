@@ -91,7 +91,10 @@ describe('AuthService', () => {
     });
 
     it('throws 401 "Account is disabled" when user is inactive', async () => {
-      prisma.user.findUnique.mockResolvedValue({ ...mockUser, isActive: false } as any);
+      prisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        isActive: false,
+      } as any);
 
       await expect(service.login('john.doe', 'password')).rejects.toThrow(
         new UnauthorizedException('Account is disabled'),
@@ -111,7 +114,10 @@ describe('AuthService', () => {
   describe('refresh', () => {
     it('returns new tokens for valid refresh token', async () => {
       jwtService.verifyAsync.mockResolvedValue({ sub: 1, jti: 'test-uuid' });
-      prisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'hashed-jti' } as any);
+      prisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        refreshToken: 'hashed-jti',
+      } as any);
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
       jest.spyOn(bcrypt, 'hash').mockResolvedValue('new-hashed-jti' as never);
       prisma.user.update.mockResolvedValue(mockUser as any);
@@ -141,7 +147,10 @@ describe('AuthService', () => {
 
     it('throws 401 "Invalid refresh token" when no stored token in DB', async () => {
       jwtService.verifyAsync.mockResolvedValue({ sub: 1, jti: 'test-uuid' });
-      prisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: null } as any);
+      prisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        refreshToken: null,
+      } as any);
 
       await expect(service.refresh('valid.token')).rejects.toThrow(
         new UnauthorizedException('Invalid refresh token'),
@@ -150,7 +159,10 @@ describe('AuthService', () => {
 
     it('throws 401 "Invalid refresh token" when jti does not match stored hash', async () => {
       jwtService.verifyAsync.mockResolvedValue({ sub: 1, jti: 'test-uuid' });
-      prisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'hashed-jti' } as any);
+      prisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        refreshToken: 'hashed-jti',
+      } as any);
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
 
       await expect(service.refresh('tampered.token')).rejects.toThrow(

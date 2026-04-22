@@ -1,8 +1,10 @@
+// frontend/src/router/index.tsx
 import { createBrowserRouter, Navigate } from 'react-router'
 import { ProtectedRoute, PublicRoute, AdminRoute } from './guards'
 import LoginPage from '../features/auth/components/LoginPage'
 import AppLayout from '../layouts/AppLayout'
 import SemesterListPage from '../features/semester/components/SemesterListPage'
+import StudentListPage from '../features/student/components/StudentListPage'
 import StudentImportPage from '../features/student/components/StudentImportPage'
 
 const router = createBrowserRouter([
@@ -21,6 +23,7 @@ const router = createBrowserRouter([
             element: <AdminRoute />,
             children: [
               { path: '/admin/semesters', element: <SemesterListPage /> },
+              { path: '/admin/students', element: <StudentListPage /> },
               { path: '/admin/students/import', element: <StudentImportPage /> },
             ],
           },
