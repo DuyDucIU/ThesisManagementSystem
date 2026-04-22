@@ -48,9 +48,7 @@ export class StudentService {
         username: String(row[2] ?? '').trim(),
         studentId: String(row[3] ?? '').trim(),
       }))
-      .filter(
-        (r) => r.lastName || r.firstName || r.username || r.studentId,
-      );
+      .filter((r) => r.lastName || r.firstName || r.username || r.studentId);
   }
 
   private validateRow(row: RawRow, seenIds: Set<string>): string | null {
@@ -307,7 +305,9 @@ export class StudentService {
         const rawTarget = e.meta?.target;
         const target = Array.isArray(rawTarget)
           ? rawTarget.join(',')
-          : String(rawTarget ?? '');
+          : typeof rawTarget === 'string'
+            ? rawTarget
+            : '';
         if (target.includes('student_id') || target.includes('studentId')) {
           throw new BadRequestException(
             `Student ID '${dto.studentId}' is already in use`,
@@ -318,7 +318,9 @@ export class StudentService {
             `Email '${dto.email}' is already in use`,
           );
         }
-        throw new BadRequestException('A field conflicts with an existing record');
+        throw new BadRequestException(
+          'A field conflicts with an existing record',
+        );
       }
       throw e;
     }
