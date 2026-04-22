@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsOptional, IsString, IsBoolean, IsInt, Min } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, IsInt, Min, Max } from 'class-validator';
 
 export class QueryStudentDto {
   @IsOptional()
@@ -31,5 +31,6 @@ export class QueryStudentDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(100)
   limit?: number;
 }
