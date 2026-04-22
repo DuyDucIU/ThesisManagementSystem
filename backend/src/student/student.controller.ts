@@ -19,6 +19,7 @@ import * as multer from 'multer';
 import { Role } from '@prisma/client';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { StudentService } from './student.service';
+import { CreateStudentDto } from './dto/create-student.dto';
 import { QueryStudentDto } from './dto/query-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 
@@ -41,6 +42,12 @@ export class StudentController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.studentService.remove(id);
+  }
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  create(@Body() dto: CreateStudentDto) {
+    return this.studentService.create(dto);
   }
 
   @Post('import')

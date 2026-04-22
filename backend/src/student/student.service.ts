@@ -14,6 +14,7 @@ import {
   AlreadyEnrolledDetail,
   SkippedDetail,
 } from './dto/import-student.dto';
+import { CreateStudentDto } from './dto/create-student.dto';
 import { QueryStudentDto } from './dto/query-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 
@@ -30,6 +31,49 @@ interface RawRow {
 @Injectable()
 export class StudentService {
   constructor(private prisma: PrismaService) {}
+
+  async create(dto: CreateStudentDto) {
+    try {
+      const student = await this.prisma.student.create({
+        data: {
+          studentId: dto.studentId,
+          fullName: dto.fullName,
+          email: dto.email,
+        },
+      });
+      return {
+        id: student.id,
+        studentId: student.studentId,
+        fullName: student.fullName,
+        email: student.email,
+        hasAccount: false,
+      };
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        const rawTarget = e.meta?.target;
+        const target = Array.isArray(rawTarget)
+          ? rawTarget.join(',')
+          : typeof rawTarget === 'string'
+            ? rawTarget
+            : '';
+        if (target.includes('student_id') || target.includes('studentId')) {
+          throw new BadRequestException(
+            `Student ID '${dto.studentId}' is already in use`,
+          );
+        }
+        if (target.includes('email')) {
+          throw new BadRequestException(
+            `Email '${dto.email}' is already in use`,
+          );
+        }
+        throw new BadRequestException('A field conflicts with an existing record');
+      }
+      throw e;
+    }
+  }
 
   private extractRows(buffer: Buffer): RawRow[] {
     const workbook = XLSX.read(buffer, { type: 'buffer' });

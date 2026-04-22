@@ -41,6 +41,7 @@ describe('StudentService', () => {
       count: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
+      create: jest.Mock;
     };
     semesterStudent: {
       findUnique: jest.Mock;
@@ -67,6 +68,7 @@ describe('StudentService', () => {
               count: jest.fn(),
               update: jest.fn(),
               delete: jest.fn(),
+              create: jest.fn(),
             },
             semesterStudent: {
               findUnique: jest.fn(),
@@ -597,6 +599,66 @@ describe('StudentService', () => {
         where: { studentId: 1 },
       });
       expect(prisma.student.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+    });
+  });
+
+  // ─── create ──────────────────────────────────────────────────────────────────
+
+  describe('create', () => {
+    it('creates and returns a student with hasAccount: false', async () => {
+      const dto = {
+        studentId: 'ITITIU21001',
+        fullName: 'Nguyen Van A',
+        email: 'nvana@student.hcmiu.edu.vn',
+      };
+      prisma.student.create.mockResolvedValue({
+        id: 10,
+        studentId: dto.studentId,
+        fullName: dto.fullName,
+        email: dto.email,
+        userId: null,
+      });
+
+      const result = await service.create(dto);
+
+      expect(prisma.student.create).toHaveBeenCalledWith({
+        data: {
+          studentId: dto.studentId,
+          fullName: dto.fullName,
+          email: dto.email,
+        },
+      });
+      expect(result).toEqual({
+        id: 10,
+        studentId: dto.studentId,
+        fullName: dto.fullName,
+        email: dto.email,
+        hasAccount: false,
+      });
+    });
+
+    it('throws BadRequestException on studentId duplicate (P2002)', async () => {
+      const p2002 = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        { code: 'P2002', clientVersion: '5.0.0', meta: { target: 'students_student_id_key' } },
+      );
+      prisma.student.create.mockRejectedValue(p2002);
+
+      await expect(
+        service.create({ studentId: 'DUP', fullName: 'Name', email: 'a@b.com' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException on email duplicate (P2002)', async () => {
+      const p2002 = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        { code: 'P2002', clientVersion: '5.0.0', meta: { target: 'students_email_key' } },
+      );
+      prisma.student.create.mockRejectedValue(p2002);
+
+      await expect(
+        service.create({ studentId: 'NEW001', fullName: 'Name', email: 'dup@student.hcmiu.edu.vn' }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

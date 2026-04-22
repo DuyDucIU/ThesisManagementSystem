@@ -15,7 +15,8 @@ const mockImportResult = { imported: 1, skipped: 0, skippedDetails: [] };
 
 describe('StudentController', () => {
   let controller: StudentController;
-  let service: { parseImport: jest.Mock; importStudents: jest.Mock };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let service: any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
