@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as XLSX from 'xlsx';
-import { SemesterStatus } from '@prisma/client';
+import { Prisma, SemesterStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   ParseImportResult,
@@ -9,6 +9,7 @@ import {
   AlreadyEnrolledDetail,
   SkippedDetail,
 } from './dto/import-student.dto';
+import { QueryStudentDto } from './dto/query-student.dto';
 
 const EMAIL_DOMAIN = 'student.hcmiu.edu.vn';
 
@@ -177,5 +178,71 @@ export class StudentService {
     }
 
     return { imported, skipped: skippedDetails.length, skippedDetails };
+  }
+
+  async findAll(query: QueryStudentDto) {
+    const { search, hasAccount, semesterId, page = 1, limit = 20 } = query;
+    const skip = (page - 1) * limit;
+    const where: Prisma.StudentWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { fullName: { contains: search } },
+        { studentId: { contains: search } },
+        { email: { contains: search } },
+      ];
+    }
+
+    if (hasAccount === true) where.userId = { not: null };
+    else if (hasAccount === false) where.userId = null;
+
+    if (semesterId) {
+      where.semesterStudents = { some: { semesterId } };
+    }
+
+    const [students, total] = await Promise.all([
+      this.prisma.student.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { fullName: 'asc' },
+      }),
+      this.prisma.student.count({ where }),
+    ]);
+
+    const enrollmentMap = new Map<number, string>();
+    if (semesterId !== undefined && students.length > 0) {
+      const enrollments = await this.prisma.semesterStudent.findMany({
+        where: {
+          semesterId,
+          studentId: { in: students.map((s) => s.id) },
+        },
+        select: { studentId: true, status: true },
+      });
+      for (const e of enrollments) {
+        enrollmentMap.set(e.studentId, e.status);
+      }
+    }
+
+    const data = students.map((s) => {
+      const base = {
+        id: s.id,
+        studentId: s.studentId,
+        fullName: s.fullName,
+        email: s.email,
+        hasAccount: s.userId !== null,
+      };
+      if (semesterId !== undefined) {
+        return {
+          ...base,
+          semesterStudent: enrollmentMap.has(s.id)
+            ? { status: enrollmentMap.get(s.id) }
+            : null,
+        };
+      }
+      return base;
+    });
+
+    return { data, total, page, limit };
   }
 }

@@ -347,4 +347,97 @@ describe('StudentService', () => {
       expect(result.skippedDetails).toHaveLength(2);
     });
   });
+
+  // ─── findAll ─────────────────────────────────────────────────────────────────
+
+  describe('findAll', () => {
+    const mockStudents = [
+      {
+        id: 1,
+        studentId: 'ITITWE22055',
+        fullName: 'Vo Gia Kiet',
+        email: 'ititwe22055@student.hcmiu.edu.vn',
+        userId: null,
+      },
+      {
+        id: 2,
+        studentId: 'ITIT22001',
+        fullName: 'Nguyen Van An',
+        email: 'itit22001@student.hcmiu.edu.vn',
+        userId: 5,
+      },
+    ];
+
+    it('returns paginated students with default page and limit', async () => {
+      prisma.student.findMany.mockResolvedValue(mockStudents);
+      prisma.student.count.mockResolvedValue(2);
+
+      const result = await service.findAll({});
+
+      expect(prisma.student.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 0, take: 20 }),
+      );
+      expect(result.total).toBe(2);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+      expect(result.data).toHaveLength(2);
+    });
+
+    it('maps userId presence to hasAccount boolean', async () => {
+      prisma.student.findMany.mockResolvedValue(mockStudents);
+      prisma.student.count.mockResolvedValue(2);
+
+      const result = await service.findAll({});
+
+      expect(result.data[0].hasAccount).toBe(false);
+      expect(result.data[1].hasAccount).toBe(true);
+    });
+
+    it('applies page and limit to skip/take', async () => {
+      prisma.student.findMany.mockResolvedValue([]);
+      prisma.student.count.mockResolvedValue(0);
+
+      await service.findAll({ page: 3, limit: 10 });
+
+      expect(prisma.student.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 20, take: 10 }),
+      );
+    });
+
+    it('does not include semesterStudent in data when semesterId is not provided', async () => {
+      prisma.student.findMany.mockResolvedValue([mockStudents[0]]);
+      prisma.student.count.mockResolvedValue(1);
+
+      const result = await service.findAll({});
+
+      expect('semesterStudent' in result.data[0]).toBe(false);
+      expect(prisma.semesterStudent.findMany).not.toHaveBeenCalled();
+    });
+
+    it('fetches and attaches semesterStudent when semesterId is provided', async () => {
+      prisma.student.findMany.mockResolvedValue([mockStudents[0]]);
+      prisma.student.count.mockResolvedValue(1);
+      prisma.semesterStudent.findMany.mockResolvedValue([
+        { studentId: 1, status: 'AVAILABLE' },
+      ]);
+
+      const result = await service.findAll({ semesterId: 7 });
+
+      expect(prisma.semesterStudent.findMany).toHaveBeenCalledWith({
+        where: { semesterId: 7, studentId: { in: [1] } },
+        select: { studentId: true, status: true },
+      });
+      expect(result.data[0].semesterStudent).toEqual({ status: 'AVAILABLE' });
+    });
+
+    it('sets semesterStudent to null for students not found in enrollment query', async () => {
+      prisma.student.findMany.mockResolvedValue([mockStudents[0]]);
+      prisma.student.count.mockResolvedValue(1);
+      prisma.semesterStudent.findMany.mockResolvedValue([]);
+
+      const result = await service.findAll({ semesterId: 7 });
+
+      expect(result.data[0].semesterStudent).toBeNull();
+    });
+  });
 });
