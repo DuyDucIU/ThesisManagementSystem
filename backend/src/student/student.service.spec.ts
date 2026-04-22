@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Prisma, SemesterStatus } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import { StudentService } from './student.service';
@@ -514,6 +514,63 @@ describe('StudentService', () => {
       await expect(
         service.update(1, { email: 'dup@student.hcmiu.edu.vn' }),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // ─── remove ──────────────────────────────────────────────────────────────────
+
+  describe('remove', () => {
+    const mockStudent = {
+      id: 1,
+      studentId: 'ITITWE22055',
+      fullName: 'Vo Gia Kiet',
+      email: 'ititwe22055@student.hcmiu.edu.vn',
+      userId: null,
+    };
+
+    it('throws NotFoundException when student does not exist', async () => {
+      prisma.student.findUnique.mockResolvedValue(null);
+
+      await expect(service.remove(999)).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ConflictException when student has thesis records', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      prisma.thesis.count.mockResolvedValue(1);
+
+      await expect(service.remove(1)).rejects.toThrow(
+        new ConflictException('Cannot delete student with active thesis work'),
+      );
+      expect(prisma.semesterStudent.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.student.delete).not.toHaveBeenCalled();
+    });
+
+    it('deletes semesterStudent records then student when no thesis exists', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      prisma.thesis.count.mockResolvedValue(0);
+      prisma.semesterStudent.deleteMany.mockResolvedValue({ count: 1 });
+      prisma.student.delete.mockResolvedValue(mockStudent);
+
+      await service.remove(1);
+
+      expect(prisma.semesterStudent.deleteMany).toHaveBeenCalledWith({
+        where: { studentId: 1 },
+      });
+      expect(prisma.student.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+    });
+
+    it('deletes student with no semesterStudent records', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      prisma.thesis.count.mockResolvedValue(0);
+      prisma.semesterStudent.deleteMany.mockResolvedValue({ count: 0 });
+      prisma.student.delete.mockResolvedValue(mockStudent);
+
+      await service.remove(1);
+
+      expect(prisma.semesterStudent.deleteMany).toHaveBeenCalledWith({
+        where: { studentId: 1 },
+      });
+      expect(prisma.student.delete).toHaveBeenCalledWith({ where: { id: 1 } });
     });
   });
 });

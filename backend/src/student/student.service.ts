@@ -251,6 +251,24 @@ export class StudentService {
     return { data, total, page, limit };
   }
 
+  async remove(id: number) {
+    const student = await this.prisma.student.findUnique({ where: { id } });
+    if (!student) throw new NotFoundException(`Student #${id} not found`);
+
+    const thesisCount = await this.prisma.thesis.count({
+      where: { semesterStudent: { studentId: id } },
+    });
+
+    if (thesisCount > 0) {
+      throw new ConflictException(
+        'Cannot delete student with active thesis work',
+      );
+    }
+
+    await this.prisma.semesterStudent.deleteMany({ where: { studentId: id } });
+    await this.prisma.student.delete({ where: { id } });
+  }
+
   async update(id: number, dto: UpdateStudentDto) {
     const student = await this.prisma.student.findUnique({ where: { id } });
     if (!student) throw new NotFoundException(`Student #${id} not found`);
