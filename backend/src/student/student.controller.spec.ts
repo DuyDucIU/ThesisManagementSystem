@@ -27,6 +27,7 @@ describe('StudentController', () => {
           useValue: {
             parseImport: jest.fn().mockResolvedValue(mockParseResult),
             importStudents: jest.fn().mockResolvedValue(mockImportResult),
+            create: jest.fn().mockResolvedValue({ id: 10, studentId: 'S1', fullName: 'Name', email: 'e@x.com', hasAccount: false }),
             findAll: jest
               .fn()
               .mockResolvedValue({ data: [], total: 0, page: 1, limit: 20 }),
@@ -93,6 +94,12 @@ describe('StudentController', () => {
     ).rejects.toThrow(
       new BadRequestException('action must be "parse" or "import"'),
     );
+  });
+
+  it('delegates create to service with dto', async () => {
+    const dto = { studentId: 'S1', fullName: 'Name', email: 'e@x.com' };
+    await controller.create(dto as any);
+    expect(service.create).toHaveBeenCalledWith(dto);
   });
 
   it('delegates findAll to service with query', async () => {
