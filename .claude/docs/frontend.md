@@ -43,7 +43,7 @@ frontend/src/
 └── index.css                       # Tailwind import + shadcn CSS variable theme
 ```
 
-**Pattern:** New features go under `src/features/<feature-name>/` with `components/`, `store/`, `api.ts` sub-folders.
+**Pattern:** New features go under `src/features/<feature-name>/` with `components/`, `store/`, `api.ts` sub-folders. The `store/` sub-folder is optional — use local React state when data is page-scoped and not shared across the app (e.g. `StudentImportPage` uses no Zustand store).
 
 ## Build Tooling
 
@@ -150,6 +150,16 @@ Axios instance at `src/lib/axios.ts`:
 ## API Integration
 
 All auth API calls go through `src/features/auth/api.ts` (`authApi.login/refresh/logout/me`). Future features add their own `src/features/<feature>/api.ts`.
+
+**Multipart file uploads:** Pass a `FormData` object directly to `api.post<T>()`. Axios automatically sets the correct `multipart/form-data` boundary — do not set `Content-Type` manually.
+
+```typescript
+const form = new FormData()
+form.append('file', file)
+return api.post<ParseImportResult>('/students/import?action=parse', form)
+```
+
+**`extractErrorMessage` helper:** Each feature's `api.ts` exports an `extractErrorMessage(err: unknown): string` function that safely unwraps NestJS error shapes (both `string` and `string[]` message variants). This is currently duplicated across feature modules — a future cleanup should extract it to `src/lib/errors.ts`.
 
 Vite proxy config (`vite.config.ts`):
 ```typescript

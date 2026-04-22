@@ -9,6 +9,7 @@ A web application for managing academic theses — tracking submissions, reviews
 | Backend     | NestJS (Node.js + TypeScript) | 11.x    |
 | ORM         | Prisma (MySQL)                | 6.x     |
 | Auth        | JWT + Passport.js + bcrypt    | —       |
+| Excel parse | xlsx                          | 0.18.x  |
 | Frontend    | React + Vite (TypeScript)     | 19.x    |
 | Styling     | Tailwind CSS v4 + shadcn/ui   | 4.x     |
 | State       | Zustand                       | 5.x     |
@@ -31,7 +32,7 @@ ThesisManagementSystem/
 │   └── test/             # E2E tests
 ├── frontend/             # React SPA (Vite) — see frontend.md
 │   └── src/
-│       ├── features/     # Feature modules (auth, semester, ...) — components, store, api
+│       ├── features/     # Feature modules (auth, semester, student, ...) — components, store, api
 │       ├── components/   # Shared UI — shadcn/ui components under ui/
 │       ├── layouts/      # App shell (AppLayout)
 │       ├── router/       # Route config + guards
