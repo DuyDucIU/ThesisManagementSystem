@@ -62,6 +62,18 @@ Paginated, filtered list of all students.
 
 ---
 
+### `POST /students`
+
+Create a new student profile record.
+
+**Body:** `{ studentId: string, fullName: string, email: string }` — all fields required.
+
+**Responses:**
+- `201` — created student: `{ id, studentId, fullName, email, hasAccount: false }`
+- `400` — `studentId` or `email` already taken; or validation error (missing field, invalid email)
+
+---
+
 ### `PATCH /students/:id`
 
 Update one or more profile fields.

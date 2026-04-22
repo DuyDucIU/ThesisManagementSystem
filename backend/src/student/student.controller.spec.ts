@@ -15,8 +15,7 @@ const mockImportResult = { imported: 1, skipped: 0, skippedDetails: [] };
 
 describe('StudentController', () => {
   let controller: StudentController;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let service: any;
+  let service: jest.Mocked<StudentService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -27,7 +26,13 @@ describe('StudentController', () => {
           useValue: {
             parseImport: jest.fn().mockResolvedValue(mockParseResult),
             importStudents: jest.fn().mockResolvedValue(mockImportResult),
-            create: jest.fn().mockResolvedValue({ id: 10, studentId: 'S1', fullName: 'Name', email: 'e@x.com', hasAccount: false }),
+            create: jest.fn().mockResolvedValue({
+              id: 10,
+              studentId: 'S1',
+              fullName: 'Name',
+              email: 'e@x.com',
+              hasAccount: false,
+            }),
             findAll: jest
               .fn()
               .mockResolvedValue({ data: [], total: 0, page: 1, limit: 20 }),

@@ -46,32 +46,10 @@ export class StudentService {
         studentId: student.studentId,
         fullName: student.fullName,
         email: student.email,
-        hasAccount: false,
+        hasAccount: student.userId !== null,
       };
     } catch (e) {
-      if (
-        e instanceof Prisma.PrismaClientKnownRequestError &&
-        e.code === 'P2002'
-      ) {
-        const rawTarget = e.meta?.target;
-        const target = Array.isArray(rawTarget)
-          ? rawTarget.join(',')
-          : typeof rawTarget === 'string'
-            ? rawTarget
-            : '';
-        if (target.includes('student_id') || target.includes('studentId')) {
-          throw new BadRequestException(
-            `Student ID '${dto.studentId}' is already in use`,
-          );
-        }
-        if (target.includes('email')) {
-          throw new BadRequestException(
-            `Email '${dto.email}' is already in use`,
-          );
-        }
-        throw new BadRequestException('A field conflicts with an existing record');
-      }
-      throw e;
+      this.handleStudentP2002(e, dto.studentId, dto.email);
     }
   }
 
@@ -342,31 +320,37 @@ export class StudentService {
         hasAccount: updated.userId !== null,
       };
     } catch (e) {
-      if (
-        e instanceof Prisma.PrismaClientKnownRequestError &&
-        e.code === 'P2002'
-      ) {
-        const rawTarget = e.meta?.target;
-        const target = Array.isArray(rawTarget)
-          ? rawTarget.join(',')
-          : typeof rawTarget === 'string'
-            ? rawTarget
-            : '';
-        if (target.includes('student_id') || target.includes('studentId')) {
-          throw new BadRequestException(
-            `Student ID '${dto.studentId}' is already in use`,
-          );
-        }
-        if (target.includes('email')) {
-          throw new BadRequestException(
-            `Email '${dto.email}' is already in use`,
-          );
-        }
+      this.handleStudentP2002(e, dto.studentId, dto.email);
+    }
+  }
+
+  private handleStudentP2002(
+    e: unknown,
+    studentId?: string,
+    email?: string,
+  ): never {
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === 'P2002'
+    ) {
+      const rawTarget = e.meta?.target;
+      const target = Array.isArray(rawTarget)
+        ? rawTarget.join(',')
+        : typeof rawTarget === 'string'
+          ? rawTarget
+          : '';
+      if (target.includes('student_id') || target.includes('studentId')) {
         throw new BadRequestException(
-          'A field conflicts with an existing record',
+          `Student ID '${studentId}' is already in use`,
         );
       }
-      throw e;
+      if (target.includes('email')) {
+        throw new BadRequestException(`Email '${email}' is already in use`);
+      }
+      throw new BadRequestException(
+        'A field conflicts with an existing record',
+      );
     }
+    throw e as Error;
   }
 }
