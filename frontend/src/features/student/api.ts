@@ -69,6 +69,12 @@ export interface UpdateStudentDto {
   studentId?: string
 }
 
+export interface CreateStudentDto {
+  studentId: string
+  fullName: string
+  email: string
+}
+
 // ─── Error helper (shared) ─────────────────────────────────────────────────
 
 export function extractErrorMessage(err: unknown): string {
@@ -94,6 +100,9 @@ export const studentApi = {
     form.append('file', file)
     return api.post<ImportStudentsResult>('/students/import?action=import', form)
   },
+
+  create: (dto: CreateStudentDto) =>
+    api.post<StudentItem>('/students', dto),
 
   list: (params?: StudentQuery) =>
     api.get<PaginatedStudentResult>('/students', { params }),

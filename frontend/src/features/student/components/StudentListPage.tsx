@@ -27,6 +27,7 @@ import type { StudentItem } from '../api'
 import { semesterApi } from '../../semester/api'
 import type { Semester } from '../../semester/api'
 import StudentEditModal from './StudentEditModal'
+import StudentCreateModal from './StudentCreateModal'
 
 const PAGE_LIMIT = 20
 
@@ -41,6 +42,7 @@ export default function StudentListPage() {
   const [editTarget, setEditTarget] = useState<StudentItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<StudentItem | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFirstRender = useRef(true)
@@ -113,11 +115,19 @@ export default function StudentListPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="font-display text-3xl font-semibold text-on-surface">Students</h1>
-        <p className="font-sans text-sm font-medium text-muted-foreground mt-1">
-          Manage student profiles.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-display text-3xl font-semibold text-on-surface">Students</h1>
+          <p className="font-sans text-sm font-medium text-muted-foreground mt-1">
+            Manage student profiles.
+          </p>
+        </div>
+        <Button
+          onClick={() => setCreateOpen(true)}
+          className="font-label bg-gradient-to-br from-primary to-primary-container text-primary-foreground"
+        >
+          + Create Student
+        </Button>
       </div>
 
       {/* Filter bar */}
@@ -334,6 +344,16 @@ export default function StudentListPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create Modal */}
+      <StudentCreateModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => {
+          setCreateOpen(false)
+          void fetchAll(buildQuery(1))
+        }}
+      />
     </div>
   )
 }
