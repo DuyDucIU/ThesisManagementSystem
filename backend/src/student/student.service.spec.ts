@@ -30,8 +30,21 @@ describe('StudentService', () => {
   let service: StudentService;
   let prisma: {
     semester: { findFirst: jest.Mock };
-    student: { findUnique: jest.Mock; upsert: jest.Mock };
-    semesterStudent: { findUnique: jest.Mock; create: jest.Mock };
+    student: {
+      findUnique: jest.Mock;
+      upsert: jest.Mock;
+      findMany: jest.Mock;
+      count: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
+    };
+    semesterStudent: {
+      findUnique: jest.Mock;
+      create: jest.Mock;
+      findMany: jest.Mock;
+      deleteMany: jest.Mock;
+    };
+    thesis: { count: jest.Mock };
   };
 
   beforeEach(async () => {
@@ -42,8 +55,21 @@ describe('StudentService', () => {
           provide: PrismaService,
           useValue: {
             semester: { findFirst: jest.fn() },
-            student: { findUnique: jest.fn(), upsert: jest.fn() },
-            semesterStudent: { findUnique: jest.fn(), create: jest.fn() },
+            student: {
+              findUnique: jest.fn(),
+              upsert: jest.fn(),
+              findMany: jest.fn(),
+              count: jest.fn(),
+              update: jest.fn(),
+              delete: jest.fn(),
+            },
+            semesterStudent: {
+              findUnique: jest.fn(),
+              create: jest.fn(),
+              findMany: jest.fn(),
+              deleteMany: jest.fn(),
+            },
+            thesis: { count: jest.fn() },
           },
         },
       ],
