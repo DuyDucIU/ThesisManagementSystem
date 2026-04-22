@@ -255,7 +255,11 @@ export class StudentService {
     const student = await this.prisma.student.findUnique({ where: { id } });
     if (!student) throw new NotFoundException(`Student #${id} not found`);
 
-    if (!dto.fullName && !dto.email && !dto.studentId) {
+    if (
+      dto.fullName === undefined &&
+      dto.email === undefined &&
+      dto.studentId === undefined
+    ) {
       throw new BadRequestException('At least one field must be provided');
     }
 
@@ -280,8 +284,11 @@ export class StudentService {
         e instanceof Prisma.PrismaClientKnownRequestError &&
         e.code === 'P2002'
       ) {
-        const target = String(e.meta?.target ?? '');
-        if (target.includes('student_id')) {
+        const rawTarget = e.meta?.target;
+        const target = Array.isArray(rawTarget)
+          ? rawTarget.join(',')
+          : String(rawTarget ?? '');
+        if (target.includes('student_id') || target.includes('studentId')) {
           throw new BadRequestException(
             `Student ID '${dto.studentId}' is already in use`,
           );
