@@ -10,6 +10,7 @@ import {
 } from '../../../components/ui/dialog'
 import { Button } from '../../../components/ui/button'
 import { Input } from '../../../components/ui/input'
+import { Label } from '../../../components/ui/label'
 import { studentApi, extractErrorMessage } from '../api'
 import type { StudentItem } from '../api'
 
@@ -25,7 +26,6 @@ export default function StudentEditModal({ student, onClose, onSaved }: Props) {
   const [studentId, setStudentId] = useState('')
   const [loading, setLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<{
-    fullName?: string
     email?: string
     studentId?: string
   }>({})
@@ -39,7 +39,8 @@ export default function StudentEditModal({ student, onClose, onSaved }: Props) {
     }
   }, [student])
 
-  async function handleSave() {
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
     if (!student) return
     setLoading(true)
     setFieldErrors({})
@@ -74,33 +75,35 @@ export default function StudentEditModal({ student, onClose, onSaved }: Props) {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {/* Full Name */}
           <div className="space-y-1.5">
-            <label className="font-label text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <Label htmlFor="fullName" className="font-label text-xs font-medium text-on-surface uppercase tracking-wide">
               Full Name
-            </label>
+            </Label>
             <Input
+              id="fullName"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               disabled={loading}
-              className="font-sans text-sm"
+              className="font-sans bg-surface-container-low border-0 focus-visible:ring-1 focus-visible:ring-primary/30"
             />
-            {fieldErrors.fullName && (
-              <p className="font-sans text-xs text-destructive">{fieldErrors.fullName}</p>
-            )}
           </div>
 
           {/* Student ID */}
           <div className="space-y-1.5">
-            <label className="font-label text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <Label htmlFor="studentId" className="font-label text-xs font-medium text-on-surface uppercase tracking-wide">
               Student ID
-            </label>
+            </Label>
             <Input
+              id="studentId"
               value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
+              onChange={(e) => {
+                setStudentId(e.target.value)
+                setFieldErrors((prev) => ({ ...prev, studentId: undefined }))
+              }}
               disabled={loading}
-              className="font-sans text-sm"
+              className="font-sans bg-surface-container-low border-0 focus-visible:ring-1 focus-visible:ring-primary/30"
             />
             {fieldErrors.studentId && (
               <p className="font-sans text-xs text-destructive">{fieldErrors.studentId}</p>
@@ -109,39 +112,44 @@ export default function StudentEditModal({ student, onClose, onSaved }: Props) {
 
           {/* Email */}
           <div className="space-y-1.5">
-            <label className="font-label text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <Label htmlFor="email" className="font-label text-xs font-medium text-on-surface uppercase tracking-wide">
               Email
-            </label>
+            </Label>
             <Input
+              id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                setFieldErrors((prev) => ({ ...prev, email: undefined }))
+              }}
               disabled={loading}
-              className="font-sans text-sm"
+              className="font-sans bg-surface-container-low border-0 focus-visible:ring-1 focus-visible:ring-primary/30"
             />
             {fieldErrors.email && (
               <p className="font-sans text-xs text-destructive">{fieldErrors.email}</p>
             )}
           </div>
-        </div>
 
-        <DialogFooter>
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            disabled={loading}
-            className="font-label"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={loading}
-            className="font-label bg-gradient-to-br from-primary to-primary-container text-primary-foreground"
-          >
-            {loading ? 'Saving…' : 'Save'}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              disabled={loading}
+              className="font-label"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="font-label bg-gradient-to-br from-primary to-primary-container text-primary-foreground"
+            >
+              {loading ? 'Saving…' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )
