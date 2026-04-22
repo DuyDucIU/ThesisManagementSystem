@@ -33,10 +33,7 @@ export class StudentController {
   }
 
   @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateStudentDto,
-  ) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStudentDto) {
     return this.studentService.update(id, dto);
   }
 

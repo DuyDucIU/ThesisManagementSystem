@@ -4,7 +4,12 @@ import { StudentController } from './student.controller';
 import { StudentService } from './student.service';
 
 const mockParseResult = {
-  total: 1, valid: 1, alreadyEnrolled: 0, invalid: 0, errors: [], alreadyEnrolledDetails: [],
+  total: 1,
+  valid: 1,
+  alreadyEnrolled: 0,
+  invalid: 0,
+  errors: [],
+  alreadyEnrolledDetails: [],
 };
 const mockImportResult = { imported: 1, skipped: 0, skippedDetails: [] };
 
@@ -21,8 +26,16 @@ describe('StudentController', () => {
           useValue: {
             parseImport: jest.fn().mockResolvedValue(mockParseResult),
             importStudents: jest.fn().mockResolvedValue(mockImportResult),
-            findAll: jest.fn().mockResolvedValue({ data: [], total: 0, page: 1, limit: 20 }),
-            update: jest.fn().mockResolvedValue({ id: 1, studentId: 'S1', fullName: 'Name', email: 'e@x.com', hasAccount: false }),
+            findAll: jest
+              .fn()
+              .mockResolvedValue({ data: [], total: 0, page: 1, limit: 20 }),
+            update: jest.fn().mockResolvedValue({
+              id: 1,
+              studentId: 'S1',
+              fullName: 'Name',
+              email: 'e@x.com',
+              hasAccount: false,
+            }),
             remove: jest.fn().mockResolvedValue(undefined),
           },
         },
@@ -57,21 +70,28 @@ describe('StudentController', () => {
   it('throws BadRequestException when file is missing', async () => {
     await expect(
       controller.importStudents(undefined as any, 'parse'),
-    ).rejects.toThrow(new BadRequestException('Please select a file before parsing.'));
+    ).rejects.toThrow(
+      new BadRequestException('Please select a file before parsing.'),
+    );
   });
 
   it('throws BadRequestException for unsupported file extension', async () => {
-    const csvFile = { ...mockFile, originalname: 'students.csv' } as Express.Multer.File;
+    const csvFile = {
+      ...mockFile,
+      originalname: 'students.csv',
+    } as Express.Multer.File;
 
-    await expect(
-      controller.importStudents(csvFile, 'parse'),
-    ).rejects.toThrow(new BadRequestException('Only .xlsx and .xls files are accepted'));
+    await expect(controller.importStudents(csvFile, 'parse')).rejects.toThrow(
+      new BadRequestException('Only .xlsx and .xls files are accepted'),
+    );
   });
 
   it('throws BadRequestException for unknown action', async () => {
     await expect(
       controller.importStudents(mockFile, 'unknown' as any),
-    ).rejects.toThrow(new BadRequestException('action must be "parse" or "import"'));
+    ).rejects.toThrow(
+      new BadRequestException('action must be "parse" or "import"'),
+    );
   });
 
   it('delegates findAll to service with query', async () => {

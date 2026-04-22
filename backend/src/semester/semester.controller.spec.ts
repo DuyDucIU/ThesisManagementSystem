@@ -47,7 +47,9 @@ describe('SemesterController', () => {
   it('findAll delegates to service with query', async () => {
     service.findAll.mockResolvedValue([mockSemester]);
     const result = await controller.findAll({ status: SemesterStatus.ACTIVE });
-    expect(service.findAll).toHaveBeenCalledWith({ status: SemesterStatus.ACTIVE });
+    expect(service.findAll).toHaveBeenCalledWith({
+      status: SemesterStatus.ACTIVE,
+    });
     expect(result).toEqual([mockSemester]);
   });
 

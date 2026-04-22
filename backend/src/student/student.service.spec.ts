@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma, SemesterStatus } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import { StudentService } from './student.service';
@@ -88,7 +92,9 @@ describe('StudentService', () => {
   describe('parseImport', () => {
     it('throws BadRequestException when no active semester exists', async () => {
       prisma.semester.findFirst.mockResolvedValue(null);
-      const buffer = buildExcelBuffer([['VO GIA', 'KIET', 'ititwe22055', 'ITITWE22055']]);
+      const buffer = buildExcelBuffer([
+        ['VO GIA', 'KIET', 'ititwe22055', 'ITITWE22055'],
+      ]);
 
       await expect(service.parseImport(buffer)).rejects.toThrow(
         new BadRequestException('No active semester found'),
@@ -126,9 +132,7 @@ describe('StudentService', () => {
     it('reports error for row missing studentId', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
 
-      const buffer = buildExcelBuffer([
-        ['VO GIA', 'KIET', 'ititwe22055', ''],
-      ]);
+      const buffer = buildExcelBuffer([['VO GIA', 'KIET', 'ititwe22055', '']]);
 
       const result = await service.parseImport(buffer);
 
@@ -161,15 +165,16 @@ describe('StudentService', () => {
       const result = await service.parseImport(buffer);
 
       expect(result.invalid).toBe(1);
-      expect(result.errors[0]).toEqual({ row: 2, reason: 'Missing first name' });
+      expect(result.errors[0]).toEqual({
+        row: 2,
+        reason: 'Missing first name',
+      });
     });
 
     it('reports error for row missing username', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
 
-      const buffer = buildExcelBuffer([
-        ['VO GIA', 'KIET', '', 'ITITWE22055'],
-      ]);
+      const buffer = buildExcelBuffer([['VO GIA', 'KIET', '', 'ITITWE22055']]);
 
       const result = await service.parseImport(buffer);
 
@@ -199,7 +204,10 @@ describe('StudentService', () => {
 
     it('flags already-enrolled students in alreadyEnrolledDetails', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
-      prisma.student.findUnique.mockResolvedValue({ id: 10, studentId: 'ITITWE22055' });
+      prisma.student.findUnique.mockResolvedValue({
+        id: 10,
+        studentId: 'ITITWE22055',
+      });
       prisma.semesterStudent.findUnique.mockResolvedValue({ id: 5 });
 
       const buffer = buildExcelBuffer([
@@ -238,7 +246,9 @@ describe('StudentService', () => {
   describe('importStudents', () => {
     it('throws BadRequestException when no active semester exists', async () => {
       prisma.semester.findFirst.mockResolvedValue(null);
-      const buffer = buildExcelBuffer([['VO GIA', 'KIET', 'ititwe22055', 'ITITWE22055']]);
+      const buffer = buildExcelBuffer([
+        ['VO GIA', 'KIET', 'ititwe22055', 'ITITWE22055'],
+      ]);
 
       await expect(service.importStudents(buffer)).rejects.toThrow(
         new BadRequestException('No active semester found'),
@@ -256,7 +266,12 @@ describe('StudentService', () => {
 
     it('creates student and semesterStudent for a new valid row', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
-      const createdStudent = { id: 1, studentId: 'ITITWE22055', fullName: 'VO GIA KIET', email: 'ititwe22055@student.hcmiu.edu.vn' };
+      const createdStudent = {
+        id: 1,
+        studentId: 'ITITWE22055',
+        fullName: 'VO GIA KIET',
+        email: 'ititwe22055@student.hcmiu.edu.vn',
+      };
       prisma.student.upsert.mockResolvedValue(createdStudent);
       prisma.semesterStudent.findUnique.mockResolvedValue(null);
       prisma.semesterStudent.create.mockResolvedValue({ id: 1 });
@@ -285,7 +300,10 @@ describe('StudentService', () => {
 
     it('skips already-enrolled student and adds to skippedDetails', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
-      prisma.student.upsert.mockResolvedValue({ id: 10, studentId: 'ITITWE22055' });
+      prisma.student.upsert.mockResolvedValue({
+        id: 10,
+        studentId: 'ITITWE22055',
+      });
       prisma.semesterStudent.findUnique.mockResolvedValue({ id: 5 });
 
       const buffer = buildExcelBuffer([
@@ -307,9 +325,7 @@ describe('StudentService', () => {
     it('skips invalid row and adds to skippedDetails with null studentId', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
 
-      const buffer = buildExcelBuffer([
-        ['VO GIA', 'KIET', 'ititwe22055', ''],
-      ]);
+      const buffer = buildExcelBuffer([['VO GIA', 'KIET', 'ititwe22055', '']]);
 
       const result = await service.importStudents(buffer);
 
@@ -496,7 +512,11 @@ describe('StudentService', () => {
       prisma.student.findUnique.mockResolvedValue(mockStudent);
       const p2002 = new Prisma.PrismaClientKnownRequestError(
         'Unique constraint failed',
-        { code: 'P2002', clientVersion: '5.0.0', meta: { target: 'students_student_id_key' } },
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+          meta: { target: 'students_student_id_key' },
+        },
       );
       prisma.student.update.mockRejectedValue(p2002);
 
@@ -509,7 +529,11 @@ describe('StudentService', () => {
       prisma.student.findUnique.mockResolvedValue(mockStudent);
       const p2002 = new Prisma.PrismaClientKnownRequestError(
         'Unique constraint failed',
-        { code: 'P2002', clientVersion: '5.0.0', meta: { target: 'students_email_key' } },
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+          meta: { target: 'students_email_key' },
+        },
       );
       prisma.student.update.mockRejectedValue(p2002);
 

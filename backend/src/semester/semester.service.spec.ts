@@ -84,10 +84,7 @@ describe('SemesterService', () => {
 
       expect(prisma.semester.findMany).toHaveBeenCalledWith({
         where: {
-          OR: [
-            { name: { contains: 'HK1' } },
-            { code: { contains: 'HK1' } },
-          ],
+          OR: [{ name: { contains: 'HK1' } }, { code: { contains: 'HK1' } }],
         },
         orderBy: { createdAt: 'desc' },
       });
@@ -173,14 +170,19 @@ describe('SemesterService', () => {
     it('throws BadRequestException when endDate is not after startDate', async () => {
       await expect(
         service.create({ ...dto, endDate: '2025-09-01' }),
-      ).rejects.toThrow(new BadRequestException('endDate must be after startDate'));
+      ).rejects.toThrow(
+        new BadRequestException('endDate must be after startDate'),
+      );
     });
 
     it('throws ConflictException on duplicate code (Prisma P2002)', async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError('Unique constraint', {
-        code: 'P2002',
-        clientVersion: '6.0.0',
-      });
+      const prismaError = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint',
+        {
+          code: 'P2002',
+          clientVersion: '6.0.0',
+        },
+      );
       prisma.semester.create.mockRejectedValue(prismaError);
 
       await expect(service.create(dto)).rejects.toThrow(
@@ -194,7 +196,10 @@ describe('SemesterService', () => {
   describe('update', () => {
     it('updates an INACTIVE semester', async () => {
       prisma.semester.findUnique.mockResolvedValue(mockSemester);
-      prisma.semester.update.mockResolvedValue({ ...mockSemester, name: 'Updated' });
+      prisma.semester.update.mockResolvedValue({
+        ...mockSemester,
+        name: 'Updated',
+      });
 
       const result = await service.update(1, { name: 'Updated' });
 
@@ -252,7 +257,9 @@ describe('SemesterService', () => {
       prisma.semester.findUnique.mockResolvedValue(mockSemester);
 
       await expect(service.update(1, {})).rejects.toThrow(
-        new BadRequestException('At least one field must be provided for update'),
+        new BadRequestException(
+          'At least one field must be provided for update',
+        ),
       );
     });
 
@@ -261,15 +268,20 @@ describe('SemesterService', () => {
 
       await expect(
         service.update(1, { endDate: '2025-08-31' }),
-      ).rejects.toThrow(new BadRequestException('endDate must be after startDate'));
+      ).rejects.toThrow(
+        new BadRequestException('endDate must be after startDate'),
+      );
     });
 
     it('throws ConflictException on duplicate code (Prisma P2002)', async () => {
       prisma.semester.findUnique.mockResolvedValue(mockSemester);
-      const prismaError = new Prisma.PrismaClientKnownRequestError('Unique constraint', {
-        code: 'P2002',
-        clientVersion: '6.0.0',
-      });
+      const prismaError = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint',
+        {
+          code: 'P2002',
+          clientVersion: '6.0.0',
+        },
+      );
       prisma.semester.update.mockRejectedValue(prismaError);
 
       await expect(service.update(1, { code: 'DUPLICATE' })).rejects.toThrow(

@@ -59,7 +59,9 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
 
     if (!user || !user.isActive || !user.refreshToken) {
       throw new UnauthorizedException('Invalid refresh token');
