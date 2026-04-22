@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import * as XLSX from 'xlsx';
 import { Prisma, SemesterStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -10,6 +15,7 @@ import {
   SkippedDetail,
 } from './dto/import-student.dto';
 import { QueryStudentDto } from './dto/query-student.dto';
+import { UpdateStudentDto } from './dto/update-student.dto';
 
 const EMAIL_DOMAIN = 'student.hcmiu.edu.vn';
 
@@ -243,5 +249,51 @@ export class StudentService {
     });
 
     return { data, total, page, limit };
+  }
+
+  async update(id: number, dto: UpdateStudentDto) {
+    const student = await this.prisma.student.findUnique({ where: { id } });
+    if (!student) throw new NotFoundException(`Student #${id} not found`);
+
+    if (!dto.fullName && !dto.email && !dto.studentId) {
+      throw new BadRequestException('At least one field must be provided');
+    }
+
+    try {
+      const updated = await this.prisma.student.update({
+        where: { id },
+        data: {
+          ...(dto.fullName !== undefined && { fullName: dto.fullName }),
+          ...(dto.email !== undefined && { email: dto.email }),
+          ...(dto.studentId !== undefined && { studentId: dto.studentId }),
+        },
+      });
+      return {
+        id: updated.id,
+        studentId: updated.studentId,
+        fullName: updated.fullName,
+        email: updated.email,
+        hasAccount: updated.userId !== null,
+      };
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        const target = String(e.meta?.target ?? '');
+        if (target.includes('student_id')) {
+          throw new BadRequestException(
+            `Student ID '${dto.studentId}' is already in use`,
+          );
+        }
+        if (target.includes('email')) {
+          throw new BadRequestException(
+            `Email '${dto.email}' is already in use`,
+          );
+        }
+        throw new BadRequestException('A field conflicts with an existing record');
+      }
+      throw e;
+    }
   }
 }

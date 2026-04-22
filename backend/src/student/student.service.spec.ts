@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
-import { SemesterStatus } from '@prisma/client';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { Prisma, SemesterStatus } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import { StudentService } from './student.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -438,6 +438,82 @@ describe('StudentService', () => {
       const result = await service.findAll({ semesterId: 7 });
 
       expect(result.data[0].semesterStudent).toBeNull();
+    });
+  });
+
+  // ─── update ──────────────────────────────────────────────────────────────────
+
+  describe('update', () => {
+    const mockStudent = {
+      id: 1,
+      studentId: 'ITITWE22055',
+      fullName: 'Vo Gia Kiet',
+      email: 'ititwe22055@student.hcmiu.edu.vn',
+      userId: null,
+    };
+
+    it('throws NotFoundException when student does not exist', async () => {
+      prisma.student.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.update(999, { fullName: 'New Name' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException when no fields are provided', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+
+      await expect(service.update(1, {})).rejects.toThrow(
+        new BadRequestException('At least one field must be provided'),
+      );
+    });
+
+    it('updates fullName and returns student shape with hasAccount', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      prisma.student.update.mockResolvedValue({
+        ...mockStudent,
+        fullName: 'Updated Name',
+      });
+
+      const result = await service.update(1, { fullName: 'Updated Name' });
+
+      expect(prisma.student.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { fullName: 'Updated Name' },
+      });
+      expect(result).toEqual({
+        id: 1,
+        studentId: 'ITITWE22055',
+        fullName: 'Updated Name',
+        email: 'ititwe22055@student.hcmiu.edu.vn',
+        hasAccount: false,
+      });
+    });
+
+    it('throws BadRequestException on studentId duplicate (P2002)', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      const p2002 = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        { code: 'P2002', clientVersion: '5.0.0', meta: { target: 'students_student_id_key' } },
+      );
+      prisma.student.update.mockRejectedValue(p2002);
+
+      await expect(
+        service.update(1, { studentId: 'DUPLICATE' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException on email duplicate (P2002)', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      const p2002 = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        { code: 'P2002', clientVersion: '5.0.0', meta: { target: 'students_email_key' } },
+      );
+      prisma.student.update.mockRejectedValue(p2002);
+
+      await expect(
+        service.update(1, { email: 'dup@student.hcmiu.edu.vn' }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });
