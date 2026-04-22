@@ -640,24 +640,40 @@ describe('StudentService', () => {
     it('throws BadRequestException on studentId duplicate (P2002)', async () => {
       const p2002 = new Prisma.PrismaClientKnownRequestError(
         'Unique constraint failed',
-        { code: 'P2002', clientVersion: '5.0.0', meta: { target: 'students_student_id_key' } },
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+          meta: { target: 'students_student_id_key' },
+        },
       );
       prisma.student.create.mockRejectedValue(p2002);
 
       await expect(
-        service.create({ studentId: 'DUP', fullName: 'Name', email: 'a@b.com' }),
+        service.create({
+          studentId: 'DUP',
+          fullName: 'Name',
+          email: 'a@b.com',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException on email duplicate (P2002)', async () => {
       const p2002 = new Prisma.PrismaClientKnownRequestError(
         'Unique constraint failed',
-        { code: 'P2002', clientVersion: '5.0.0', meta: { target: 'students_email_key' } },
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+          meta: { target: 'students_email_key' },
+        },
       );
       prisma.student.create.mockRejectedValue(p2002);
 
       await expect(
-        service.create({ studentId: 'NEW001', fullName: 'Name', email: 'dup@student.hcmiu.edu.vn' }),
+        service.create({
+          studentId: 'NEW001',
+          fullName: 'Name',
+          email: 'dup@student.hcmiu.edu.vn',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
   });
