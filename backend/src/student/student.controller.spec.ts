@@ -21,6 +21,9 @@ describe('StudentController', () => {
           useValue: {
             parseImport: jest.fn().mockResolvedValue(mockParseResult),
             importStudents: jest.fn().mockResolvedValue(mockImportResult),
+            findAll: jest.fn().mockResolvedValue({ data: [], total: 0, page: 1, limit: 20 }),
+            update: jest.fn().mockResolvedValue({ id: 1, studentId: 'S1', fullName: 'Name', email: 'e@x.com', hasAccount: false }),
+            remove: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -69,5 +72,21 @@ describe('StudentController', () => {
     await expect(
       controller.importStudents(mockFile, 'unknown' as any),
     ).rejects.toThrow(new BadRequestException('action must be "parse" or "import"'));
+  });
+
+  it('delegates findAll to service with query', async () => {
+    const query = { page: 1, limit: 10 };
+    await controller.findAll(query as any);
+    expect(service.findAll).toHaveBeenCalledWith(query);
+  });
+
+  it('delegates update to service with id and dto', async () => {
+    await controller.update(1, { fullName: 'New' } as any);
+    expect(service.update).toHaveBeenCalledWith(1, { fullName: 'New' });
+  });
+
+  it('delegates remove to service with id', async () => {
+    await controller.remove(1);
+    expect(service.remove).toHaveBeenCalledWith(1);
   });
 });
