@@ -8,6 +8,7 @@ interface StudentState {
   total: number
   page: number
   loading: boolean
+  error: string | null
   fetchAll: (query?: StudentQuery) => Promise<void>
 }
 
@@ -16,9 +17,10 @@ export const useStudentStore = create<StudentState>((set) => ({
   total: 0,
   page: 1,
   loading: false,
+  error: null,
 
   fetchAll: async (query) => {
-    set({ loading: true })
+    set({ loading: true, error: null })
     try {
       const res = await studentApi.list(query)
       set({
@@ -28,7 +30,7 @@ export const useStudentStore = create<StudentState>((set) => ({
         loading: false,
       })
     } catch {
-      set({ loading: false })
+      set({ error: 'Failed to load students.', loading: false })
     }
   },
 }))
