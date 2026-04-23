@@ -44,5 +44,4 @@ export class StudentController {
   create(@Body() dto: CreateStudentDto) {
     return this.studentService.create(dto);
   }
-
 }

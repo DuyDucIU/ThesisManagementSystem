@@ -29,6 +29,14 @@ backend/src/
 │   │   └── roles.guard.ts          # Global guard — enforces @Roles()
 │   └── strategies/
 │       └── jwt.strategy.ts         # passport-jwt strategy
+├── enrollment/                     # Per-semester enrollment module
+│   ├── enrollment.module.ts
+│   ├── enrollment.controller.ts    # GET /enrollments, POST /enrollments/import
+│   ├── enrollment.service.ts       # list + Excel import (creates Student records if new)
+│   ├── enrollment.service.spec.ts
+│   └── dto/
+│       ├── query-enrollment.dto.ts
+│       └── import-enrollment.dto.ts
 └── <feature>/                      # Each feature module follows the same shape
     ├── <feature>.module.ts
     ├── <feature>.controller.ts
@@ -145,7 +153,7 @@ pnpm add -D @types/multer
 - **`@Roles()` at controller level** — apply `@Roles(Role.ADMIN)` on the controller class to protect every route in it. Individual methods can still override with their own `@Roles()`. This is cleaner than repeating the decorator on every handler.
 - **`multer` import style** — use `import * as multer from 'multer'` (not default import). Required because multer ships as a CommonJS module.
 - **`?action=` query param for multi-action endpoints** — when one URL handles logically related but distinct operations (e.g. parse-then-import), use `@Query('action') action: 'parse' | 'import'` rather than separate routes. Validate the action value explicitly and throw `BadRequestException` for unknown values.
-- **Hardcoded email domain in student import** — `StudentService` constructs student emails as `${username}@student.hcmiu.edu.vn` via the `EMAIL_DOMAIN` constant at the top of `student.service.ts`. If the university's student email domain changes, update that constant.
+- **Hardcoded email domain in enrollment import** — `EnrollmentService` constructs student emails as `${username}@student.hcmiu.edu.vn` via the `EMAIL_DOMAIN` constant at the top of `enrollment.service.ts`. If the university's student email domain changes, update that constant.
 - **DTO files can be plain TypeScript interfaces** — `dto/import-student.dto.ts` uses `interface` declarations (not class-validator decorated classes) because these types describe response shapes and internal data, not incoming request bodies. Class-validator is only needed for DTOs that go through `ValidationPipe`.
 - **Prisma P2002 field detection** — when catching a unique-constraint violation, identify *which* field caused it via `e.meta?.target`. The value can be a string or an array depending on the Prisma version; normalise before checking: `const target = Array.isArray(rawTarget) ? rawTarget.join(',') : String(rawTarget ?? '')`. Then `target.includes('student_id')` / `target.includes('email')` to throw the right `BadRequestException`.
 - **Query DTO with `@Transform`** — when a query param can arrive as an empty string (e.g. from a cleared filter), use `@Transform(({ value }) => value || undefined)` before the validator so empty strings don't fail `@IsDateString()` or similar. Requires `enableImplicitConversion: false` (the default) — explicit transforms run regardless.
