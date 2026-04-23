@@ -20,7 +20,6 @@ describe('StudentService', () => {
       create: jest.Mock;
     };
     enrollment: {
-      findMany: jest.Mock;
       deleteMany: jest.Mock;
     };
     thesis: { count: jest.Mock };
@@ -43,7 +42,6 @@ describe('StudentService', () => {
               create: jest.fn(),
             },
             enrollment: {
-              findMany: jest.fn(),
               deleteMany: jest.fn(),
             },
             thesis: { count: jest.fn() },
@@ -115,41 +113,6 @@ describe('StudentService', () => {
       );
     });
 
-    it('does not include semesterStudent in data when semesterId is not provided', async () => {
-      prisma.student.findMany.mockResolvedValue([mockStudents[0]]);
-      prisma.student.count.mockResolvedValue(1);
-
-      const result = await service.findAll({});
-
-      expect('semesterStudent' in result.data[0]).toBe(false);
-      expect(prisma.enrollment.findMany).not.toHaveBeenCalled();
-    });
-
-    it('fetches and attaches semesterStudent when semesterId is provided', async () => {
-      prisma.student.findMany.mockResolvedValue([mockStudents[0]]);
-      prisma.student.count.mockResolvedValue(1);
-      prisma.enrollment.findMany.mockResolvedValue([
-        { studentId: 1, status: 'AVAILABLE' },
-      ]);
-
-      const result = await service.findAll({ semesterId: 7 });
-
-      expect(prisma.enrollment.findMany).toHaveBeenCalledWith({
-        where: { semesterId: 7, studentId: { in: [1] } },
-        select: { studentId: true, status: true },
-      });
-      expect(result.data[0].semesterStudent).toEqual({ status: 'AVAILABLE' });
-    });
-
-    it('sets semesterStudent to null for students not found in enrollment query', async () => {
-      prisma.student.findMany.mockResolvedValue([mockStudents[0]]);
-      prisma.student.count.mockResolvedValue(1);
-      prisma.enrollment.findMany.mockResolvedValue([]);
-
-      const result = await service.findAll({ semesterId: 7 });
-
-      expect(result.data[0].semesterStudent).toBeNull();
-    });
   });
 
   // ─── update ──────────────────────────────────────────────────────────────────

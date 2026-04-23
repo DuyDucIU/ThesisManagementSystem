@@ -36,7 +36,7 @@ export class StudentService {
   }
 
   async findAll(query: QueryStudentDto) {
-    const { search, hasAccount, semesterId, page = 1, limit = 20 } = query;
+    const { search, hasAccount, page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
     const where: Prisma.StudentWhereInput = {};
 
@@ -51,10 +51,6 @@ export class StudentService {
     if (hasAccount === true) where.userId = { not: null };
     else if (hasAccount === false) where.userId = null;
 
-    if (semesterId !== undefined) {
-      where.enrollments = { some: { semesterId } };
-    }
-
     const [students, total] = await Promise.all([
       this.prisma.student.findMany({
         where,
@@ -65,37 +61,13 @@ export class StudentService {
       this.prisma.student.count({ where }),
     ]);
 
-    const enrollmentMap = new Map<number, string>();
-    if (semesterId !== undefined && students.length > 0) {
-      const enrollments = await this.prisma.enrollment.findMany({
-        where: {
-          semesterId,
-          studentId: { in: students.map((s) => s.id) },
-        },
-        select: { studentId: true, status: true },
-      });
-      for (const e of enrollments) {
-        enrollmentMap.set(e.studentId, e.status);
-      }
-    }
-
-    const data = students.map((s) => {
-      const base = {
-        id: s.id,
-        studentId: s.studentId,
-        fullName: s.fullName,
-        email: s.email,
-        hasAccount: s.userId !== null,
-      };
-      if (semesterId !== undefined) {
-        const status = enrollmentMap.get(s.id);
-        return {
-          ...base,
-          semesterStudent: status !== undefined ? { status } : null,
-        };
-      }
-      return base;
-    });
+    const data = students.map((s) => ({
+      id: s.id,
+      studentId: s.studentId,
+      fullName: s.fullName,
+      email: s.email,
+      hasAccount: s.userId !== null,
+    }));
 
     return { data, total, page, limit };
   }

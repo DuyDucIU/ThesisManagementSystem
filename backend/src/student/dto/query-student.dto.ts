@@ -26,12 +26,6 @@ export class QueryStudentDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  semesterId?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
   page?: number;
 
   @IsOptional()
