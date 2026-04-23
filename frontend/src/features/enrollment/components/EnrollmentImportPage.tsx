@@ -125,6 +125,7 @@ export default function EnrollmentImportPage() {
     setParseResult(null)
     setImportResult(null)
     setFileError(null)
+    setSemesterIdSelect('active')
     setPageState('upload')
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
