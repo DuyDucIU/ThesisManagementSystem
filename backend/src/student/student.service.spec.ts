@@ -113,6 +113,38 @@ describe('StudentService', () => {
       );
     });
 
+    it('applies search filter to fullName, studentId, and email', async () => {
+      prisma.student.findMany.mockResolvedValue([]);
+      prisma.student.count.mockResolvedValue(0);
+
+      await service.findAll({ search: 'Nguyen' });
+
+      expect(prisma.student.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              { fullName: { contains: 'Nguyen' } },
+              { studentId: { contains: 'Nguyen' } },
+              { email: { contains: 'Nguyen' } },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('filters by hasAccount: true (userId not null)', async () => {
+      prisma.student.findMany.mockResolvedValue([]);
+      prisma.student.count.mockResolvedValue(0);
+
+      await service.findAll({ hasAccount: true });
+
+      expect(prisma.student.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: { not: null } },
+        }),
+      );
+    });
+
   });
 
   // ─── update ──────────────────────────────────────────────────────────────────
