@@ -82,8 +82,6 @@ export default function EnrollmentListPage() {
   const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_LIMIT + 1
   const rangeEnd = Math.min(page * PAGE_LIMIT, total)
 
-  const activeSemesterId = semesters.find((s) => s.status === 'ACTIVE')?.id
-
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -93,9 +91,7 @@ export default function EnrollmentListPage() {
             Enrollments
           </h1>
           <p className="font-sans text-sm font-medium text-muted-foreground mt-1">
-            {currentSemester
-              ? `Viewing: ${currentSemester.code} — ${currentSemester.name}`
-              : 'Per-semester student enrollment records.'}
+            Per-semester student enrollment records.
           </p>
         </div>
         <Link to="/admin/enrollments/import">
@@ -105,6 +101,18 @@ export default function EnrollmentListPage() {
           </Button>
         </Link>
       </div>
+
+      {/* Current semester card */}
+      {currentSemester && (
+        <div className="bg-surface-container-low rounded-lg px-4 py-3 flex items-center gap-3 max-w-md">
+          <span className="font-label text-xs font-medium text-muted-foreground uppercase tracking-wide shrink-0">
+            Viewing
+          </span>
+          <span className="font-sans text-sm font-semibold text-on-surface">
+            {currentSemester.code} — {currentSemester.name}
+          </span>
+        </div>
+      )}
 
       {/* Filter bar */}
       <div className="flex flex-wrap gap-3">
@@ -120,11 +128,10 @@ export default function EnrollmentListPage() {
             <SelectValue placeholder="Semester" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="active">Active semester (default)</SelectItem>
-            {semesters.map((s) => (
+            <SelectItem value="active">Current semester</SelectItem>
+            {semesters.filter((s) => s.status !== 'ACTIVE').map((s) => (
               <SelectItem key={s.id} value={String(s.id)}>
-                {s.code} — {s.name}
-                {s.id === activeSemesterId ? ' (active)' : ''}
+                {s.code} — {s.name} ({s.status})
               </SelectItem>
             ))}
           </SelectContent>

@@ -52,7 +52,7 @@ export default function EnrollmentImportPage() {
   }, [])
 
   const activeSemester = semesters.find((s) => s.status === 'ACTIVE')
-  const selectableSemesters = semesters.filter((s) => s.status !== 'CLOSED')
+  const selectableSemesters = semesters.filter((s) => s.status === 'INACTIVE')
   const chosenSemesterId =
     semesterIdSelect !== 'active' ? Number(semesterIdSelect) : undefined
 
@@ -161,13 +161,12 @@ export default function EnrollmentImportPage() {
           <SelectContent>
             <SelectItem value="active">
               {activeSemester
-                ? `${activeSemester.code} — ${activeSemester.name} (active, default)`
+                ? `(Current semester) ${activeSemester.code} — ${activeSemester.name}`
                 : 'Active semester (none available)'}
             </SelectItem>
             {selectableSemesters.map((s) => (
               <SelectItem key={s.id} value={String(s.id)}>
                 {s.code} — {s.name}
-                {s.id === activeSemester?.id ? ' (active)' : ''}
               </SelectItem>
             ))}
           </SelectContent>
