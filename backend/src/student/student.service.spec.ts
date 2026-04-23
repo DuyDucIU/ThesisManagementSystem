@@ -43,7 +43,7 @@ describe('StudentService', () => {
       delete: jest.Mock;
       create: jest.Mock;
     };
-    semesterStudent: {
+    enrollment: {
       findUnique: jest.Mock;
       create: jest.Mock;
       findMany: jest.Mock;
@@ -70,7 +70,7 @@ describe('StudentService', () => {
               delete: jest.fn(),
               create: jest.fn(),
             },
-            semesterStudent: {
+            enrollment: {
               findUnique: jest.fn(),
               create: jest.fn(),
               findMany: jest.fn(),
@@ -210,7 +210,7 @@ describe('StudentService', () => {
         id: 10,
         studentId: 'ITITWE22055',
       });
-      prisma.semesterStudent.findUnique.mockResolvedValue({ id: 5 });
+      prisma.enrollment.findUnique.mockResolvedValue({ id: 5 });
 
       const buffer = buildExcelBuffer([
         ['VO GIA', 'KIET', 'ititwe22055', 'ITITWE22055'],
@@ -239,7 +239,7 @@ describe('StudentService', () => {
       await service.parseImport(buffer);
 
       expect(prisma.student.upsert).not.toHaveBeenCalled();
-      expect(prisma.semesterStudent.create).not.toHaveBeenCalled();
+      expect(prisma.enrollment.create).not.toHaveBeenCalled();
     });
   });
 
@@ -275,8 +275,8 @@ describe('StudentService', () => {
         email: 'ititwe22055@student.hcmiu.edu.vn',
       };
       prisma.student.upsert.mockResolvedValue(createdStudent);
-      prisma.semesterStudent.findUnique.mockResolvedValue(null);
-      prisma.semesterStudent.create.mockResolvedValue({ id: 1 });
+      prisma.enrollment.findUnique.mockResolvedValue(null);
+      prisma.enrollment.create.mockResolvedValue({ id: 1 });
 
       const buffer = buildExcelBuffer([
         ['VO GIA', 'KIET', 'ititwe22055', 'ITITWE22055'],
@@ -293,7 +293,7 @@ describe('StudentService', () => {
           email: 'ititwe22055@student.hcmiu.edu.vn',
         },
       });
-      expect(prisma.semesterStudent.create).toHaveBeenCalledWith({
+      expect(prisma.enrollment.create).toHaveBeenCalledWith({
         data: { studentId: 1, semesterId: 1 },
       });
       expect(result.imported).toBe(1);
@@ -306,7 +306,7 @@ describe('StudentService', () => {
         id: 10,
         studentId: 'ITITWE22055',
       });
-      prisma.semesterStudent.findUnique.mockResolvedValue({ id: 5 });
+      prisma.enrollment.findUnique.mockResolvedValue({ id: 5 });
 
       const buffer = buildExcelBuffer([
         ['VO GIA', 'KIET', 'ititwe22055', 'ITITWE22055'],
@@ -314,7 +314,7 @@ describe('StudentService', () => {
 
       const result = await service.importStudents(buffer);
 
-      expect(prisma.semesterStudent.create).not.toHaveBeenCalled();
+      expect(prisma.enrollment.create).not.toHaveBeenCalled();
       expect(result.imported).toBe(0);
       expect(result.skipped).toBe(1);
       expect(result.skippedDetails[0]).toEqual({
@@ -348,11 +348,11 @@ describe('StudentService', () => {
         .mockResolvedValueOnce({ id: 1, studentId: 'ITITWE22055' })
         .mockResolvedValueOnce({ id: 2, studentId: 'ITIT22001' });
 
-      prisma.semesterStudent.findUnique
+      prisma.enrollment.findUnique
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({ id: 5 });
 
-      prisma.semesterStudent.create.mockResolvedValue({ id: 10 });
+      prisma.enrollment.create.mockResolvedValue({ id: 10 });
 
       const buffer = buildExcelBuffer([
         ['VO GIA', 'KIET', 'ititwe22055', 'ITITWE22055'],
@@ -431,19 +431,19 @@ describe('StudentService', () => {
       const result = await service.findAll({});
 
       expect('semesterStudent' in result.data[0]).toBe(false);
-      expect(prisma.semesterStudent.findMany).not.toHaveBeenCalled();
+      expect(prisma.enrollment.findMany).not.toHaveBeenCalled();
     });
 
     it('fetches and attaches semesterStudent when semesterId is provided', async () => {
       prisma.student.findMany.mockResolvedValue([mockStudents[0]]);
       prisma.student.count.mockResolvedValue(1);
-      prisma.semesterStudent.findMany.mockResolvedValue([
+      prisma.enrollment.findMany.mockResolvedValue([
         { studentId: 1, status: 'AVAILABLE' },
       ]);
 
       const result = await service.findAll({ semesterId: 7 });
 
-      expect(prisma.semesterStudent.findMany).toHaveBeenCalledWith({
+      expect(prisma.enrollment.findMany).toHaveBeenCalledWith({
         where: { semesterId: 7, studentId: { in: [1] } },
         select: { studentId: true, status: true },
       });
@@ -453,7 +453,7 @@ describe('StudentService', () => {
     it('sets semesterStudent to null for students not found in enrollment query', async () => {
       prisma.student.findMany.mockResolvedValue([mockStudents[0]]);
       prisma.student.count.mockResolvedValue(1);
-      prisma.semesterStudent.findMany.mockResolvedValue([]);
+      prisma.enrollment.findMany.mockResolvedValue([]);
 
       const result = await service.findAll({ semesterId: 7 });
 
@@ -569,19 +569,19 @@ describe('StudentService', () => {
       await expect(service.remove(1)).rejects.toThrow(
         new ConflictException('Cannot delete student with active thesis work'),
       );
-      expect(prisma.semesterStudent.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.enrollment.deleteMany).not.toHaveBeenCalled();
       expect(prisma.student.delete).not.toHaveBeenCalled();
     });
 
     it('deletes semesterStudent records then student when no thesis exists', async () => {
       prisma.student.findUnique.mockResolvedValue(mockStudent);
       prisma.thesis.count.mockResolvedValue(0);
-      prisma.semesterStudent.deleteMany.mockResolvedValue({ count: 1 });
+      prisma.enrollment.deleteMany.mockResolvedValue({ count: 1 });
       prisma.student.delete.mockResolvedValue(mockStudent);
 
       await service.remove(1);
 
-      expect(prisma.semesterStudent.deleteMany).toHaveBeenCalledWith({
+      expect(prisma.enrollment.deleteMany).toHaveBeenCalledWith({
         where: { studentId: 1 },
       });
       expect(prisma.student.delete).toHaveBeenCalledWith({ where: { id: 1 } });
@@ -590,12 +590,12 @@ describe('StudentService', () => {
     it('deletes student with no semesterStudent records', async () => {
       prisma.student.findUnique.mockResolvedValue(mockStudent);
       prisma.thesis.count.mockResolvedValue(0);
-      prisma.semesterStudent.deleteMany.mockResolvedValue({ count: 0 });
+      prisma.enrollment.deleteMany.mockResolvedValue({ count: 0 });
       prisma.student.delete.mockResolvedValue(mockStudent);
 
       await service.remove(1);
 
-      expect(prisma.semesterStudent.deleteMany).toHaveBeenCalledWith({
+      expect(prisma.enrollment.deleteMany).toHaveBeenCalledWith({
         where: { studentId: 1 },
       });
       expect(prisma.student.delete).toHaveBeenCalledWith({ where: { id: 1 } });

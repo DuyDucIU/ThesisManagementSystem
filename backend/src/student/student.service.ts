@@ -113,7 +113,7 @@ export class StudentService {
       });
 
       if (existingStudent) {
-        const enrolled = await this.prisma.semesterStudent.findUnique({
+        const enrolled = await this.prisma.enrollment.findUnique({
           where: {
             studentId_semesterId: {
               studentId: existingStudent.id,
@@ -179,7 +179,7 @@ export class StudentService {
         },
       });
 
-      const existing = await this.prisma.semesterStudent.findUnique({
+      const existing = await this.prisma.enrollment.findUnique({
         where: {
           studentId_semesterId: {
             studentId: student.id,
@@ -197,7 +197,7 @@ export class StudentService {
         continue;
       }
 
-      await this.prisma.semesterStudent.create({
+      await this.prisma.enrollment.create({
         data: { studentId: student.id, semesterId: activeSemester.id },
       });
       imported++;
@@ -223,7 +223,7 @@ export class StudentService {
     else if (hasAccount === false) where.userId = null;
 
     if (semesterId !== undefined) {
-      where.semesterStudents = { some: { semesterId } };
+      where.enrollments = { some: { semesterId } };
     }
 
     const [students, total] = await Promise.all([
@@ -238,7 +238,7 @@ export class StudentService {
 
     const enrollmentMap = new Map<number, string>();
     if (semesterId !== undefined && students.length > 0) {
-      const enrollments = await this.prisma.semesterStudent.findMany({
+      const enrollments = await this.prisma.enrollment.findMany({
         where: {
           semesterId,
           studentId: { in: students.map((s) => s.id) },
@@ -276,7 +276,7 @@ export class StudentService {
     if (!student) throw new NotFoundException(`Student #${id} not found`);
 
     const thesisCount = await this.prisma.thesis.count({
-      where: { semesterStudent: { studentId: id } },
+      where: { enrollment: { studentId: id } },
     });
 
     if (thesisCount > 0) {
@@ -286,7 +286,7 @@ export class StudentService {
     }
 
     await this.prisma.$transaction([
-      this.prisma.semesterStudent.deleteMany({ where: { studentId: id } }),
+      this.prisma.enrollment.deleteMany({ where: { studentId: id } }),
       this.prisma.student.delete({ where: { id } }),
     ]);
   }
