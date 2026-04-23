@@ -59,7 +59,7 @@ body {
 }
 
 @theme inline {
-  --font-display: 'Newsreader', Georgia, serif;
+  --font-display: 'Manrope', system-ui, sans-serif;
   --font-sans: 'Manrope', system-ui, sans-serif;
   --font-label: 'Inter', system-ui, sans-serif;
   --color-ring-offset-background: var(--background);
