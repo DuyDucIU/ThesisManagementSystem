@@ -11,7 +11,11 @@ import {
   ParseImportResult,
   ParseRowError,
   AlreadyEnrolledDetail,
+  ImportEnrollmentsResult,
+  SkippedDetail,
 } from './dto/import-enrollment.dto';
+
+const EMAIL_DOMAIN = 'student.hcmiu.edu.vn';
 
 interface RawRow {
   index: number;
@@ -200,6 +204,73 @@ export class EnrollmentService {
       invalid: errors.length,
       errors,
       alreadyEnrolledDetails,
+    };
+  }
+
+  async importEnrollments(
+    buffer: Buffer,
+    semesterId: number | undefined,
+  ): Promise<ImportEnrollmentsResult> {
+    const target = await this.resolveTargetSemester(semesterId, {
+      allowClosed: false,
+    });
+
+    const rows = this.extractRows(buffer);
+    if (rows.length === 0) {
+      throw new BadRequestException('File has no data rows');
+    }
+
+    const seenIds = new Set<string>();
+    const skippedDetails: SkippedDetail[] = [];
+    let imported = 0;
+
+    for (const row of rows) {
+      const error = this.validateRow(row, seenIds);
+      if (error) {
+        skippedDetails.push({ row: row.index, studentId: null, reason: error });
+        continue;
+      }
+      seenIds.add(row.studentId);
+
+      const student = await this.prisma.student.upsert({
+        where: { studentId: row.studentId },
+        update: {},
+        create: {
+          studentId: row.studentId,
+          fullName: `${row.lastName} ${row.firstName}`,
+          email: `${row.username}@${EMAIL_DOMAIN}`,
+        },
+      });
+
+      const existing = await this.prisma.enrollment.findUnique({
+        where: {
+          studentId_semesterId: {
+            studentId: student.id,
+            semesterId: target.id,
+          },
+        },
+      });
+
+      if (existing) {
+        skippedDetails.push({
+          row: row.index,
+          studentId: row.studentId,
+          reason: 'Already enrolled in target semester',
+        });
+        continue;
+      }
+
+      await this.prisma.enrollment.create({
+        data: { studentId: student.id, semesterId: target.id },
+      });
+      imported++;
+    }
+
+    return {
+      semester: { id: target.id, code: target.code, name: target.name },
+      imported,
+      skipped: skippedDetails.length,
+      skippedDetails,
     };
   }
 }

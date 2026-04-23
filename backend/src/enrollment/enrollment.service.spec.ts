@@ -334,4 +334,107 @@ describe('EnrollmentService', () => {
       expect(result.semester.id).toBe(3);
     });
   });
+
+  describe('importEnrollments', () => {
+    it('throws 400 when target is CLOSED', async () => {
+      prisma.semester.findUnique.mockResolvedValue(mockClosedSemester);
+      const buffer = buildExcelBuffer([['A', 'B', 'u', 'S1']]);
+
+      await expect(
+        service.importEnrollments(buffer, 2),
+      ).rejects.toThrow(new BadRequestException('Cannot import into a closed semester'));
+    });
+
+    it('creates student and enrollment for new row', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      prisma.student.upsert.mockResolvedValue({
+        id: 100, studentId: 'ITITIU20002',
+        fullName: 'VO KIET', email: 'u1@student.hcmiu.edu.vn', userId: null,
+      });
+      prisma.enrollment.findUnique.mockResolvedValue(null);
+      prisma.enrollment.create.mockResolvedValue({
+        id: 500, studentId: 100, semesterId: 1, status: 'AVAILABLE',
+      });
+      const buffer = buildExcelBuffer([['VO', 'KIET', 'u1', 'ITITIU20002']]);
+
+      const result = await service.importEnrollments(buffer, undefined);
+
+      expect(prisma.student.upsert).toHaveBeenCalledWith({
+        where: { studentId: 'ITITIU20002' },
+        update: {},
+        create: {
+          studentId: 'ITITIU20002',
+          fullName: 'VO KIET',
+          email: 'u1@student.hcmiu.edu.vn',
+        },
+      });
+      expect(prisma.enrollment.create).toHaveBeenCalledWith({
+        data: { studentId: 100, semesterId: 1 },
+      });
+      expect(result.imported).toBe(1);
+      expect(result.skipped).toBe(0);
+      expect(result.semester).toEqual({ id: 1, code: 'HK1-2025', name: 'HK1' });
+    });
+
+    it('skips existing student already enrolled in target semester', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      prisma.student.upsert.mockResolvedValue({
+        id: 100, studentId: 'ITITIU20002',
+        fullName: 'VO KIET', email: 'u1@student.hcmiu.edu.vn', userId: null,
+      });
+      prisma.enrollment.findUnique.mockResolvedValue({
+        id: 500, studentId: 100, semesterId: 1, status: 'AVAILABLE',
+      });
+      const buffer = buildExcelBuffer([['VO', 'KIET', 'u1', 'ITITIU20002']]);
+
+      const result = await service.importEnrollments(buffer, undefined);
+
+      expect(prisma.enrollment.create).not.toHaveBeenCalled();
+      expect(result.imported).toBe(0);
+      expect(result.skipped).toBe(1);
+      expect(result.skippedDetails[0]).toEqual({
+        row: 2, studentId: 'ITITIU20002',
+        reason: 'Already enrolled in target semester',
+      });
+    });
+
+    it('skips row with validation error', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      const buffer = buildExcelBuffer([['', 'KIET', 'u1', 'S1']]);
+
+      const result = await service.importEnrollments(buffer, undefined);
+
+      expect(result.imported).toBe(0);
+      expect(result.skipped).toBe(1);
+      expect(result.skippedDetails[0]).toEqual({
+        row: 2, studentId: null, reason: 'Missing last name',
+      });
+    });
+
+    it('mixed: some imported, some skipped', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      prisma.student.upsert
+        .mockResolvedValueOnce({
+          id: 1, studentId: 'S1', fullName: 'A B', email: 'a@x', userId: null,
+        })
+        .mockResolvedValueOnce({
+          id: 2, studentId: 'S2', fullName: 'C D', email: 'c@x', userId: null,
+        });
+      prisma.enrollment.findUnique
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 99, studentId: 2, semesterId: 1, status: 'AVAILABLE' });
+      prisma.enrollment.create.mockResolvedValue({
+        id: 10, studentId: 1, semesterId: 1, status: 'AVAILABLE',
+      });
+
+      const buffer = buildExcelBuffer([
+        ['A', 'B', 'u1', 'S1'],
+        ['C', 'D', 'u2', 'S2'],
+      ]);
+      const result = await service.importEnrollments(buffer, undefined);
+
+      expect(result.imported).toBe(1);
+      expect(result.skipped).toBe(1);
+    });
+  });
 });
