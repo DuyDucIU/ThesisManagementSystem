@@ -20,7 +20,7 @@ import type { Semester } from '../../semester/api'
 const PAGE_LIMIT = 20
 
 export default function EnrollmentListPage() {
-  const { enrollments, total, page, loading, currentSemester, fetchAll } =
+  const { enrollments, total, page, loading, currentSemester, error, fetchAll } =
     useEnrollmentStore()
 
   const [search, setSearch] = useState('')
@@ -68,6 +68,11 @@ export default function EnrollmentListPage() {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [fetchAll, buildQuery])
+
+  // Display error toast when fetch fails
+  useEffect(() => {
+    if (error) toast.error(error)
+  }, [error])
 
   function handlePageChange(newPage: number) {
     void fetchAll(buildQuery(newPage))
