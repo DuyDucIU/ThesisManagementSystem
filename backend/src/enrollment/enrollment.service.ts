@@ -4,8 +4,22 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, Semester, SemesterStatus } from '@prisma/client';
+import * as XLSX from 'xlsx';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryEnrollmentDto } from './dto/query-enrollment.dto';
+import {
+  ParseImportResult,
+  ParseRowError,
+  AlreadyEnrolledDetail,
+} from './dto/import-enrollment.dto';
+
+interface RawRow {
+  index: number;
+  lastName: string;
+  firstName: string;
+  username: string;
+  studentId: string;
+}
 
 @Injectable()
 export class EnrollmentService {
@@ -94,6 +108,98 @@ export class EnrollmentService {
         code: semester.code,
         name: semester.name,
       },
+    };
+  }
+
+  private extractRows(buffer: Buffer): RawRow[] {
+    const workbook = XLSX.read(buffer, { type: 'buffer' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json<string[]>(sheet, {
+      header: 1,
+      defval: '',
+    });
+
+    return raw
+      .slice(1)
+      .map((row, i) => ({
+        index: i + 2,
+        lastName: String(row[0] ?? '').trim(),
+        firstName: String(row[1] ?? '').trim(),
+        username: String(row[2] ?? '').trim(),
+        studentId: String(row[3] ?? '').trim(),
+      }))
+      .filter((r) => r.lastName || r.firstName || r.username || r.studentId);
+  }
+
+  private validateRow(row: RawRow, seenIds: Set<string>): string | null {
+    if (!row.lastName) return 'Missing last name';
+    if (!row.firstName) return 'Missing first name';
+    if (!row.username) return 'Missing username';
+    if (!row.studentId) return 'Missing studentId';
+    if (seenIds.has(row.studentId)) return 'Duplicate studentId within file';
+    return null;
+  }
+
+  async parseImport(
+    buffer: Buffer,
+    semesterId: number | undefined,
+  ): Promise<ParseImportResult> {
+    const target = await this.resolveTargetSemester(semesterId, {
+      allowClosed: false,
+    });
+
+    const rows = this.extractRows(buffer);
+    if (rows.length === 0) {
+      throw new BadRequestException('File has no data rows');
+    }
+
+    const seenIds = new Set<string>();
+    const errors: ParseRowError[] = [];
+    const alreadyEnrolledDetails: AlreadyEnrolledDetail[] = [];
+    let valid = 0;
+
+    for (const row of rows) {
+      const error = this.validateRow(row, seenIds);
+      if (error) {
+        errors.push({ row: row.index, reason: error });
+        continue;
+      }
+      seenIds.add(row.studentId);
+
+      const existingStudent = await this.prisma.student.findUnique({
+        where: { studentId: row.studentId },
+      });
+
+      if (existingStudent) {
+        const enrolled = await this.prisma.enrollment.findUnique({
+          where: {
+            studentId_semesterId: {
+              studentId: existingStudent.id,
+              semesterId: target.id,
+            },
+          },
+        });
+        if (enrolled) {
+          alreadyEnrolledDetails.push({
+            row: row.index,
+            studentId: row.studentId,
+            reason: 'Already enrolled in target semester',
+          });
+          continue;
+        }
+      }
+
+      valid++;
+    }
+
+    return {
+      semester: { id: target.id, code: target.code, name: target.name },
+      total: rows.length,
+      valid,
+      alreadyEnrolled: alreadyEnrolledDetails.length,
+      invalid: errors.length,
+      errors,
+      alreadyEnrolledDetails,
     };
   }
 }

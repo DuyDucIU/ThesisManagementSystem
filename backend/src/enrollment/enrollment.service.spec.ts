@@ -6,6 +6,17 @@ import {
 import { SemesterStatus } from '@prisma/client';
 import { EnrollmentService } from './enrollment.service';
 import { PrismaService } from '../prisma/prisma.service';
+import * as XLSX from 'xlsx';
+
+function buildExcelBuffer(dataRows: string[][]): Buffer {
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['Last Name', 'First Name', 'Username', 'StudentID'],
+    ...dataRows,
+  ]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+}
 
 const mockActiveSemester = {
   id: 1,
@@ -189,6 +200,138 @@ describe('EnrollmentService', () => {
       const result = await service.findAll({});
 
       expect(result.data[0].student.hasAccount).toBe(false);
+    });
+  });
+
+  describe('parseImport', () => {
+    it('throws 400 when no active and no semesterId', async () => {
+      prisma.semester.findFirst.mockResolvedValue(null);
+      const buffer = buildExcelBuffer([['A', 'B', 'u1', 'S1']]);
+
+      await expect(service.parseImport(buffer, undefined)).rejects.toThrow(
+        new BadRequestException('No active semester — please specify semesterId'),
+      );
+    });
+
+    it('throws 400 when target semester is CLOSED', async () => {
+      prisma.semester.findUnique.mockResolvedValue(mockClosedSemester);
+      const buffer = buildExcelBuffer([['A', 'B', 'u1', 'S1']]);
+
+      await expect(service.parseImport(buffer, 2)).rejects.toThrow(
+        new BadRequestException('Cannot import into a closed semester'),
+      );
+    });
+
+    it('throws 404 when semester not found', async () => {
+      prisma.semester.findUnique.mockResolvedValue(null);
+      const buffer = buildExcelBuffer([['A', 'B', 'u1', 'S1']]);
+
+      await expect(service.parseImport(buffer, 999)).rejects.toThrow(
+        new NotFoundException('Semester #999 not found'),
+      );
+    });
+
+    it('throws 400 when file has no data rows', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      const buffer = buildExcelBuffer([]);
+
+      await expect(service.parseImport(buffer, undefined)).rejects.toThrow(
+        new BadRequestException('File has no data rows'),
+      );
+    });
+
+    it('returns all valid for clean new rows', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      prisma.student.findUnique.mockResolvedValue(null);
+      const buffer = buildExcelBuffer([
+        ['VO', 'KIET', 'ititwe22055', 'ITITWE22055'],
+        ['NGUYEN', 'AN', 'itit22001', 'ITIT22001'],
+      ]);
+
+      const result = await service.parseImport(buffer, undefined);
+
+      expect(result.total).toBe(2);
+      expect(result.valid).toBe(2);
+      expect(result.invalid).toBe(0);
+      expect(result.alreadyEnrolled).toBe(0);
+      expect(result.semester).toEqual({ id: 1, code: 'HK1-2025', name: 'HK1' });
+    });
+
+    it('reports error for row missing last name', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      const buffer = buildExcelBuffer([['', 'KIET', 'u', 'S1']]);
+      const result = await service.parseImport(buffer, undefined);
+      expect(result.invalid).toBe(1);
+      expect(result.errors[0]).toEqual({ row: 2, reason: 'Missing last name' });
+    });
+
+    it('reports error for row missing first name', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      const buffer = buildExcelBuffer([['VO', '', 'u', 'S1']]);
+      const result = await service.parseImport(buffer, undefined);
+      expect(result.errors[0]).toEqual({ row: 2, reason: 'Missing first name' });
+    });
+
+    it('reports error for row missing username', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      const buffer = buildExcelBuffer([['VO', 'KIET', '', 'S1']]);
+      const result = await service.parseImport(buffer, undefined);
+      expect(result.errors[0]).toEqual({ row: 2, reason: 'Missing username' });
+    });
+
+    it('reports error for row missing studentId', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      const buffer = buildExcelBuffer([['VO', 'KIET', 'u', '']]);
+      const result = await service.parseImport(buffer, undefined);
+      expect(result.errors[0]).toEqual({ row: 2, reason: 'Missing studentId' });
+    });
+
+    it('detects duplicate studentId within file', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      prisma.student.findUnique.mockResolvedValue(null);
+      const buffer = buildExcelBuffer([
+        ['VO', 'KIET', 'u1', 'SAME'],
+        ['NGUYEN', 'AN', 'u2', 'SAME'],
+      ]);
+
+      const result = await service.parseImport(buffer, undefined);
+
+      expect(result.valid).toBe(1);
+      expect(result.invalid).toBe(1);
+      expect(result.errors[0]).toEqual({
+        row: 3, reason: 'Duplicate studentId within file',
+      });
+    });
+
+    it('detects already-enrolled students in target semester', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      prisma.student.findUnique.mockResolvedValue({
+        id: 5, studentId: 'ITITIU20001',
+        fullName: 'A', email: 'a@x', userId: null,
+      });
+      prisma.enrollment.findUnique.mockResolvedValue({
+        id: 20, studentId: 5, semesterId: 1, status: 'AVAILABLE',
+      });
+
+      const buffer = buildExcelBuffer([['VO', 'KIET', 'u1', 'ITITIU20001']]);
+      const result = await service.parseImport(buffer, undefined);
+
+      expect(result.alreadyEnrolled).toBe(1);
+      expect(result.alreadyEnrolledDetails[0]).toEqual({
+        row: 2, studentId: 'ITITIU20001',
+        reason: 'Already enrolled in target semester',
+      });
+    });
+
+    it('accepts INACTIVE target semester', async () => {
+      prisma.semester.findUnique.mockResolvedValue(mockInactiveSemester);
+      prisma.student.findUnique.mockResolvedValue(null);
+      const buffer = buildExcelBuffer([['VO', 'KIET', 'u1', 'S1']]);
+
+      const result = await service.parseImport(buffer, 3);
+
+      expect(result.valid).toBe(1);
+      expect(result.semester.id).toBe(3);
     });
   });
 });
