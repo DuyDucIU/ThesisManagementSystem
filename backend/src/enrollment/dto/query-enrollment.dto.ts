@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsOptional, IsString, IsInt, Min, Max, IsEnum } from 'class-validator';
 import { EnrollmentStatus } from '@prisma/client';
 
@@ -14,6 +14,7 @@ export class QueryEnrollmentDto {
   status?: EnrollmentStatus;
 
   @IsOptional()
+  @Transform(({ value }) => value || undefined)
   @IsString()
   search?: string;
 
