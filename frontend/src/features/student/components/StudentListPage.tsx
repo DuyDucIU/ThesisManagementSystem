@@ -24,8 +24,6 @@ import {
 import { useStudentStore } from '../store/studentStore'
 import { studentApi, extractErrorMessage } from '../api'
 import type { StudentItem } from '../api'
-import { semesterApi } from '../../semester/api'
-import type { Semester } from '../../semester/api'
 import StudentEditModal from './StudentEditModal'
 import StudentCreateModal from './StudentCreateModal'
 
@@ -35,9 +33,9 @@ export default function StudentListPage() {
   const { students, total, page, loading, fetchAll } = useStudentStore()
 
   const [search, setSearch] = useState('')
-  const [hasAccountFilter, setHasAccountFilter] = useState<'all' | 'true' | 'false'>('all')
-  const [semesterIdFilter, setSemesterIdFilter] = useState<string>('all')
-  const [semesters, setSemesters] = useState<Semester[]>([])
+  const [hasAccountFilter, setHasAccountFilter] = useState<
+    'all' | 'true' | 'false'
+  >('all')
 
   const [editTarget, setEditTarget] = useState<StudentItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<StudentItem | null>(null)
@@ -56,21 +54,12 @@ export default function StudentListPage() {
           : hasAccountFilter === 'false'
             ? false
             : undefined,
-      semesterId: semesterIdFilter !== 'all' ? Number(semesterIdFilter) : undefined,
       page: p,
       limit: PAGE_LIMIT,
     }),
-    [search, hasAccountFilter, semesterIdFilter],
+    [search, hasAccountFilter],
   )
 
-  // Load semesters for filter dropdown once
-  useEffect(() => {
-    semesterApi.list().then((res) => setSemesters(res.data)).catch(() => {
-      toast.error('Failed to load semesters.')
-    })
-  }, [])
-
-  // Debounced re-fetch when filters change
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (isFirstRender.current) {
@@ -97,11 +86,13 @@ export default function StudentListPage() {
       await studentApi.remove(deleteTarget.id)
       toast.success(`"${deleteTarget.fullName}" deleted.`)
       setDeleteTarget(null)
-      const nextPage = Math.max(1, Math.min(page, Math.ceil((total - 1) / PAGE_LIMIT)))
+      const nextPage = Math.max(
+        1,
+        Math.min(page, Math.ceil((total - 1) / PAGE_LIMIT)),
+      )
       void fetchAll(buildQuery(nextPage))
     } catch (err) {
-      const msg = extractErrorMessage(err)
-      toast.error(msg)
+      toast.error(extractErrorMessage(err))
       setDeleteTarget(null)
     } finally {
       setDeleteLoading(false)
@@ -114,12 +105,13 @@ export default function StudentListPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-on-surface">Students</h1>
+          <h1 className="font-display text-3xl font-semibold text-on-surface">
+            Students
+          </h1>
           <p className="font-sans text-sm font-medium text-muted-foreground mt-1">
-            Manage student profiles.
+            Global student directory.
           </p>
         </div>
         <Button
@@ -130,7 +122,6 @@ export default function StudentListPage() {
         </Button>
       </div>
 
-      {/* Filter bar */}
       <div className="flex flex-wrap gap-3">
         <Input
           placeholder="Search by name, student ID, or email…"
@@ -141,7 +132,9 @@ export default function StudentListPage() {
 
         <Select
           value={hasAccountFilter}
-          onValueChange={(v) => setHasAccountFilter(v as 'all' | 'true' | 'false')}
+          onValueChange={(v) =>
+            setHasAccountFilter(v as 'all' | 'true' | 'false')
+          }
         >
           <SelectTrigger className="w-44 font-sans text-sm">
             <SelectValue placeholder="Account status" />
@@ -152,67 +145,30 @@ export default function StudentListPage() {
             <SelectItem value="false">No account</SelectItem>
           </SelectContent>
         </Select>
-
-        <Select
-          value={semesterIdFilter}
-          onValueChange={setSemesterIdFilter}
-        >
-          <SelectTrigger className="w-52 font-sans text-sm">
-            <SelectValue placeholder="All semesters" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All semesters</SelectItem>
-            {semesters.map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>
-                {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
-      {/* Table */}
       <div className="bg-surface-container-low rounded-lg overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="bg-surface-container">
-              <th className="text-left px-4 py-3 font-label text-xs text-muted-foreground">
-                Student ID
-              </th>
-              <th className="text-left px-4 py-3 font-label text-xs text-muted-foreground">
-                Full Name
-              </th>
-              <th className="text-left px-4 py-3 font-label text-xs text-muted-foreground">
-                Email
-              </th>
-              <th className="text-left px-4 py-3 font-label text-xs text-muted-foreground">
-                Account
-              </th>
-              {semesterIdFilter !== 'all' && (
-                <th className="text-left px-4 py-3 font-label text-xs text-muted-foreground">
-                  Status
-                </th>
-              )}
+              <th className="text-left px-4 py-3 font-label text-xs text-muted-foreground">Student ID</th>
+              <th className="text-left px-4 py-3 font-label text-xs text-muted-foreground">Full Name</th>
+              <th className="text-left px-4 py-3 font-label text-xs text-muted-foreground">Email</th>
+              <th className="text-left px-4 py-3 font-label text-xs text-muted-foreground">Account</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td
-                  colSpan={semesterIdFilter !== 'all' ? 6 : 5}
-                  className="px-4 py-8 text-center font-sans text-sm text-muted-foreground"
-                >
+                <td colSpan={5} className="px-4 py-8 text-center font-sans text-sm text-muted-foreground">
                   Loading…
                 </td>
               </tr>
             )}
             {!loading && students.length === 0 && (
               <tr>
-                <td
-                  colSpan={semesterIdFilter !== 'all' ? 6 : 5}
-                  className="px-4 py-8 text-center font-sans text-sm text-muted-foreground"
-                >
+                <td colSpan={5} className="px-4 py-8 text-center font-sans text-sm text-muted-foreground">
                   No students found.
                 </td>
               </tr>
@@ -223,15 +179,9 @@ export default function StudentListPage() {
                   key={s.id}
                   className="border-t border-surface-container hover:bg-surface-container transition-colors"
                 >
-                  <td className="px-4 py-3 font-sans text-sm font-medium text-on-surface">
-                    {s.studentId}
-                  </td>
-                  <td className="px-4 py-3 font-sans text-sm text-on-surface">
-                    {s.fullName}
-                  </td>
-                  <td className="px-4 py-3 font-sans text-sm text-muted-foreground">
-                    {s.email}
-                  </td>
+                  <td className="px-4 py-3 font-sans text-sm font-medium text-on-surface">{s.studentId}</td>
+                  <td className="px-4 py-3 font-sans text-sm text-on-surface">{s.fullName}</td>
+                  <td className="px-4 py-3 font-sans text-sm text-muted-foreground">{s.email}</td>
                   <td className="px-4 py-3">
                     {s.hasAccount ? (
                       <span className="font-label text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
@@ -241,11 +191,6 @@ export default function StudentListPage() {
                       <span className="font-sans text-sm text-muted-foreground">—</span>
                     )}
                   </td>
-                  {semesterIdFilter !== 'all' && (
-                    <td className="px-4 py-3 font-sans text-sm text-muted-foreground">
-                      {s.semesterStudent?.status ?? '—'}
-                    </td>
-                  )}
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <Button
@@ -274,7 +219,6 @@ export default function StudentListPage() {
         </table>
       </div>
 
-      {/* Pagination */}
       {total > 0 && (
         <div className="flex items-center justify-between">
           <p className="font-sans text-sm text-muted-foreground">
@@ -303,7 +247,6 @@ export default function StudentListPage() {
         </div>
       )}
 
-      {/* Edit Modal */}
       <StudentEditModal
         student={editTarget}
         onClose={() => setEditTarget(null)}
@@ -313,10 +256,11 @@ export default function StudentListPage() {
         }}
       />
 
-      {/* Delete Confirmation */}
       <AlertDialog
         open={deleteTarget !== null}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
       >
         <AlertDialogContent
           className="bg-surface"
@@ -345,7 +289,6 @@ export default function StudentListPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Create Modal */}
       <StudentCreateModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
