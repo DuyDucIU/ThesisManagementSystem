@@ -5,6 +5,7 @@ import {
   IsInt,
   Min,
   MinLength,
+  MaxLength,
 } from 'class-validator';
 
 export class UpdateLecturerDto {
@@ -24,6 +25,7 @@ export class UpdateLecturerDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   title?: string;
 
   @IsOptional()

@@ -25,6 +25,7 @@ export class CreateLecturerDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   title?: string;
 
   @IsOptional()
