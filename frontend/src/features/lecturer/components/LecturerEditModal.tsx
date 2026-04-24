@@ -47,7 +47,7 @@ export default function LecturerEditModal({ lecturer, onClose, onSaved }: Props)
       await lecturerApi.update(lecturer.id, {
         fullName,
         email,
-        title: title || undefined,
+        title: title.trim(),
         maxStudents: Number(maxStudents),
       })
       toast.success('Lecturer updated.')
