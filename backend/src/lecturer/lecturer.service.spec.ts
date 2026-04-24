@@ -178,7 +178,7 @@ describe('LecturerService', () => {
       const result = await service.findAll({});
 
       expect(prisma.lecturer.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 0, take: 20 }),
+        expect.objectContaining({ skip: 0, take: 20, orderBy: { fullName: 'asc' } }),
       );
       expect(result).toEqual({
         data: [
