@@ -249,4 +249,70 @@ describe('LecturerService', () => {
       await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
     });
   });
+
+  // ─── update ──────────────────────────────────────────────────────────────────
+
+  describe('update', () => {
+    it('throws NotFoundException when lecturer does not exist', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(null);
+
+      await expect(service.update(999, { fullName: 'New Name' })).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException when no fields are provided', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
+
+      await expect(service.update(1, {})).rejects.toThrow(
+        new BadRequestException('At least one field must be provided'),
+      );
+    });
+
+    it('updates fullName and returns response without userId', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
+      prisma.lecturer.update.mockResolvedValue({ ...mockLecturer, fullName: 'Updated Name' });
+
+      const result = await service.update(1, { fullName: 'Updated Name' });
+
+      expect(prisma.lecturer.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { fullName: 'Updated Name' },
+      });
+      expect(result).toEqual({ ...lecturerResponse, fullName: 'Updated Name' });
+      expect(result).not.toHaveProperty('userId');
+    });
+
+    it('updates only the provided fields', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
+      prisma.lecturer.update.mockResolvedValue({ ...mockLecturer, maxStudents: 8 });
+
+      await service.update(1, { maxStudents: 8 });
+
+      expect(prisma.lecturer.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { maxStudents: 8 },
+      });
+    });
+
+    it('throws ConflictException on lecturerId duplicate (P2002)', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
+      const p2002 = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        { code: 'P2002', clientVersion: '5.0.0', meta: { target: ['lecturerId'] } },
+      );
+      prisma.lecturer.update.mockRejectedValue(p2002);
+
+      await expect(service.update(1, { lecturerId: 'DUPLICATE' })).rejects.toThrow(ConflictException);
+    });
+
+    it('throws ConflictException on email duplicate (P2002)', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
+      const p2002 = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        { code: 'P2002', clientVersion: '5.0.0', meta: { target: 'lecturers_email_key' } },
+      );
+      prisma.lecturer.update.mockRejectedValue(p2002);
+
+      await expect(service.update(1, { email: 'dup@x.com' })).rejects.toThrow(ConflictException);
+    });
+  });
 });

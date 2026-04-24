@@ -91,7 +91,34 @@ export class LecturerService {
   }
 
   async update(id: number, dto: UpdateLecturerDto) {
-    return null as any;
+    const lecturer = await this.prisma.lecturer.findUnique({ where: { id } });
+    if (!lecturer) throw new NotFoundException(`Lecturer #${id} not found`);
+
+    if (
+      dto.fullName === undefined &&
+      dto.email === undefined &&
+      dto.lecturerId === undefined &&
+      dto.title === undefined &&
+      dto.maxStudents === undefined
+    ) {
+      throw new BadRequestException('At least one field must be provided');
+    }
+
+    try {
+      const updated = await this.prisma.lecturer.update({
+        where: { id },
+        data: {
+          ...(dto.fullName !== undefined && { fullName: dto.fullName }),
+          ...(dto.email !== undefined && { email: dto.email }),
+          ...(dto.lecturerId !== undefined && { lecturerId: dto.lecturerId }),
+          ...(dto.title !== undefined && { title: dto.title }),
+          ...(dto.maxStudents !== undefined && { maxStudents: dto.maxStudents }),
+        },
+      });
+      return this.toResponse(updated);
+    } catch (e) {
+      this.handleP2002(e, dto.lecturerId, dto.email);
+    }
   }
 
   async remove(id: number): Promise<void> {
