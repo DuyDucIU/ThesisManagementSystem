@@ -12,10 +12,12 @@ export class UpdateLecturerDto {
   @IsOptional()
   @IsString()
   @MinLength(1)
+  @MaxLength(200)
   fullName?: string;
 
   @IsOptional()
   @IsEmail()
+  @MaxLength(100)
   email?: string;
 
   @IsOptional()

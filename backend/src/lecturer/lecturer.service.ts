@@ -142,6 +142,15 @@ export class LecturerService {
       );
     }
 
+    const reviewedDocCount = await this.prisma.document.count({
+      where: { lecturerReviewedBy: id },
+    });
+    if (reviewedDocCount > 0) {
+      throw new ConflictException(
+        'Cannot delete lecturer who has reviewed documents',
+      );
+    }
+
     await this.prisma.$transaction([
       this.prisma.lecturer.delete({ where: { id } }),
       this.prisma.user.delete({ where: { id: lecturer.userId } }),

@@ -42,6 +42,7 @@ describe('LecturerService', () => {
     topic: { count: jest.Mock };
     thesis: { count: jest.Mock };
     thesisReview: { count: jest.Mock };
+    document: { count: jest.Mock };
     $transaction: jest.Mock;
   };
 
@@ -62,6 +63,7 @@ describe('LecturerService', () => {
       topic: { count: jest.fn() },
       thesis: { count: jest.fn() },
       thesisReview: { count: jest.fn() },
+      document: { count: jest.fn() },
       $transaction: jest.fn().mockImplementation((arg) => {
         if (typeof arg === 'function') return arg(prisma);
         return Promise.resolve(arg);
@@ -349,11 +351,25 @@ describe('LecturerService', () => {
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
+    it('throws ConflictException when lecturer has reviewed documents', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
+      prisma.topic.count.mockResolvedValue(0);
+      prisma.thesis.count.mockResolvedValue(0);
+      prisma.thesisReview.count.mockResolvedValue(0);
+      prisma.document.count.mockResolvedValue(1);
+
+      await expect(service.remove(1)).rejects.toThrow(
+        new ConflictException('Cannot delete lecturer who has reviewed documents'),
+      );
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
     it('deletes lecturer then user in a transaction when no constraints violated', async () => {
       prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
       prisma.topic.count.mockResolvedValue(0);
       prisma.thesis.count.mockResolvedValue(0);
       prisma.thesisReview.count.mockResolvedValue(0);
+      prisma.document.count.mockResolvedValue(0);
       prisma.lecturer.delete.mockResolvedValue(mockLecturer);
       prisma.user.delete.mockResolvedValue({});
 
