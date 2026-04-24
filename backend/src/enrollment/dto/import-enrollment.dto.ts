@@ -1,3 +1,9 @@
+export interface SemesterSummary {
+  id: number;
+  code: string;
+  name: string;
+}
+
 export interface ParseRowError {
   row: number;
   reason: string;
@@ -10,6 +16,7 @@ export interface AlreadyEnrolledDetail {
 }
 
 export interface ParseImportResult {
+  semester: SemesterSummary;
   total: number;
   valid: number;
   alreadyEnrolled: number;
@@ -24,7 +31,8 @@ export interface SkippedDetail {
   reason: string;
 }
 
-export interface ImportStudentsResult {
+export interface ImportEnrollmentsResult {
+  semester: SemesterSummary;
   imported: number;
   skipped: number;
   skippedDetails: SkippedDetail[];

@@ -162,7 +162,7 @@ export default function SemesterListPage() {
       </div>
 
       {/* Filters toolbar + Status cards */}
-      <div className="flex gap-4 items-stretch">
+      <div className="flex gap-4 items-start">
         {/* Filters */}
         <div className="flex-1 flex flex-wrap gap-3 bg-surface-container-low rounded-lg p-4">
           <Input

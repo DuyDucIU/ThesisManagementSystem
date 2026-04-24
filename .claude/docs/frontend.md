@@ -19,15 +19,21 @@ frontend/src/
 │   │   ├── store/
 │   │   │   └── semesterStore.ts        # Zustand store for semester state
 │   │   └── api.ts                      # Semester CRUD + status-transition API calls
-│   └── student/
+│   ├── student/
 │       ├── components/
 │       │   ├── StudentListPage.tsx     # Admin list page with filters, table, action dialogs
 │       │   ├── StudentEditModal.tsx    # Edit modal (Dialog)
-│       │   ├── StudentCreateModal.tsx  # Create modal (Dialog)
-│       │   └── StudentImportPage.tsx   # Excel import flow (parse → confirm → import)
+│       │   └── StudentCreateModal.tsx  # Create modal (Dialog)
 │       ├── store/
 │       │   └── studentStore.ts         # Zustand store for student state
-│       └── api.ts                      # Student CRUD + import API calls
+│       └── api.ts                      # Student CRUD API calls
+│   └── enrollment/
+│       ├── components/
+│       │   ├── EnrollmentListPage.tsx  # Per-semester enrollment list with semester/status/search filters
+│       │   └── EnrollmentImportPage.tsx  # Excel import flow (parse → confirm → import) with semester selector
+│       ├── store/
+│       │   └── enrollmentStore.ts      # Zustand store for enrollment state
+│       └── api.ts                      # Enrollment list + import API calls
 ├── components/
 │   └── ui/                         # shadcn/ui generated components (Button, Input, Label, Dialog, Select, AlertDialog, Sonner, etc.)
 ├── layouts/
@@ -43,7 +49,7 @@ frontend/src/
 └── index.css                       # Tailwind import + shadcn CSS variable theme
 ```
 
-**Pattern:** New features go under `src/features/<feature-name>/` with `components/`, `store/`, `api.ts` sub-folders. The `store/` sub-folder is optional — use local React state when data is page-scoped and not shared across the app (e.g. `StudentImportPage` uses no Zustand store).
+**Pattern:** New features go under `src/features/<feature-name>/` with `components/`, `store/`, `api.ts` sub-folders. The `store/` sub-folder is optional — use local React state when data is page-scoped and not shared across the app (e.g. `EnrollmentImportPage` uses no Zustand store).
 
 ## Build Tooling
 
@@ -80,7 +86,8 @@ React Router v7 (`react-router` package):
 | `/` | Redirect → `/admin/semesters` | `ProtectedRoute` |
 | `/admin/semesters` | `SemesterListPage` | `ProtectedRoute` → `AdminRoute` |
 | `/admin/students` | `StudentListPage` | `ProtectedRoute` → `AdminRoute` |
-| `/admin/students/import` | `StudentImportPage` | `ProtectedRoute` → `AdminRoute` |
+| `/admin/enrollments` | `EnrollmentListPage` | `ProtectedRoute` → `AdminRoute` |
+| `/admin/enrollments/import` | `EnrollmentImportPage` | `ProtectedRoute` → `AdminRoute` |
 | `*` | Redirect → `/login` | — |
 
 Guards live in `src/router/guards.tsx` (separate from route config to satisfy react-refresh ESLint rule):
@@ -156,7 +163,7 @@ All auth API calls go through `src/features/auth/api.ts` (`authApi.login/refresh
 ```typescript
 const form = new FormData()
 form.append('file', file)
-return api.post<ParseImportResult>('/students/import?action=parse', form)
+return api.post<ParseImportResult>('/enrollments/import?action=parse', form)
 ```
 
 **`extractErrorMessage` helper:** Each feature's `api.ts` exports an `extractErrorMessage(err: unknown): string` function that safely unwraps NestJS error shapes (both `string` and `string[]` message variants). This is currently duplicated across feature modules — a future cleanup should extract it to `src/lib/errors.ts`.

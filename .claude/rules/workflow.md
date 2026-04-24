@@ -3,7 +3,7 @@
 ## Feature Development Process
 
 Every new feature follows three stages. **Do not write any code before the spec is approved.**
-**Hard rule: frontend work never begins until the user has verified the backend independently.**
+**Hard rule: the frontend implementation cycle never begins until the user has verified the backend independently.** Writing the frontend plan upfront (alongside the backend plan) is allowed — planning is design, not implementation.
 
 ---
 
@@ -17,7 +17,7 @@ Design the feature before any code is written. Cover all of the following during
 4. **Approaches** — Propose 2-3 implementation approaches with trade-offs. Get user agreement on direction.
 5. **Edge cases & constraints** — Business rules, error scenarios, access control.
 
-After spec is approved, the user will request both plans separately — backend first, then frontend. Each plan is written before its implementation cycle begins.
+After spec is approved, the user may request both plans upfront (backend and frontend together) or one at a time. Either way, each implementation cycle still runs sequentially — backend cycle must complete and be verified before the frontend implementation cycle starts.
 
 ---
 
@@ -31,7 +31,7 @@ After spec is approved, the user will request both plans separately — backend 
 ### Stage 3 — Frontend Cycle
 
 1. **API Drift Check** — before executing, review the frontend plan against actual API behavior from Stage 2 and update any tasks that drifted.
-2. **Implement** — execute the frontend plan.
+2. **Implement** — execute the frontend plan. When building new pages or components, invoke `/frontend-design` skill for distinctive, production-grade UI quality.
 3. **E2E Verification** — test with Playwright (Claude) and manual browser testing (user). Confirm the full user journey works end-to-end.
 
 After E2E verification passes, wrap up the branch.

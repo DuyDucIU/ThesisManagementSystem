@@ -32,7 +32,7 @@ ThesisManagementSystem/
 │   └── test/             # E2E tests
 ├── frontend/             # React SPA (Vite) — see frontend.md
 │   └── src/
-│       ├── features/     # Feature modules (auth, semester, student, ...) — components, store, api
+│       ├── features/     # Feature modules (auth, semester, student, enrollment, ...) — components, store, api
 │       ├── components/   # Shared UI — shadcn/ui components under ui/
 │       ├── layouts/      # App shell (AppLayout)
 │       ├── router/       # Route config + guards

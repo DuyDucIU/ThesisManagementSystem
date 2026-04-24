@@ -26,7 +26,7 @@ Schema file: `backend/prisma/schema.prisma`
 |------|--------|
 | `Role` | ADMIN, LECTURER, STUDENT |
 | `SemesterStatus` | INACTIVE, ACTIVE, CLOSED |
-| `SemesterStudentStatus` | AVAILABLE, ASSIGNED, COMPLETED, FAILED |
+| `EnrollmentStatus` | AVAILABLE, ASSIGNED, COMPLETED, FAILED |
 | `TopicStatus` | OPEN, CLOSED, FULL |
 | `ThesisStatus` | IN_PROGRESS, SUBMITTED, APPROVED, UNDER_REVIEW, REVIEWED |
 | `DocumentType` | REGISTRATION, CONFIRMATION, THESIS_REPORT |
@@ -42,7 +42,7 @@ User (users)
  └── 1:N → Notification
 
 Semester (semesters)
- ├── 1:N → SemesterStudent
+ ├── 1:N → Enrollment
  └── 1:N → Topic
 
 Lecturer (lecturers)
@@ -54,9 +54,9 @@ Lecturer (lecturers)
 
 Student (students)
  ├── N:1 → User (optional — student may exist before account)
- └── 1:N → SemesterStudent
+ └── 1:N → Enrollment
 
-SemesterStudent (semester_students)
+Enrollment (enrollments)
  ├── N:1 → Student
  ├── N:1 → Semester
  └── 1:1 → Thesis
@@ -68,7 +68,7 @@ Topic (topics)
  └── 1:N → Thesis
 
 Thesis (theses)
- ├── 1:1 → SemesterStudent (unique)
+ ├── 1:1 → Enrollment (unique)
  ├── N:1 → Topic
  ├── N:1 → Lecturer (reviewer, optional)
  ├── 1:N → Document
@@ -90,7 +90,7 @@ Notification (notifications)
 ### Key Design Decisions
 
 - **Student/Lecturer ↔ User is deferred** — Excel import creates Student/Lecturer records with no User account. Admin activation is what creates the User record and credentials. Student.userId is optional for this reason; Lecturer.userId is required once activated.
-- **SemesterStudent is a join table with state** — tracks a student's status within a specific semester; thesis is linked here, not directly to Student
+- **Enrollment is a join table with state** — tracks a student's participation in a specific semester; thesis is linked here, not directly to Student. Previously named `SemesterStudent`; renamed to `Enrollment` to express the business concept rather than the DB implementation.
 - **Document has two-level review** — lecturer review + admin review, each with feedback, reviewer reference, and timestamp
 - **Files stored in S3** — Document stores `s3Key`, `originalName`, `mimeType`, `fileSize`
 - **All table names use `@@map` for snake_case** — Prisma model names are PascalCase, DB tables are snake_case

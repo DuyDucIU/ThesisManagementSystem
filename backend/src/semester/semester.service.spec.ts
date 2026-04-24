@@ -30,7 +30,7 @@ describe('SemesterService', () => {
       update: jest.Mock;
       delete: jest.Mock;
     };
-    semesterStudent: { count: jest.Mock };
+    enrollment: { count: jest.Mock };
     topic: { count: jest.Mock };
   };
 
@@ -49,7 +49,7 @@ describe('SemesterService', () => {
               update: jest.fn(),
               delete: jest.fn(),
             },
-            semesterStudent: { count: jest.fn() },
+            enrollment: { count: jest.fn() },
             topic: { count: jest.fn() },
           },
         },
@@ -295,7 +295,7 @@ describe('SemesterService', () => {
   describe('remove', () => {
     it('deletes an INACTIVE semester with no linked data', async () => {
       prisma.semester.findUnique.mockResolvedValue(mockSemester);
-      prisma.semesterStudent.count.mockResolvedValue(0);
+      prisma.enrollment.count.mockResolvedValue(0);
       prisma.topic.count.mockResolvedValue(0);
       prisma.semester.delete.mockResolvedValue(mockSemester);
 
@@ -314,7 +314,7 @@ describe('SemesterService', () => {
       await expect(service.remove(1)).rejects.toThrow(
         new ConflictException('Only INACTIVE semesters can be deleted'),
       );
-      expect(prisma.semesterStudent.count).not.toHaveBeenCalled();
+      expect(prisma.enrollment.count).not.toHaveBeenCalled();
       expect(prisma.topic.count).not.toHaveBeenCalled();
     });
 
@@ -327,13 +327,13 @@ describe('SemesterService', () => {
       await expect(service.remove(1)).rejects.toThrow(
         new ConflictException('Only INACTIVE semesters can be deleted'),
       );
-      expect(prisma.semesterStudent.count).not.toHaveBeenCalled();
+      expect(prisma.enrollment.count).not.toHaveBeenCalled();
       expect(prisma.topic.count).not.toHaveBeenCalled();
     });
 
     it('throws ConflictException when semester has linked students', async () => {
       prisma.semester.findUnique.mockResolvedValue(mockSemester);
-      prisma.semesterStudent.count.mockResolvedValue(3);
+      prisma.enrollment.count.mockResolvedValue(3);
       prisma.topic.count.mockResolvedValue(0);
 
       await expect(service.remove(1)).rejects.toThrow(
@@ -345,7 +345,7 @@ describe('SemesterService', () => {
 
     it('throws ConflictException when semester has linked topics', async () => {
       prisma.semester.findUnique.mockResolvedValue(mockSemester);
-      prisma.semesterStudent.count.mockResolvedValue(0);
+      prisma.enrollment.count.mockResolvedValue(0);
       prisma.topic.count.mockResolvedValue(2);
 
       await expect(service.remove(1)).rejects.toThrow(

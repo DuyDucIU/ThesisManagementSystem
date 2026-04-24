@@ -5,7 +5,8 @@ import LoginPage from '../features/auth/components/LoginPage'
 import AppLayout from '../layouts/AppLayout'
 import SemesterListPage from '../features/semester/components/SemesterListPage'
 import StudentListPage from '../features/student/components/StudentListPage'
-import StudentImportPage from '../features/student/components/StudentImportPage'
+import EnrollmentListPage from '../features/enrollment/components/EnrollmentListPage'
+import EnrollmentImportPage from '../features/enrollment/components/EnrollmentImportPage'
 
 const router = createBrowserRouter([
   {
@@ -24,7 +25,8 @@ const router = createBrowserRouter([
             children: [
               { path: '/admin/semesters', element: <SemesterListPage /> },
               { path: '/admin/students', element: <StudentListPage /> },
-              { path: '/admin/students/import', element: <StudentImportPage /> },
+              { path: '/admin/enrollments', element: <EnrollmentListPage /> },
+              { path: '/admin/enrollments/import', element: <EnrollmentImportPage /> },
             ],
           },
         ],

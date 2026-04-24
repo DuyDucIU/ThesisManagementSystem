@@ -46,7 +46,7 @@ A tri-font system establishing a clear scholarly hierarchy. Load all three via G
 
 | Role | Font | Weights | Use for |
 |------|------|---------|---------|
-| Display & Headlines | **Newsreader** (Serif) | 400, 600 | Page titles, major headings — signals prestige |
+| Display & Headlines | **Manrope** (Geometric Sans) | 400, 600 | Page titles, major headings |
 | Titles & Body | **Manrope** (Geometric Sans) | 400, 500, 600 | Card headers, body text, thesis abstracts |
 | Labels | **Inter** (Utilitarian Sans) | 400, 500 | Status badges, table headers, small-scale UI |
 
@@ -54,7 +54,7 @@ A tri-font system establishing a clear scholarly hierarchy. Load all three via G
 
 | Name | Font | Size | Weight | Use |
 |------|------|------|--------|-----|
-| `display-md` | Newsreader | 2.5rem | 600 | Page titles (e.g. "Thesis Submission") |
+| `display-md` | Manrope | 2.5rem | 600 | Page titles (e.g. "Thesis Submission") |
 | `title-lg` | Manrope | 1.25rem | 600 | Card headers |
 | `title-sm` | Manrope | 1rem | 600 | Section labels, upload prompts |
 | `body-lg` | Manrope | 1rem | 400 | Thesis abstracts, main body |
@@ -123,7 +123,7 @@ Muted tones only — no bright "traffic light" colors. Pill shape (`border-radiu
 ## 6. Do's and Don'ts
 
 ### Do
-- Use **Newsreader** (Serif) for all major page headings.
+- Use **Manrope** for all major page headings.
 - Use `spacing.10` (2.5rem) or `spacing.12` (3rem) for margins between major sections.
 - Use `secondary` color tokens for metadata (dates, word counts, advisor names).
 - Use `on_surface` (#191c1d) for all body text.

@@ -23,7 +23,7 @@ enum SemesterStatus {
   CLOSED
 }
 
-enum SemesterStudentStatus {
+enum EnrollmentStatus {
   AVAILABLE
   ASSIGNED
   COMPLETED
@@ -94,8 +94,8 @@ model Semester {
   createdAt DateTime       @default(now()) @map("created_at")
   updatedAt DateTime       @updatedAt @map("updated_at")
 
-  semesterStudents SemesterStudent[]
-  topics           Topic[]
+  enrollments Enrollment[]
+  topics      Topic[]
 
   @@map("semesters")
 }
@@ -128,16 +128,16 @@ model Student {
 
   user User? @relation(fields: [userId], references: [id])
 
-  semesterStudents SemesterStudent[]
+  enrollments Enrollment[]
 
   @@map("students")
 }
 
-model SemesterStudent {
-  id         Int                   @id @default(autoincrement())
-  studentId  Int                   @map("student_id")
-  semesterId Int                   @map("semester_id")
-  status     SemesterStudentStatus @default(AVAILABLE)
+model Enrollment {
+  id         Int              @id @default(autoincrement())
+  studentId  Int              @map("student_id")
+  semesterId Int              @map("semester_id")
+  status     EnrollmentStatus @default(AVAILABLE)
 
   student  Student  @relation(fields: [studentId], references: [id])
   semester Semester @relation(fields: [semesterId], references: [id])
@@ -145,7 +145,7 @@ model SemesterStudent {
   thesis Thesis?
 
   @@unique([studentId, semesterId])
-  @@map("semester_students")
+  @@map("enrollments")
 }
 
 model Topic {
@@ -169,16 +169,16 @@ model Topic {
 
 model Thesis {
   id                Int          @id @default(autoincrement())
-  semesterStudentId Int          @unique @map("semester_student_id")
-  topicId           Int          @map("topic_id")
-  reviewerId        Int?         @map("reviewer_id")
-  title             String
-  description       String?      @db.Text
-  status            ThesisStatus @default(IN_PROGRESS)
-  createdAt         DateTime     @default(now()) @map("created_at")
-  updatedAt         DateTime     @updatedAt @map("updated_at")
+  enrollmentId Int          @unique @map("enrollment_id")
+  topicId      Int          @map("topic_id")
+  reviewerId   Int?         @map("reviewer_id")
+  title        String
+  description  String?      @db.Text
+  status       ThesisStatus @default(IN_PROGRESS)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
 
-  semesterStudent SemesterStudent @relation(fields: [semesterStudentId], references: [id])
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
   topic           Topic           @relation(fields: [topicId], references: [id])
   reviewer        Lecturer?       @relation("Reviewer", fields: [reviewerId], references: [id])
 

@@ -1,5 +1,5 @@
-// frontend/src/features/student/components/StudentImportPage.tsx
-import { useRef, useState } from 'react'
+// frontend/src/features/enrollment/components/EnrollmentImportPage.tsx
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Upload } from 'lucide-react'
 import {
@@ -14,23 +14,47 @@ import {
 } from '../../../components/ui/alert-dialog'
 import { Button } from '../../../components/ui/button'
 import {
-  studentApi,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../components/ui/select'
+import {
+  enrollmentApi,
   extractErrorMessage,
   type ParseImportResult,
-  type ImportStudentsResult,
+  type ImportEnrollmentsResult,
 } from '../api'
+import { semesterApi } from '../../semester/api'
+import type { Semester } from '../../semester/api'
 
 type PageState = 'upload' | 'parsed' | 'imported'
 
-export default function StudentImportPage() {
+export default function EnrollmentImportPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pageState, setPageState] = useState<PageState>('upload')
   const [file, setFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
   const [parseResult, setParseResult] = useState<ParseImportResult | null>(null)
-  const [importResult, setImportResult] = useState<ImportStudentsResult | null>(null)
+  const [importResult, setImportResult] = useState<ImportEnrollmentsResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+
+  const [semesters, setSemesters] = useState<Semester[]>([])
+  const [semesterIdSelect, setSemesterIdSelect] = useState<string>('active')
+
+  useEffect(() => {
+    semesterApi
+      .list()
+      .then((res) => setSemesters(res.data))
+      .catch(() => toast.error('Failed to load semesters.'))
+  }, [])
+
+  const activeSemester = semesters.find((s) => s.status === 'ACTIVE')
+  const selectableSemesters = semesters.filter((s) => s.status === 'INACTIVE')
+  const chosenSemesterId =
+    semesterIdSelect !== 'active' ? Number(semesterIdSelect) : undefined
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0] ?? null
@@ -53,7 +77,7 @@ export default function StudentImportPage() {
     }
     setLoading(true)
     try {
-      const res = await studentApi.parseImport(file)
+      const res = await enrollmentApi.parseImport(file, chosenSemesterId)
       setParseResult(res.data)
       setPageState('parsed')
     } catch (err) {
@@ -85,7 +109,7 @@ export default function StudentImportPage() {
     setConfirmOpen(false)
     setLoading(true)
     try {
-      const res = await studentApi.importStudents(file)
+      const res = await enrollmentApi.importEnrollments(file, chosenSemesterId)
       setImportResult(res.data)
       setPageState('imported')
       toast.success(`Import complete — ${res.data.imported} student(s) enrolled.`)
@@ -101,20 +125,52 @@ export default function StudentImportPage() {
     setParseResult(null)
     setImportResult(null)
     setFileError(null)
+    setSemesterIdSelect('active')
     setPageState('upload')
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const skipCount = (parseResult?.invalid ?? 0) + (parseResult?.alreadyEnrolled ?? 0)
+  const skipCount =
+    (parseResult?.invalid ?? 0) + (parseResult?.alreadyEnrolled ?? 0)
 
   return (
     <div className="space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="font-display text-3xl font-semibold text-on-surface">Import Students</h1>
+        <h1 className="font-display text-3xl font-semibold text-on-surface">
+          Import Enrollments
+        </h1>
         <p className="font-sans text-sm font-medium text-muted-foreground mt-1">
-          Upload a university Excel export to enroll students into the active semester.
+          Upload a university Excel export to enroll students into a semester.
         </p>
+      </div>
+
+      {/* Semester selector (always visible) */}
+      <div className="bg-surface-container-low rounded-lg p-4 max-w-xl">
+        <label className="font-label text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-2">
+          Target Semester
+        </label>
+        <Select
+          value={semesterIdSelect}
+          onValueChange={setSemesterIdSelect}
+          disabled={pageState !== 'upload' || loading}
+        >
+          <SelectTrigger className="font-sans text-sm">
+            <SelectValue placeholder="Select semester" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">
+              {activeSemester
+                ? `(Current semester) ${activeSemester.code} — ${activeSemester.name}`
+                : 'Active semester (none available)'}
+            </SelectItem>
+            {selectableSemesters.map((s) => (
+              <SelectItem key={s.id} value={String(s.id)}>
+                {s.code} — {s.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* State 1 — Upload */}
@@ -162,15 +218,30 @@ export default function StudentImportPage() {
       {/* State 2 — Parse Results */}
       {pageState === 'parsed' && parseResult && (
         <div className="space-y-4 max-w-2xl">
+          {/* Target banner */}
+          <p className="font-sans text-sm text-muted-foreground">
+            Importing into: <strong className="text-on-surface">
+              {parseResult.semester.code} — {parseResult.semester.name}
+            </strong>
+          </p>
+
           {/* Summary bar */}
           <div className="bg-surface-container-low rounded-lg p-4 flex gap-8">
             <Stat label="Total" value={parseResult.total} />
             <Stat label="Valid" value={parseResult.valid} highlight="primary" />
             {parseResult.alreadyEnrolled > 0 && (
-              <Stat label="Already Enrolled" value={parseResult.alreadyEnrolled} highlight="warning" />
+              <Stat
+                label="Already Enrolled"
+                value={parseResult.alreadyEnrolled}
+                highlight="warning"
+              />
             )}
             {parseResult.invalid > 0 && (
-              <Stat label="Invalid" value={parseResult.invalid} highlight="destructive" />
+              <Stat
+                label="Invalid"
+                value={parseResult.invalid}
+                highlight="destructive"
+              />
             )}
           </div>
 
@@ -190,7 +261,10 @@ export default function StudentImportPage() {
                 </thead>
                 <tbody>
                   {parseResult.alreadyEnrolledDetails.map((d) => (
-                    <tr key={`${d.row}-${d.studentId}`} className="border-t border-surface-container">
+                    <tr
+                      key={`${d.row}-${d.studentId}`}
+                      className="border-t border-surface-container"
+                    >
                       <td className="px-4 py-3 font-sans text-sm text-muted-foreground">{d.row}</td>
                       <td className="px-4 py-3 font-sans text-sm font-medium text-on-surface">{d.studentId}</td>
                       <td className="px-4 py-3 font-sans text-sm text-muted-foreground">{d.reason}</td>
@@ -226,7 +300,6 @@ export default function StudentImportPage() {
             </div>
           )}
 
-          {/* All records invalid/enrolled */}
           {parseResult.valid === 0 && (
             <p className="font-sans text-sm text-muted-foreground bg-surface-container-low rounded-lg px-4 py-3">
               All records are invalid or already enrolled. Please fix the file and re-upload.
@@ -259,13 +332,17 @@ export default function StudentImportPage() {
       {/* State 3 — Import Results */}
       {pageState === 'imported' && importResult && (
         <div className="space-y-4 max-w-2xl">
-          {/* Summary bar */}
+          <p className="font-sans text-sm text-muted-foreground">
+            Imported into: <strong className="text-on-surface">
+              {importResult.semester.code} — {importResult.semester.name}
+            </strong>
+          </p>
+
           <div className="bg-surface-container-low rounded-lg p-4 flex gap-8">
             <Stat label="Imported" value={importResult.imported} highlight="primary" />
             <Stat label="Skipped" value={importResult.skipped} />
           </div>
 
-          {/* Skipped details table */}
           {importResult.skippedDetails.length > 0 && (
             <div className="bg-surface-container-low rounded-lg overflow-hidden">
               <p className="px-4 py-3 font-label text-xs font-semibold text-muted-foreground uppercase tracking-wide bg-surface-container">
@@ -281,7 +358,10 @@ export default function StudentImportPage() {
                 </thead>
                 <tbody>
                   {importResult.skippedDetails.map((d, i) => (
-                    <tr key={`${d.row}-${d.studentId ?? i}`} className="border-t border-surface-container">
+                    <tr
+                      key={`${d.row}-${d.studentId ?? i}`}
+                      className="border-t border-surface-container"
+                    >
                       <td className="px-4 py-3 font-sans text-sm text-muted-foreground">{d.row}</td>
                       <td className="px-4 py-3 font-sans text-sm font-medium text-on-surface">{d.studentId ?? '—'}</td>
                       <td className="px-4 py-3 font-sans text-sm text-muted-foreground">{d.reason}</td>
@@ -316,7 +396,9 @@ export default function StudentImportPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading} className="font-label">Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={loading} className="font-label">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={loading}
               onClick={() => void runImport()}
@@ -351,8 +433,12 @@ function Stat({
 
   return (
     <div>
-      <p className="font-label text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
-      <p className={`font-display text-2xl font-semibold ${valueClass}`}>{value}</p>
+      <p className="font-label text-xs text-muted-foreground uppercase tracking-wide">
+        {label}
+      </p>
+      <p className={`font-display text-2xl font-semibold ${valueClass}`}>
+        {value}
+      </p>
     </div>
   )
 }

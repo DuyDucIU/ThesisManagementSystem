@@ -83,7 +83,8 @@ export default function AppLayout() {
                 Students
               </NavLink>
               <NavLink
-                to="/admin/students/import"
+                to="/admin/enrollments"
+                end
                 className={({ isActive }) =>
                   `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
                     isActive
@@ -92,7 +93,19 @@ export default function AppLayout() {
                   }`
                 }
               >
-                Import Students
+                Enrollments
+              </NavLink>
+              <NavLink
+                to="/admin/enrollments/import"
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
+                    isActive
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-on-surface hover:bg-surface-container'
+                  }`
+                }
+              >
+                Import Enrollments
               </NavLink>
             </nav>
           </aside>

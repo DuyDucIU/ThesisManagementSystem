@@ -127,7 +127,7 @@ export class SemesterService {
     }
 
     const [studentCount, topicCount] = await Promise.all([
-      this.prisma.semesterStudent.count({ where: { semesterId: id } }),
+      this.prisma.enrollment.count({ where: { semesterId: id } }),
       this.prisma.topic.count({ where: { semesterId: id } }),
     ]);
 
