@@ -91,7 +91,7 @@ export class LecturerService {
         : typeof rawTarget === 'string'
           ? rawTarget
           : '';
-      if (target.includes('username') || target.includes('lecturer_id')) {
+      if (target.includes('username') || target.includes('lecturer_id') || target.includes('lecturerId')) {
         throw new ConflictException(
           `Lecturer ID '${lecturerId}' is already in use`,
         );
