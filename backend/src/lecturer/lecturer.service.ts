@@ -120,7 +120,25 @@ export class LecturerService {
   }
 
   async remove(id: number): Promise<void> {
-    return;
+    const lecturer = await this.prisma.lecturer.findUnique({ where: { id } });
+    if (!lecturer) throw new NotFoundException(`Lecturer #${id} not found`);
+
+    const topicCount = await this.prisma.topic.count({ where: { lecturerId: id } });
+    if (topicCount > 0) {
+      throw new ConflictException('Cannot delete lecturer with existing topics');
+    }
+
+    const reviewerCount = await this.prisma.thesis.count({ where: { reviewerId: id } });
+    if (reviewerCount > 0) {
+      throw new ConflictException(
+        'Cannot delete lecturer assigned as thesis reviewer',
+      );
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.lecturer.delete({ where: { id } }),
+      this.prisma.user.delete({ where: { id: lecturer.userId } }),
+    ]);
   }
 
   private toResponse(lecturer: LecturerRow) {

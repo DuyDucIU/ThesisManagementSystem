@@ -304,4 +304,49 @@ describe('LecturerService', () => {
       await expect(service.update(1, { email: 'dup@x.com' })).rejects.toThrow(ConflictException);
     });
   });
+
+  // ─── remove ──────────────────────────────────────────────────────────────────
+
+  describe('remove', () => {
+    it('throws NotFoundException when lecturer does not exist', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(null);
+
+      await expect(service.remove(999)).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ConflictException when lecturer has topics', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
+      prisma.topic.count.mockResolvedValue(2);
+
+      await expect(service.remove(1)).rejects.toThrow(
+        new ConflictException('Cannot delete lecturer with existing topics'),
+      );
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws ConflictException when lecturer is assigned as thesis reviewer', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
+      prisma.topic.count.mockResolvedValue(0);
+      prisma.thesis.count.mockResolvedValue(1);
+
+      await expect(service.remove(1)).rejects.toThrow(
+        new ConflictException('Cannot delete lecturer assigned as thesis reviewer'),
+      );
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('deletes lecturer then user in a transaction when no constraints violated', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
+      prisma.topic.count.mockResolvedValue(0);
+      prisma.thesis.count.mockResolvedValue(0);
+      prisma.lecturer.delete.mockResolvedValue(mockLecturer);
+      prisma.user.delete.mockResolvedValue({});
+
+      await service.remove(1);
+
+      expect(prisma.lecturer.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 99 } });
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+  });
 });
