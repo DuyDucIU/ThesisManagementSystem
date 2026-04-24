@@ -135,6 +135,13 @@ export class LecturerService {
       );
     }
 
+    const thesisReviewCount = await this.prisma.thesisReview.count({ where: { reviewerId: id } });
+    if (thesisReviewCount > 0) {
+      throw new ConflictException(
+        'Cannot delete lecturer with existing thesis reviews',
+      );
+    }
+
     await this.prisma.$transaction([
       this.prisma.lecturer.delete({ where: { id } }),
       this.prisma.user.delete({ where: { id: lecturer.userId } }),
