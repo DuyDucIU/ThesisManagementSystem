@@ -31,7 +31,7 @@ After spec is approved, the user may request both plans upfront (backend and fro
 ### Stage 3 — Frontend Cycle
 
 1. **API Drift Check** — before executing, review the frontend plan against actual API behavior from Stage 2 and update any tasks that drifted.
-2. **Implement** — execute the frontend plan.
+2. **Implement** — execute the frontend plan. When building new pages or components, invoke `/frontend-design` skill for distinctive, production-grade UI quality.
 3. **E2E Verification** — test with Playwright (Claude) and manual browser testing (user). Confirm the full user journey works end-to-end.
 
 After E2E verification passes, wrap up the branch.
