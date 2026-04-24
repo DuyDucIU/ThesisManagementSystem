@@ -54,11 +54,40 @@ export class LecturerService {
   }
 
   async findAll(query: QueryLecturerDto) {
-    return { data: [], total: 0, page: 1, limit: 20 };
+    const { search, page = 1, limit = 20 } = query;
+    const skip = (page - 1) * limit;
+    const where: Prisma.LecturerWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { fullName: { contains: search } },
+        { lecturerId: { contains: search } },
+        { email: { contains: search } },
+      ];
+    }
+
+    const [lecturers, total] = await Promise.all([
+      this.prisma.lecturer.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { fullName: 'asc' },
+      }),
+      this.prisma.lecturer.count({ where }),
+    ]);
+
+    return {
+      data: lecturers.map((l) => this.toResponse(l)),
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOne(id: number) {
-    return null as any;
+    const lecturer = await this.prisma.lecturer.findUnique({ where: { id } });
+    if (!lecturer) throw new NotFoundException(`Lecturer #${id} not found`);
+    return this.toResponse(lecturer);
   }
 
   async update(id: number, dto: UpdateLecturerDto) {

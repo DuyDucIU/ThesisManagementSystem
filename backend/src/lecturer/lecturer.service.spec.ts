@@ -162,4 +162,91 @@ describe('LecturerService', () => {
       ).rejects.toThrow(ConflictException);
     });
   });
+
+  // ─── findAll ─────────────────────────────────────────────────────────────────
+
+  describe('findAll', () => {
+    const mockLecturers = [
+      { id: 1, lecturerId: 'GV001', fullName: 'Nguyen Van A', email: 'nva@x.com', title: 'Dr.', maxStudents: 5, userId: 99 },
+      { id: 2, lecturerId: 'GV002', fullName: 'Tran Thi B', email: 'ttb@x.com', title: null, maxStudents: 3, userId: 100 },
+    ];
+
+    it('returns paginated lecturers with default page and limit', async () => {
+      prisma.lecturer.findMany.mockResolvedValue(mockLecturers);
+      prisma.lecturer.count.mockResolvedValue(2);
+
+      const result = await service.findAll({});
+
+      expect(prisma.lecturer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 0, take: 20 }),
+      );
+      expect(result).toEqual({
+        data: [
+          { id: 1, lecturerId: 'GV001', fullName: 'Nguyen Van A', email: 'nva@x.com', title: 'Dr.', maxStudents: 5 },
+          { id: 2, lecturerId: 'GV002', fullName: 'Tran Thi B', email: 'ttb@x.com', title: null, maxStudents: 3 },
+        ],
+        total: 2,
+        page: 1,
+        limit: 20,
+      });
+    });
+
+    it('applies page and limit to skip/take', async () => {
+      prisma.lecturer.findMany.mockResolvedValue([]);
+      prisma.lecturer.count.mockResolvedValue(0);
+
+      await service.findAll({ page: 3, limit: 10 });
+
+      expect(prisma.lecturer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 20, take: 10 }),
+      );
+    });
+
+    it('applies search filter to fullName, lecturerId, and email', async () => {
+      prisma.lecturer.findMany.mockResolvedValue([]);
+      prisma.lecturer.count.mockResolvedValue(0);
+
+      await service.findAll({ search: 'Nguyen' });
+
+      expect(prisma.lecturer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              { fullName: { contains: 'Nguyen' } },
+              { lecturerId: { contains: 'Nguyen' } },
+              { email: { contains: 'Nguyen' } },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('strips userId from response', async () => {
+      prisma.lecturer.findMany.mockResolvedValue([mockLecturers[0]]);
+      prisma.lecturer.count.mockResolvedValue(1);
+
+      const result = await service.findAll({});
+
+      expect(result.data[0]).not.toHaveProperty('userId');
+    });
+  });
+
+  // ─── findOne ─────────────────────────────────────────────────────────────────
+
+  describe('findOne', () => {
+    it('returns the lecturer response when found', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
+
+      const result = await service.findOne(1);
+
+      expect(prisma.lecturer.findUnique).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(result).toEqual(lecturerResponse);
+    });
+
+    it('throws NotFoundException when lecturer does not exist', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(null);
+
+      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+    });
+  });
 });
