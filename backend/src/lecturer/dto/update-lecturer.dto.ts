@@ -12,11 +12,6 @@ export class UpdateLecturerDto {
   @IsOptional()
   @IsString()
   @MinLength(1)
-  lecturerId?: string;
-
-  @IsOptional()
-  @IsString()
-  @MinLength(1)
   fullName?: string;
 
   @IsOptional()

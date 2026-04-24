@@ -293,17 +293,6 @@ describe('LecturerService', () => {
       });
     });
 
-    it('throws ConflictException on lecturerId duplicate (P2002)', async () => {
-      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
-      const p2002 = new Prisma.PrismaClientKnownRequestError(
-        'Unique constraint failed',
-        { code: 'P2002', clientVersion: '5.0.0', meta: { target: ['lecturerId'] } },
-      );
-      prisma.lecturer.update.mockRejectedValue(p2002);
-
-      await expect(service.update(1, { lecturerId: 'DUPLICATE' })).rejects.toThrow(ConflictException);
-    });
-
     it('throws ConflictException on email duplicate (P2002)', async () => {
       prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
       const p2002 = new Prisma.PrismaClientKnownRequestError(

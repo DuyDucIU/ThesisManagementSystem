@@ -97,7 +97,6 @@ export class LecturerService {
     if (
       dto.fullName === undefined &&
       dto.email === undefined &&
-      dto.lecturerId === undefined &&
       dto.title === undefined &&
       dto.maxStudents === undefined
     ) {
@@ -110,14 +109,13 @@ export class LecturerService {
         data: {
           ...(dto.fullName !== undefined && { fullName: dto.fullName }),
           ...(dto.email !== undefined && { email: dto.email }),
-          ...(dto.lecturerId !== undefined && { lecturerId: dto.lecturerId }),
           ...(dto.title !== undefined && { title: dto.title }),
           ...(dto.maxStudents !== undefined && { maxStudents: dto.maxStudents }),
         },
       });
       return this.toResponse(updated);
     } catch (e) {
-      this.handleP2002(e, dto.lecturerId, dto.email);
+      this.handleP2002(e, undefined, dto.email);
     }
   }
 
