@@ -91,7 +91,7 @@ export class LecturerService {
         : typeof rawTarget === 'string'
           ? rawTarget
           : '';
-      if (target.includes('lecturer_id')) {
+      if (target.includes('username') || target.includes('lecturer_id')) {
         throw new ConflictException(
           `Lecturer ID '${lecturerId}' is already in use`,
         );
@@ -101,6 +101,6 @@ export class LecturerService {
       }
       throw new ConflictException('A field conflicts with an existing record');
     }
-    throw e as Error;
+    throw e;
   }
 }

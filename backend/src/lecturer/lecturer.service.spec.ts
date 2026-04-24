@@ -140,7 +140,7 @@ describe('LecturerService', () => {
     it('throws ConflictException on lecturerId duplicate (P2002)', async () => {
       const p2002 = new Prisma.PrismaClientKnownRequestError(
         'Unique constraint failed',
-        { code: 'P2002', clientVersion: '5.0.0', meta: { target: 'lecturers_lecturer_id_key' } },
+        { code: 'P2002', clientVersion: '5.0.0', meta: { target: ['username'] } },
       );
       prisma.user.create.mockRejectedValue(p2002);
 
