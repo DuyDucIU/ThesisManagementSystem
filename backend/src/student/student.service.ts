@@ -36,7 +36,7 @@ export class StudentService {
   }
 
   async findAll(query: QueryStudentDto) {
-    const { search, hasAccount, page = 1, limit = 20 } = query;
+    const { search, hasAccount, accountStatus, page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
     const where: Prisma.StudentWhereInput = {};
 
@@ -48,12 +48,22 @@ export class StudentService {
       ];
     }
 
-    if (hasAccount === true) where.userId = { not: null };
-    else if (hasAccount === false) where.userId = null;
+    if (accountStatus === 'no-account') {
+      where.userId = null;
+    } else if (accountStatus === 'active') {
+      where.user = { isActive: true };
+    } else if (accountStatus === 'inactive') {
+      where.user = { isActive: false };
+    } else if (hasAccount === true) {
+      where.userId = { not: null };
+    } else if (hasAccount === false) {
+      where.userId = null;
+    }
 
     const [students, total] = await Promise.all([
       this.prisma.student.findMany({
         where,
+        include: { user: { select: { isActive: true } } },
         skip,
         take: limit,
         orderBy: { fullName: 'asc' },
@@ -67,6 +77,7 @@ export class StudentService {
       fullName: s.fullName,
       email: s.email,
       hasAccount: s.userId !== null,
+      isActive: s.user?.isActive ?? null,
     }));
 
     return { data, total, page, limit };

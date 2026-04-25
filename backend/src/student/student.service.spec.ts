@@ -19,10 +19,13 @@ describe('StudentService', () => {
       delete: jest.Mock;
       create: jest.Mock;
     };
-    enrollment: {
-      deleteMany: jest.Mock;
-    };
+    enrollment: { deleteMany: jest.Mock };
     thesis: { count: jest.Mock };
+    user: {
+      create: jest.Mock;
+      update: jest.Mock;
+      updateMany: jest.Mock;
+    };
     $transaction: jest.Mock;
   };
 
@@ -45,7 +48,15 @@ describe('StudentService', () => {
               deleteMany: jest.fn(),
             },
             thesis: { count: jest.fn() },
-            $transaction: jest.fn((queries) => Promise.resolve(queries)),
+            user: {
+              create: jest.fn(),
+              update: jest.fn(),
+              updateMany: jest.fn(),
+            },
+            $transaction: jest.fn().mockImplementation((arg) => {
+              if (typeof arg === 'function') return arg(prisma);
+              return Promise.resolve(arg);
+            }),
           },
         },
       ],
@@ -62,18 +73,16 @@ describe('StudentService', () => {
   describe('findAll', () => {
     const mockStudents = [
       {
-        id: 1,
-        studentId: 'ITITWE22055',
-        fullName: 'Vo Gia Kiet',
+        id: 1, studentId: 'ITITWE22055', fullName: 'Vo Gia Kiet',
         email: 'ititwe22055@student.hcmiu.edu.vn',
         userId: null,
+        user: null,
       },
       {
-        id: 2,
-        studentId: 'ITIT22001',
-        fullName: 'Nguyen Van An',
+        id: 2, studentId: 'ITIT22001', fullName: 'Nguyen Van An',
         email: 'itit22001@student.hcmiu.edu.vn',
         userId: 5,
+        user: { isActive: true },
       },
     ];
 
@@ -142,6 +151,52 @@ describe('StudentService', () => {
         expect.objectContaining({
           where: { userId: { not: null } },
         }),
+      );
+    });
+
+    it('includes isActive from the linked user (active)', async () => {
+      prisma.student.findMany.mockResolvedValue([
+        { id: 1, studentId: 'ITITIU21001', fullName: 'Nguyen Van A', email: 'a@b.com', userId: 5, user: { isActive: true } },
+        { id: 2, studentId: 'ITITIU21002', fullName: 'Tran Thi B',   email: 'b@b.com', userId: null, user: null },
+      ]);
+      prisma.student.count.mockResolvedValue(2);
+
+      const result = await service.findAll({});
+
+      expect(result.data[0].isActive).toBe(true);
+      expect(result.data[1].isActive).toBeNull();
+    });
+
+    it('filters by accountStatus: active — passes user.isActive:true in where', async () => {
+      prisma.student.findMany.mockResolvedValue([]);
+      prisma.student.count.mockResolvedValue(0);
+
+      await service.findAll({ accountStatus: 'active' });
+
+      expect(prisma.student.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { user: { isActive: true } } }),
+      );
+    });
+
+    it('filters by accountStatus: inactive — passes user.isActive:false in where', async () => {
+      prisma.student.findMany.mockResolvedValue([]);
+      prisma.student.count.mockResolvedValue(0);
+
+      await service.findAll({ accountStatus: 'inactive' });
+
+      expect(prisma.student.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { user: { isActive: false } } }),
+      );
+    });
+
+    it('filters by accountStatus: no-account — passes userId:null in where', async () => {
+      prisma.student.findMany.mockResolvedValue([]);
+      prisma.student.count.mockResolvedValue(0);
+
+      await service.findAll({ accountStatus: 'no-account' });
+
+      expect(prisma.student.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { userId: null } }),
       );
     });
   });
