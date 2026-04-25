@@ -7,6 +7,7 @@ import {
 import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { AccountActionDto } from './dto/account-action.dto';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { QueryStudentDto } from './dto/query-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -124,6 +125,38 @@ export class StudentService {
       }
       throw e;
     }
+  }
+
+  async toggleAccount(id: number, dto: AccountActionDto) {
+    const student = await this.prisma.student.findUnique({ where: { id } });
+    if (!student) throw new NotFoundException(`Student #${id} not found`);
+    if (student.userId === null)
+      throw new ConflictException('Student has no account to modify');
+
+    const userId = student.userId;
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { isActive: dto.isActive },
+      });
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2025'
+      ) {
+        throw new ConflictException('Account record is missing; try re-activating the student');
+      }
+      throw e;
+    }
+
+    return {
+      id: student.id,
+      studentId: student.studentId,
+      fullName: student.fullName,
+      email: student.email,
+      hasAccount: true,
+      isActive: dto.isActive,
+    };
   }
 
   async remove(id: number) {

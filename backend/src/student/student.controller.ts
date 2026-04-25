@@ -16,6 +16,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { StudentService } from './student.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { QueryStudentDto } from './dto/query-student.dto';
+import { AccountActionDto } from './dto/account-action.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 
 @Controller('students')
@@ -32,6 +33,14 @@ export class StudentController {
   @HttpCode(HttpStatus.CREATED)
   activateAccount(@Param('id', ParseIntPipe) id: number) {
     return this.studentService.activateAccount(id);
+  }
+
+  @Patch(':id/account')
+  toggleAccount(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AccountActionDto,
+  ) {
+    return this.studentService.toggleAccount(id, dto);
   }
 
   @Patch(':id')

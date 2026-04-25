@@ -479,4 +479,72 @@ describe('StudentService', () => {
       });
     });
   });
+
+  // ─── toggleAccount ───────────────────────────────────────────────────────────
+
+  describe('toggleAccount', () => {
+    const mockStudentWithAccount = {
+      id: 1,
+      studentId: 'ITITIU21001',
+      fullName: 'Nguyen Van A',
+      email: 'a@student.hcmiu.edu.vn',
+      userId: 5,
+    };
+
+    it('throws NotFoundException when student not found', async () => {
+      prisma.student.findUnique.mockResolvedValue(null);
+
+      await expect(service.toggleAccount(999, { isActive: false })).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws ConflictException when student has no account', async () => {
+      prisma.student.findUnique.mockResolvedValue({ ...mockStudentWithAccount, userId: null });
+
+      await expect(service.toggleAccount(1, { isActive: false })).rejects.toThrow(
+        new ConflictException('Student has no account to modify'),
+      );
+    });
+
+    it('deactivates account — calls user.update with isActive:false and returns shape', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudentWithAccount);
+      prisma.user.update.mockResolvedValue({});
+
+      const result = await service.toggleAccount(1, { isActive: false });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 5 },
+        data: { isActive: false },
+      });
+      expect(result).toEqual({
+        id: 1,
+        studentId: 'ITITIU21001',
+        fullName: 'Nguyen Van A',
+        email: 'a@student.hcmiu.edu.vn',
+        hasAccount: true,
+        isActive: false,
+      });
+    });
+
+    it('reactivates account — calls user.update with isActive:true', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudentWithAccount);
+      prisma.user.update.mockResolvedValue({});
+
+      const result = await service.toggleAccount(1, { isActive: true });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 5 },
+        data: { isActive: true },
+      });
+      expect(result).toEqual({
+        id: 1,
+        studentId: 'ITITIU21001',
+        fullName: 'Nguyen Van A',
+        email: 'a@student.hcmiu.edu.vn',
+        hasAccount: true,
+        isActive: true,
+      });
+    });
+  });
 });
