@@ -4,7 +4,8 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { QueryStudentDto } from './dto/query-student.dto';
@@ -81,6 +82,48 @@ export class StudentService {
     }));
 
     return { data, total, page, limit };
+  }
+
+  async activateAccount(id: number) {
+    const student = await this.prisma.student.findUnique({ where: { id } });
+    if (!student) throw new NotFoundException(`Student #${id} not found`);
+    if (student.userId !== null)
+      throw new ConflictException('Student already has an account');
+
+    const passwordHash = await bcrypt.hash(student.studentId, 10);
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            username: student.studentId,
+            passwordHash,
+            role: Role.STUDENT,
+            isActive: true,
+          },
+        });
+        await tx.student.update({
+          where: { id },
+          data: { userId: user.id },
+        });
+        return {
+          id: student.id,
+          studentId: student.studentId,
+          fullName: student.fullName,
+          email: student.email,
+          hasAccount: true,
+          isActive: true,
+        };
+      });
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        throw new ConflictException('Student already has an account');
+      }
+      throw e;
+    }
   }
 
   async remove(id: number) {

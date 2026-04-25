@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import { StudentService } from './student.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -415,6 +416,67 @@ describe('StudentService', () => {
           email: 'dup@student.hcmiu.edu.vn',
         }),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // ─── activateAccount ─────────────────────────────────────────────────────────
+
+  describe('activateAccount', () => {
+    const mockStudent = {
+      id: 1,
+      studentId: 'ITITIU21001',
+      fullName: 'Nguyen Van A',
+      email: 'a@student.hcmiu.edu.vn',
+      userId: null,
+    };
+
+    beforeEach(() => {
+      jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashed_pw' as never);
+    });
+
+    it('throws NotFoundException when student not found', async () => {
+      prisma.student.findUnique.mockResolvedValue(null);
+
+      await expect(service.activateAccount(999)).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ConflictException when student already has an account', async () => {
+      prisma.student.findUnique.mockResolvedValue({ ...mockStudent, userId: 5 });
+
+      await expect(service.activateAccount(1)).rejects.toThrow(
+        new ConflictException('Student already has an account'),
+      );
+    });
+
+    it('hashes studentId, creates user + links student, returns account shape', async () => {
+      prisma.student.findUnique.mockResolvedValue(mockStudent);
+      prisma.user.create.mockResolvedValue({ id: 10 });
+      prisma.student.update.mockResolvedValue({});
+
+      const result = await service.activateAccount(1);
+
+      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(bcrypt.hash).toHaveBeenCalledWith('ITITIU21001', 10);
+      expect(prisma.user.create).toHaveBeenCalledWith({
+        data: {
+          username: 'ITITIU21001',
+          passwordHash: 'hashed_pw',
+          role: 'STUDENT',
+          isActive: true,
+        },
+      });
+      expect(prisma.student.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { userId: 10 },
+      });
+      expect(result).toEqual({
+        id: 1,
+        studentId: 'ITITIU21001',
+        fullName: 'Nguyen Van A',
+        email: 'a@student.hcmiu.edu.vn',
+        hasAccount: true,
+        isActive: true,
+      });
     });
   });
 });

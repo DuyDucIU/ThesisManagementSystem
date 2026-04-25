@@ -28,6 +28,12 @@ export class StudentController {
     return this.studentService.findAll(query);
   }
 
+  @Post(':id/activate')
+  @HttpCode(HttpStatus.CREATED)
+  activateAccount(@Param('id', ParseIntPipe) id: number) {
+    return this.studentService.activateAccount(id);
+  }
+
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStudentDto) {
     return this.studentService.update(id, dto);
