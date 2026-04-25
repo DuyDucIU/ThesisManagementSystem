@@ -23,7 +23,7 @@ import LecturerCreateModal from './LecturerCreateModal'
 const PAGE_LIMIT = 20
 
 export default function LecturerListPage() {
-  const { lecturers, total, page, loading, fetchAll } = useLecturerStore()
+  const { lecturers, total, page, loading, error, fetchAll } = useLecturerStore()
 
   const [search, setSearch] = useState('')
   const [editTarget, setEditTarget] = useState<LecturerItem | null>(null)
@@ -134,7 +134,14 @@ export default function LecturerListPage() {
                 </td>
               </tr>
             )}
-            {!loading && lecturers.length === 0 && (
+            {!loading && error && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center font-sans text-sm text-destructive">
+                  {error}
+                </td>
+              </tr>
+            )}
+            {!loading && !error && lecturers.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center font-sans text-sm text-muted-foreground">
                   No lecturers found.

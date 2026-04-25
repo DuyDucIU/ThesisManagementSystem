@@ -49,7 +49,7 @@ export class LecturerService {
         return this.toResponse(lecturer);
       });
     } catch (e) {
-      this.handleP2002(e, dto.lecturerId, dto.email);
+      return this.handleP2002(e, dto.lecturerId, dto.email);
     }
   }
 
@@ -115,7 +115,7 @@ export class LecturerService {
       });
       return this.toResponse(updated);
     } catch (e) {
-      this.handleP2002(e, undefined, dto.email);
+      return this.handleP2002(e, undefined, dto.email);
     }
   }
 
@@ -123,33 +123,22 @@ export class LecturerService {
     const lecturer = await this.prisma.lecturer.findUnique({ where: { id } });
     if (!lecturer) throw new NotFoundException(`Lecturer #${id} not found`);
 
-    const topicCount = await this.prisma.topic.count({ where: { lecturerId: id } });
-    if (topicCount > 0) {
+    const [topicCount, reviewerCount, thesisReviewCount, reviewedDocCount] =
+      await Promise.all([
+        this.prisma.topic.count({ where: { lecturerId: id } }),
+        this.prisma.thesis.count({ where: { reviewerId: id } }),
+        this.prisma.thesisReview.count({ where: { reviewerId: id } }),
+        this.prisma.document.count({ where: { lecturerReviewedBy: id } }),
+      ]);
+
+    if (topicCount > 0)
       throw new ConflictException('Cannot delete lecturer with existing topics');
-    }
-
-    const reviewerCount = await this.prisma.thesis.count({ where: { reviewerId: id } });
-    if (reviewerCount > 0) {
-      throw new ConflictException(
-        'Cannot delete lecturer assigned as thesis reviewer',
-      );
-    }
-
-    const thesisReviewCount = await this.prisma.thesisReview.count({ where: { reviewerId: id } });
-    if (thesisReviewCount > 0) {
-      throw new ConflictException(
-        'Cannot delete lecturer with existing thesis reviews',
-      );
-    }
-
-    const reviewedDocCount = await this.prisma.document.count({
-      where: { lecturerReviewedBy: id },
-    });
-    if (reviewedDocCount > 0) {
-      throw new ConflictException(
-        'Cannot delete lecturer who has reviewed documents',
-      );
-    }
+    if (reviewerCount > 0)
+      throw new ConflictException('Cannot delete lecturer assigned as thesis reviewer');
+    if (thesisReviewCount > 0)
+      throw new ConflictException('Cannot delete lecturer with existing thesis reviews');
+    if (reviewedDocCount > 0)
+      throw new ConflictException('Cannot delete lecturer who has reviewed documents');
 
     await this.prisma.$transaction([
       this.prisma.lecturer.delete({ where: { id } }),
