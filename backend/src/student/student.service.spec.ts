@@ -547,4 +547,102 @@ describe('StudentService', () => {
       });
     });
   });
+
+  // ─── activateBulk ────────────────────────────────────────────────────────────
+
+  describe('activateBulk', () => {
+    beforeEach(() => {
+      jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashed_pw' as never);
+    });
+
+    it('skips all when all ids already have accounts', async () => {
+      prisma.student.findMany.mockResolvedValue([]);  // none without account
+
+      const result = await service.activateBulk({ ids: [1, 2] });
+
+      expect(prisma.user.create).not.toHaveBeenCalled();
+      expect(result).toEqual({ activated: 0, skipped: 2 });
+    });
+
+    it('activates students without accounts and skips those with', async () => {
+      const noAccountStudents = [
+        { id: 1, studentId: 'ITITIU21001', fullName: 'A', email: 'a@b.com', userId: null },
+      ];
+      prisma.student.findMany.mockResolvedValue(noAccountStudents);
+      prisma.user.create.mockResolvedValue({ id: 10 });
+      prisma.student.update.mockResolvedValue({});
+
+      const result = await service.activateBulk({ ids: [1, 2] });
+
+      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(bcrypt.hash).toHaveBeenCalledWith('ITITIU21001', 10);
+      expect(prisma.user.create).toHaveBeenCalledTimes(1);
+      expect(prisma.student.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { userId: 10 },
+      });
+      expect(result).toEqual({ activated: 1, skipped: 1 });
+    });
+
+    it('activates multiple students — creates user and links each', async () => {
+      const students = [
+        { id: 1, studentId: 'ITITIU21001', fullName: 'A', email: 'a@b.com', userId: null },
+        { id: 2, studentId: 'ITITIU21002', fullName: 'B', email: 'b@b.com', userId: null },
+      ];
+      prisma.student.findMany.mockResolvedValue(students);
+      prisma.user.create
+        .mockResolvedValueOnce({ id: 10 })
+        .mockResolvedValueOnce({ id: 11 });
+      prisma.student.update.mockResolvedValue({});
+
+      const result = await service.activateBulk({ ids: [1, 2] });
+
+      expect(bcrypt.hash).toHaveBeenCalledTimes(2);
+      expect(prisma.user.create).toHaveBeenCalledTimes(2);
+      expect(prisma.student.update).toHaveBeenCalledTimes(2);
+      expect(result).toEqual({ activated: 2, skipped: 0 });
+    });
+  });
+
+  // ─── toggleAccountBulk ───────────────────────────────────────────────────────
+
+  describe('toggleAccountBulk', () => {
+    it('skips students with no account', async () => {
+      prisma.student.findMany.mockResolvedValue([]);  // none with account
+
+      const result = await service.toggleAccountBulk({ ids: [1, 2], isActive: false });
+
+      expect(prisma.user.updateMany).not.toHaveBeenCalled();
+      expect(result).toEqual({ updated: 0, skipped: 2 });
+    });
+
+    it('updates isActive for all students that have accounts', async () => {
+      prisma.student.findMany.mockResolvedValue([
+        { userId: 5 },
+        { userId: 8 },
+      ]);
+      prisma.user.updateMany.mockResolvedValue({ count: 2 });
+
+      const result = await service.toggleAccountBulk({ ids: [1, 2, 3], isActive: false });
+
+      expect(prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [5, 8] } },
+        data: { isActive: false },
+      });
+      expect(result).toEqual({ updated: 2, skipped: 1 });
+    });
+
+    it('reactivates accounts — passes isActive:true to updateMany', async () => {
+      prisma.student.findMany.mockResolvedValue([{ userId: 5 }]);
+      prisma.user.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.toggleAccountBulk({ ids: [1], isActive: true });
+
+      expect(prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [5] } },
+        data: { isActive: true },
+      });
+      expect(result).toEqual({ updated: 1, skipped: 0 });
+    });
+  });
 });

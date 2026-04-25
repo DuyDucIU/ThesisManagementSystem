@@ -17,6 +17,8 @@ import { StudentService } from './student.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { QueryStudentDto } from './dto/query-student.dto';
 import { AccountActionDto } from './dto/account-action.dto';
+import { ActivateBulkDto } from './dto/activate-bulk.dto';
+import { AccountBulkDto } from './dto/account-bulk.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 
 @Controller('students')
@@ -27,6 +29,16 @@ export class StudentController {
   @Get()
   findAll(@Query() query: QueryStudentDto) {
     return this.studentService.findAll(query);
+  }
+
+  @Post('activate-bulk')
+  activateBulk(@Body() dto: ActivateBulkDto) {
+    return this.studentService.activateBulk(dto);
+  }
+
+  @Patch('account-bulk')
+  toggleAccountBulk(@Body() dto: AccountBulkDto) {
+    return this.studentService.toggleAccountBulk(dto);
   }
 
   @Post(':id/activate')

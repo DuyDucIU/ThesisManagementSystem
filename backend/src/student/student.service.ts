@@ -8,6 +8,8 @@ import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountActionDto } from './dto/account-action.dto';
+import { ActivateBulkDto } from './dto/activate-bulk.dto';
+import { AccountBulkDto } from './dto/account-bulk.dto';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { QueryStudentDto } from './dto/query-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -157,6 +159,63 @@ export class StudentService {
       hasAccount: true,
       isActive: dto.isActive,
     };
+  }
+
+  async activateBulk(dto: ActivateBulkDto) {
+    const students = await this.prisma.student.findMany({
+      where: { id: { in: dto.ids }, userId: null },
+    });
+    const skipped = dto.ids.length - students.length;
+
+    if (students.length === 0) return { activated: 0, skipped };
+
+    const hashed = await Promise.all(
+      students.map((s) => bcrypt.hash(s.studentId, 10)),
+    );
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        for (let i = 0; i < students.length; i++) {
+          const user = await tx.user.create({
+            data: {
+              username: students[i].studentId,
+              passwordHash: hashed[i],
+              role: Role.STUDENT,
+              isActive: true,
+            },
+          });
+          await tx.student.update({
+            where: { id: students[i].id },
+            data: { userId: user.id },
+          });
+        }
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictException('One or more student accounts already exist; retry with a smaller batch');
+      }
+      throw e;
+    }
+
+    return { activated: students.length, skipped };
+  }
+
+  async toggleAccountBulk(dto: AccountBulkDto) {
+    const students = await this.prisma.student.findMany({
+      where: { id: { in: dto.ids }, userId: { not: null } },
+      select: { userId: true },
+    });
+    const skipped = dto.ids.length - students.length;
+    const userIds = students.map((s) => s.userId).filter((id): id is number => id !== null);
+
+    if (userIds.length > 0) {
+      await this.prisma.user.updateMany({
+        where: { id: { in: userIds } },
+        data: { isActive: dto.isActive },
+      });
+    }
+
+    return { updated: students.length, skipped };
   }
 
   async remove(id: number) {
