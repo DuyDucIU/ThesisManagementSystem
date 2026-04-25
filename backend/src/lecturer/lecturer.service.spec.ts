@@ -38,6 +38,8 @@ describe('LecturerService', () => {
     user: {
       create: jest.Mock;
       delete: jest.Mock;
+      update: jest.Mock;
+      updateMany: jest.Mock;
     };
     topic: { count: jest.Mock };
     thesis: { count: jest.Mock };
@@ -59,6 +61,8 @@ describe('LecturerService', () => {
       user: {
         create: jest.fn(),
         delete: jest.fn(),
+        update: jest.fn(),
+        updateMany: jest.fn(),
       },
       topic: { count: jest.fn() },
       thesis: { count: jest.fn() },
@@ -171,8 +175,8 @@ describe('LecturerService', () => {
 
   describe('findAll', () => {
     const mockLecturers = [
-      { id: 1, lecturerId: 'GV001', fullName: 'Nguyen Van A', email: 'nva@x.com', title: 'Dr.', maxStudents: 5, userId: 99 },
-      { id: 2, lecturerId: 'GV002', fullName: 'Tran Thi B', email: 'ttb@x.com', title: null, maxStudents: 3, userId: 100 },
+      { id: 1, lecturerId: 'GV001', fullName: 'Nguyen Van A', email: 'nva@x.com', title: 'Dr.', maxStudents: 5, userId: 99, user: { isActive: true } },
+      { id: 2, lecturerId: 'GV002', fullName: 'Tran Thi B', email: 'ttb@x.com', title: null, maxStudents: 3, userId: 100, user: { isActive: true } },
     ];
 
     it('returns paginated lecturers with default page and limit', async () => {
@@ -186,8 +190,8 @@ describe('LecturerService', () => {
       );
       expect(result).toEqual({
         data: [
-          { id: 1, lecturerId: 'GV001', fullName: 'Nguyen Van A', email: 'nva@x.com', title: 'Dr.', maxStudents: 5 },
-          { id: 2, lecturerId: 'GV002', fullName: 'Tran Thi B', email: 'ttb@x.com', title: null, maxStudents: 3 },
+          { id: 1, lecturerId: 'GV001', fullName: 'Nguyen Van A', email: 'nva@x.com', title: 'Dr.', maxStudents: 5, isActive: true },
+          { id: 2, lecturerId: 'GV002', fullName: 'Tran Thi B', email: 'ttb@x.com', title: null, maxStudents: 3, isActive: true },
         ],
         total: 2,
         page: 1,
@@ -232,6 +236,41 @@ describe('LecturerService', () => {
       const result = await service.findAll({});
 
       expect(result.data[0]).not.toHaveProperty('userId');
+    });
+
+    it('includes isActive from the linked user', async () => {
+      const mockLecturerWithUser = {
+        ...mockLecturer,
+        user: { isActive: true },
+      };
+      prisma.lecturer.findMany.mockResolvedValue([mockLecturerWithUser]);
+      prisma.lecturer.count.mockResolvedValue(1);
+
+      const result = await service.findAll({});
+
+      expect(result.data[0].isActive).toBe(true);
+    });
+
+    it('filters by accountStatus: inactive — passes user.isActive:false in where', async () => {
+      prisma.lecturer.findMany.mockResolvedValue([]);
+      prisma.lecturer.count.mockResolvedValue(0);
+
+      await service.findAll({ accountStatus: 'inactive' });
+
+      expect(prisma.lecturer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { user: { isActive: false } } }),
+      );
+    });
+
+    it('filters by accountStatus: active — passes user.isActive:true in where', async () => {
+      prisma.lecturer.findMany.mockResolvedValue([]);
+      prisma.lecturer.count.mockResolvedValue(0);
+
+      await service.findAll({ accountStatus: 'active' });
+
+      expect(prisma.lecturer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { user: { isActive: true } } }),
+      );
     });
   });
 

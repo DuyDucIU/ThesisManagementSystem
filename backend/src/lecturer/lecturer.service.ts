@@ -20,6 +20,10 @@ type LecturerRow = {
   maxStudents: number;
 };
 
+type LecturerRowWithUser = Prisma.LecturerGetPayload<{
+  include: { user: { select: { isActive: true } } };
+}>;
+
 @Injectable()
 export class LecturerService {
   constructor(private prisma: PrismaService) {}
@@ -54,7 +58,7 @@ export class LecturerService {
   }
 
   async findAll(query: QueryLecturerDto) {
-    const { search, page = 1, limit = 20 } = query;
+    const { search, accountStatus, page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
     const where: Prisma.LecturerWhereInput = {};
 
@@ -66,9 +70,16 @@ export class LecturerService {
       ];
     }
 
+    if (accountStatus === 'active') {
+      where.user = { isActive: true };
+    } else if (accountStatus === 'inactive') {
+      where.user = { isActive: false };
+    }
+
     const [lecturers, total] = await Promise.all([
       this.prisma.lecturer.findMany({
         where,
+        include: { user: { select: { isActive: true } } },
         skip,
         take: limit,
         orderBy: { fullName: 'asc' },
@@ -77,7 +88,7 @@ export class LecturerService {
     ]);
 
     return {
-      data: lecturers.map((l) => this.toResponse(l)),
+      data: lecturers.map((l) => this.toResponseWithAccount(l)),
       total,
       page,
       limit,
@@ -154,6 +165,13 @@ export class LecturerService {
       email: lecturer.email,
       title: lecturer.title,
       maxStudents: lecturer.maxStudents,
+    };
+  }
+
+  private toResponseWithAccount(lecturer: LecturerRowWithUser) {
+    return {
+      ...this.toResponse(lecturer),
+      isActive: lecturer.user.isActive,
     };
   }
 
