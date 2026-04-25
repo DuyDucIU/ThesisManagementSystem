@@ -437,20 +437,15 @@ interface Props {
 }
 
 export default function LecturerEditModal({ lecturer, onClose, onSaved }: Props) {
-  const [lecturerId, setLecturerId] = useState('')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [title, setTitle] = useState('')
   const [maxStudents, setMaxStudents] = useState('5')
   const [loading, setLoading] = useState(false)
-  const [fieldErrors, setFieldErrors] = useState<{
-    lecturerId?: string
-    email?: string
-  }>({})
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string }>({})
 
   useEffect(() => {
     if (lecturer) {
-      setLecturerId(lecturer.lecturerId)
       setFullName(lecturer.fullName)
       setEmail(lecturer.email)
       setTitle(lecturer.title ?? '')
@@ -466,7 +461,6 @@ export default function LecturerEditModal({ lecturer, onClose, onSaved }: Props)
     setFieldErrors({})
     try {
       await lecturerApi.update(lecturer.id, {
-        lecturerId,
         fullName,
         email,
         title: title || undefined,
@@ -476,10 +470,7 @@ export default function LecturerEditModal({ lecturer, onClose, onSaved }: Props)
       onSaved()
     } catch (err) {
       const msg = extractErrorMessage(err)
-      const lower = msg.toLowerCase()
-      if (lower.includes('lecturer id') || lower.includes('lecturer_id')) {
-        setFieldErrors({ lecturerId: msg })
-      } else if (lower.includes('email')) {
+      if (msg.toLowerCase().includes('email')) {
         setFieldErrors({ email: msg })
       } else {
         toast.error(msg)
@@ -502,24 +493,14 @@ export default function LecturerEditModal({ lecturer, onClose, onSaved }: Props)
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          {/* Lecturer ID */}
+          {/* Lecturer ID — read-only, backend does not allow renaming */}
           <div className="space-y-1.5">
-            <Label htmlFor="edit-lecturerId" className="font-label text-xs font-medium text-on-surface uppercase tracking-wide">
+            <p className="font-label text-xs font-medium text-on-surface uppercase tracking-wide">
               Lecturer ID
-            </Label>
-            <Input
-              id="edit-lecturerId"
-              value={lecturerId}
-              onChange={(e) => {
-                setLecturerId(e.target.value)
-                setFieldErrors((prev) => ({ ...prev, lecturerId: undefined }))
-              }}
-              disabled={loading}
-              className="font-sans bg-surface-container-low border-0 focus-visible:ring-1 focus-visible:ring-primary/30"
-            />
-            {fieldErrors.lecturerId && (
-              <p className="font-sans text-xs text-destructive">{fieldErrors.lecturerId}</p>
-            )}
+            </p>
+            <p className="font-mono text-sm text-on-surface-variant px-3 py-2 rounded-md bg-surface-container-low">
+              {lecturer?.lecturerId}
+            </p>
           </div>
 
           {/* Full Name */}
