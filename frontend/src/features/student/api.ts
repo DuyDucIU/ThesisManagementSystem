@@ -37,15 +37,7 @@ export interface CreateStudentDto {
 
 // ─── Error helper ──────────────────────────────────────────────────────────
 
-export function extractErrorMessage(err: unknown): string {
-  if (err && typeof err === 'object' && 'response' in err) {
-    const data = (err as { response: { data: { message: unknown } } })
-      .response?.data
-    if (Array.isArray(data?.message)) return data.message.join(', ')
-    if (typeof data?.message === 'string') return data.message
-  }
-  return 'An unexpected error occurred.'
-}
+export { extractErrorMessage } from '../../lib/utils'
 
 // ─── API calls ─────────────────────────────────────────────────────────────
 

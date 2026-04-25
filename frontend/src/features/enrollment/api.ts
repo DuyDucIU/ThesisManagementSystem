@@ -112,6 +112,6 @@ export const enrollmentApi = {
   },
 }
 
-// ─── Re-export helper for convenience ──────────────────────────────────────
+// ─── Error helper ──────────────────────────────────────────────────────────
 
-export { extractErrorMessage } from '../student/api'
+export { extractErrorMessage } from '../../lib/utils'
