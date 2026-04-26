@@ -11,6 +11,7 @@ import { CreateLecturerDto } from './dto/create-lecturer.dto';
 import { UpdateLecturerDto } from './dto/update-lecturer.dto';
 import { QueryLecturerDto } from './dto/query-lecturer.dto';
 import { AccountActionDto } from './dto/account-action.dto';
+import { AccountBulkDto } from './dto/account-bulk.dto';
 
 type LecturerRow = {
   id: number;
@@ -151,6 +152,24 @@ export class LecturerService {
     }
 
     return { ...this.toResponse(lecturer), isActive: dto.isActive };
+  }
+
+  async toggleAccountBulk(dto: AccountBulkDto) {
+    const lecturers = await this.prisma.lecturer.findMany({
+      where: { id: { in: dto.ids } },
+      select: { userId: true },
+    });
+    const skipped = dto.ids.length - lecturers.length;
+    const userIds = lecturers.map((l) => l.userId);
+
+    if (userIds.length > 0) {
+      await this.prisma.user.updateMany({
+        where: { id: { in: userIds } },
+        data: { isActive: dto.isActive },
+      });
+    }
+
+    return { updated: lecturers.length, skipped };
   }
 
   async remove(id: number): Promise<void> {

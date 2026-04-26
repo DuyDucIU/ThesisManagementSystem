@@ -423,6 +423,45 @@ describe('LecturerService', () => {
     });
   });
 
+  // ─── toggleAccountBulk ───────────────────────────────────────────────────────
+
+  describe('toggleAccountBulk', () => {
+    it('skips lecturers not found in ids', async () => {
+      prisma.lecturer.findMany.mockResolvedValue([]);
+
+      const result = await service.toggleAccountBulk({ ids: [1, 2], isActive: false });
+
+      expect(prisma.user.updateMany).not.toHaveBeenCalled();
+      expect(result).toEqual({ updated: 0, skipped: 2 });
+    });
+
+    it('calls user.updateMany with all resolved userIds', async () => {
+      prisma.lecturer.findMany.mockResolvedValue([{ userId: 99 }, { userId: 100 }]);
+      prisma.user.updateMany.mockResolvedValue({ count: 2 });
+
+      const result = await service.toggleAccountBulk({ ids: [1, 2], isActive: false });
+
+      expect(prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [99, 100] } },
+        data: { isActive: false },
+      });
+      expect(result).toEqual({ updated: 2, skipped: 0 });
+    });
+
+    it('reactivates accounts — passes isActive:true to updateMany', async () => {
+      prisma.lecturer.findMany.mockResolvedValue([{ userId: 99 }]);
+      prisma.user.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.toggleAccountBulk({ ids: [1], isActive: true });
+
+      expect(prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [99] } },
+        data: { isActive: true },
+      });
+      expect(result).toEqual({ updated: 1, skipped: 0 });
+    });
+  });
+
   // ─── toggleAccount ───────────────────────────────────────────────────────────
 
   describe('toggleAccount', () => {

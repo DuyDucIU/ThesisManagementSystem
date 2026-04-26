@@ -18,6 +18,7 @@ import { CreateLecturerDto } from './dto/create-lecturer.dto';
 import { UpdateLecturerDto } from './dto/update-lecturer.dto';
 import { QueryLecturerDto } from './dto/query-lecturer.dto';
 import { AccountActionDto } from './dto/account-action.dto';
+import { AccountBulkDto } from './dto/account-bulk.dto';
 
 @Controller('lecturers')
 @Roles(Role.ADMIN)
@@ -33,6 +34,11 @@ export class LecturerController {
   @Get()
   findAll(@Query() query: QueryLecturerDto) {
     return this.lecturerService.findAll(query);
+  }
+
+  @Patch('account-bulk')
+  toggleAccountBulk(@Body() dto: AccountBulkDto) {
+    return this.lecturerService.toggleAccountBulk(dto);
   }
 
   @Get(':id')
