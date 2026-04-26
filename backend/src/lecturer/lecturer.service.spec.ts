@@ -422,4 +422,43 @@ describe('LecturerService', () => {
       ]);
     });
   });
+
+  // ─── toggleAccount ───────────────────────────────────────────────────────────
+
+  describe('toggleAccount', () => {
+    it('throws NotFoundException when lecturer not found', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(null);
+
+      await expect(service.toggleAccount(999, { isActive: false })).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('deactivates lecturer account and returns response with isActive:false', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
+      prisma.user.update.mockResolvedValue({});
+
+      const result = await service.toggleAccount(1, { isActive: false });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 99 },
+        data: { isActive: false },
+      });
+      expect(result).toEqual({ ...lecturerResponse, isActive: false });
+    });
+
+    it('reactivates lecturer account and returns response with isActive:true', async () => {
+      prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
+      prisma.user.update.mockResolvedValue({});
+
+      const result = await service.toggleAccount(1, { isActive: true });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 99 },
+        data: { isActive: true },
+      });
+      expect(result).toEqual({ ...lecturerResponse, isActive: true });
+    });
+  });
 });

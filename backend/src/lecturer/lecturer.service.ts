@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateLecturerDto } from './dto/create-lecturer.dto';
 import { UpdateLecturerDto } from './dto/update-lecturer.dto';
 import { QueryLecturerDto } from './dto/query-lecturer.dto';
+import { AccountActionDto } from './dto/account-action.dto';
 
 type LecturerRow = {
   id: number;
@@ -128,6 +129,28 @@ export class LecturerService {
     } catch (e) {
       return this.handleP2002(e, undefined, dto.email);
     }
+  }
+
+  async toggleAccount(id: number, dto: AccountActionDto) {
+    const lecturer = await this.prisma.lecturer.findUnique({ where: { id } });
+    if (!lecturer) throw new NotFoundException(`Lecturer #${id} not found`);
+
+    try {
+      await this.prisma.user.update({
+        where: { id: lecturer.userId },
+        data: { isActive: dto.isActive },
+      });
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2025'
+      ) {
+        throw new NotFoundException(`User account for Lecturer #${id} not found`);
+      }
+      throw e;
+    }
+
+    return { ...this.toResponse(lecturer), isActive: dto.isActive };
   }
 
   async remove(id: number): Promise<void> {
