@@ -20,20 +20,32 @@ frontend/src/
 │   │   │   └── semesterStore.ts        # Zustand store for semester state
 │   │   └── api.ts                      # Semester CRUD + status-transition API calls
 │   ├── student/
+│   │   ├── components/
+│   │   │   ├── StudentListPage.tsx     # Admin list page with filters, table, action dialogs
+│   │   │   ├── StudentEditModal.tsx    # Edit modal (Dialog)
+│   │   │   └── StudentCreateModal.tsx  # Create modal (Dialog)
+│   │   ├── store/
+│   │   │   └── studentStore.ts         # Zustand store for student state
+│   │   └── api.ts                      # Student CRUD API calls; exports hasAccount + isActive fields
+│   ├── lecturer/
+│   │   ├── components/
+│   │   │   ├── LecturerListPage.tsx    # Admin list page with filters, table, action dialogs
+│   │   │   ├── LecturerEditModal.tsx   # Edit modal (Dialog)
+│   │   │   └── LecturerCreateModal.tsx # Create modal (Dialog)
+│   │   ├── store/
+│   │   │   └── lecturerStore.ts        # Zustand store for lecturer state
+│   │   └── api.ts                      # Lecturer CRUD + accountStatus filter API calls
+│   ├── enrollment/
+│   │   ├── components/
+│   │   │   ├── EnrollmentListPage.tsx  # Per-semester enrollment list with semester/status/search filters
+│   │   │   └── EnrollmentImportPage.tsx  # Excel import flow (parse → confirm → import) with semester selector
+│   │   ├── store/
+│   │   │   └── enrollmentStore.ts      # Zustand store for enrollment state
+│   │   └── api.ts                      # Enrollment list + import API calls
+│   └── account/
 │       ├── components/
-│       │   ├── StudentListPage.tsx     # Admin list page with filters, table, action dialogs
-│       │   ├── StudentEditModal.tsx    # Edit modal (Dialog)
-│       │   └── StudentCreateModal.tsx  # Create modal (Dialog)
-│       ├── store/
-│       │   └── studentStore.ts         # Zustand store for student state
-│       └── api.ts                      # Student CRUD API calls
-│   └── enrollment/
-│       ├── components/
-│       │   ├── EnrollmentListPage.tsx  # Per-semester enrollment list with semester/status/search filters
-│       │   └── EnrollmentImportPage.tsx  # Excel import flow (parse → confirm → import) with semester selector
-│       ├── store/
-│       │   └── enrollmentStore.ts      # Zustand store for enrollment state
-│       └── api.ts                      # Enrollment list + import API calls
+│       │   └── AccountManagementPage.tsx  # Admin page — tabbed Students/Lecturers view, bulk activate/toggle
+│       └── api.ts                         # Account activate/toggle API calls (per-item + bulk, no store)
 ├── components/
 │   └── ui/                         # shadcn/ui generated components (Button, Input, Label, Dialog, Select, AlertDialog, Sonner, etc.)
 ├── layouts/
@@ -43,7 +55,7 @@ frontend/src/
 │   └── guards.tsx                  # ProtectedRoute, PublicRoute, AdminRoute wrappers
 ├── lib/
 │   ├── axios.ts                    # Axios instance with Bearer token injection + 401 refresh interceptor
-│   └── utils.ts                    # shadcn cn() helper (clsx + tailwind-merge)
+│   └── utils.ts                    # shadcn cn() helper (clsx + tailwind-merge) + extractErrorMessage
 ├── App.tsx                         # Silent session restore on mount → RouterProvider
 ├── main.tsx                        # Entry point — renders <App /> into #root with StrictMode
 └── index.css                       # Tailwind import + shadcn CSS variable theme
@@ -86,6 +98,8 @@ React Router v7 (`react-router` package):
 | `/` | Redirect → `/admin/semesters` | `ProtectedRoute` |
 | `/admin/semesters` | `SemesterListPage` | `ProtectedRoute` → `AdminRoute` |
 | `/admin/students` | `StudentListPage` | `ProtectedRoute` → `AdminRoute` |
+| `/admin/lecturers` | `LecturerListPage` | `ProtectedRoute` → `AdminRoute` |
+| `/admin/accounts` | `AccountManagementPage` | `ProtectedRoute` → `AdminRoute` |
 | `/admin/enrollments` | `EnrollmentListPage` | `ProtectedRoute` → `AdminRoute` |
 | `/admin/enrollments/import` | `EnrollmentImportPage` | `ProtectedRoute` → `AdminRoute` |
 | `*` | Redirect → `/login` | — |
@@ -166,7 +180,7 @@ form.append('file', file)
 return api.post<ParseImportResult>('/enrollments/import?action=parse', form)
 ```
 
-**`extractErrorMessage` helper:** Each feature's `api.ts` exports an `extractErrorMessage(err: unknown): string` function that safely unwraps NestJS error shapes (both `string` and `string[]` message variants). This is currently duplicated across feature modules — a future cleanup should extract it to `src/lib/errors.ts`.
+**`extractErrorMessage` helper:** Centralized in `src/lib/utils.ts` — safely unwraps NestJS error shapes (both `string` and `string[]` message variants). Feature `api.ts` files re-export it: `export { extractErrorMessage } from '../../lib/utils'`. Import from the feature module, not directly from `lib/utils`, to keep imports co-located with other API types.
 
 Vite proxy config (`vite.config.ts`):
 ```typescript
