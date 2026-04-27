@@ -180,7 +180,7 @@ form.append('file', file)
 return api.post<ParseImportResult>('/enrollments/import?action=parse', form)
 ```
 
-**`extractErrorMessage` helper:** Centralized in `src/lib/utils.ts` — safely unwraps NestJS error shapes (both `string` and `string[]` message variants). Feature `api.ts` files re-export it: `export { extractErrorMessage } from '../../lib/utils'`. Import from the feature module, not directly from `lib/utils`, to keep imports co-located with other API types.
+**`extractErrorMessage` helper:** Centralized in `src/lib/utils.ts` — safely unwraps NestJS error shapes (both `string` and `string[]` message variants). Feature `api.ts` files that serve as the primary type-import source for their components re-export it: `export { extractErrorMessage } from '../../lib/utils'`. Import from the feature module (e.g. `from '../student/api'`), not directly from `lib/utils`, to keep imports co-located with other API types. Feature modules that have no component-facing types (like `account/api.ts`, which is only called via `accountApi.*`) do not need to re-export it.
 
 Vite proxy config (`vite.config.ts`):
 ```typescript

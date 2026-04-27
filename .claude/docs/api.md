@@ -9,8 +9,14 @@
 | `POST /resources` | Create |
 | `PATCH /resources/:id` | Partial update |
 | `DELETE /resources/:id` | Remove |
+| `POST /resources/:id/<action>` | Targeted sub-resource action (e.g. activate) |
+| `PATCH /resources/:id/<action>` | Targeted sub-resource toggle (e.g. account enable/disable) |
+| `POST /resources/<action>-bulk` | Bulk create/action on multiple IDs |
+| `PATCH /resources/<action>-bulk` | Bulk update on multiple IDs |
 
 Use kebab-case for multi-word resources: `/semester-students`, `/thesis-reviews`.
+
+**Sub-resource and bulk route ordering** — static segment routes (e.g. `account-bulk`) **must** be declared in the controller before parametric routes (e.g. `:id`). Otherwise NestJS/Express routes the literal string `"account-bulk"` as an id value and hits the wrong handler. See [backend.md](backend.md) gotchas for the full rule.
 
 **`?action=` pattern** — when a single endpoint handles logically related but distinct operations (e.g. a dry-run parse then the real import), use a query parameter instead of separate routes:
 
@@ -64,10 +70,12 @@ Use `@HttpCode(204)` on endpoints that return no body.
 Global `ValidationPipe` is configured in `main.ts`:
 
 ```typescript
-app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
 ```
 
 - `whitelist: true` — strips any properties not declared in the DTO
+- `forbidNonWhitelisted: true` — unknown properties now throw `400` instead of being silently stripped; callers receive an error if they send extra fields
+- `transform: true` — enables automatic type coercion in DTOs (e.g. `@Type(() => Number)` converts string query params to numbers without a manual `@Transform`)
 - Validation errors automatically return 400 with a `message` array
 
 DTOs use `class-validator` decorators:
@@ -103,6 +111,13 @@ For lists with pagination (when needed):
   "limit": 20
 }
 ```
+
+For bulk operations, return an operation summary object — not the modified records:
+```json
+{ "activated": 2, "skipped": 1 }
+{ "updated": 3, "skipped": 0 }
+```
+`skipped` counts items that were no-ops (e.g. already active). This avoids sending large arrays back for bulk mutations.
 
 For errors, NestJS's built-in exception filter produces:
 ```json
