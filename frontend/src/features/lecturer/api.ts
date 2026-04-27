@@ -7,10 +7,12 @@ export interface LecturerItem {
   email: string
   title: string | null
   maxStudents: number
+  isActive: boolean
 }
 
 export interface LecturerQuery {
   search?: string
+  accountStatus?: 'active' | 'inactive'
   page?: number
   limit?: number
 }
