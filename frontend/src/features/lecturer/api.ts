@@ -7,7 +7,7 @@ export interface LecturerItem {
   email: string
   title: string | null
   maxStudents: number
-  isActive: boolean
+  isActive: boolean | undefined
 }
 
 export interface LecturerQuery {

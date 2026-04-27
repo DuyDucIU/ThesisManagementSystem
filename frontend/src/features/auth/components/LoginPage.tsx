@@ -27,7 +27,12 @@ export default function LoginPage() {
       navigate('/')
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
-        setError('Invalid username or password.')
+        const msg = err.response.data?.message
+        setError(
+          msg === 'Account is disabled'
+            ? 'Your account has been disabled. Please contact an administrator.'
+            : 'Invalid username or password.',
+        )
       } else {
         setError('Something went wrong. Please try again.')
       }
