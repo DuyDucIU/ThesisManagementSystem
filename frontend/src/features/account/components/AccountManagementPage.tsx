@@ -151,15 +151,23 @@ export default function AccountManagementPage() {
     [search, lecturerStatus],
   )
 
-  // ─── Debounced effect — re-fetches on filter or tab change ────────────────
+  // ─── Effect 1: immediate fetch on tab switch ──────────────────────────────
 
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
+    setSelectedIds(new Set())
+    if (activeTab === 'students') void fetchStudents(1)
+    else void fetchLecturers(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab])
+
+  // ─── Effect 2: debounced fetch on filter/search change ────────────────────
+
+  useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false
-      void fetchStudents(1)
       return
     }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       if (activeTab === 'students') void fetchStudents(1)
       else void fetchLecturers(1)
@@ -167,7 +175,7 @@ export default function AccountManagementPage() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [activeTab, fetchStudents, fetchLecturers])
+  }, [fetchStudents, fetchLecturers])
 
   // ─── Tab switch ───────────────────────────────────────────────────────────
 
@@ -182,6 +190,7 @@ export default function AccountManagementPage() {
   // ─── Pagination ───────────────────────────────────────────────────────────
 
   function handlePageChange(p: number) {
+    setSelectedIds(new Set())
     if (activeTab === 'students') void fetchStudents(p)
     else void fetchLecturers(p)
   }
@@ -358,7 +367,9 @@ export default function AccountManagementPage() {
     }
   }
 
-  const dialogContent = getDialogContent()
+  const lastContentRef = useRef<ReturnType<typeof getDialogContent> | null>(null)
+  if (confirmDialog) lastContentRef.current = getDialogContent()
+  const dialogContent = lastContentRef.current ?? getDialogContent()
   const selectedCount = selectedIds.size
 
   // ─── Render ───────────────────────────────────────────────────────────────
