@@ -101,7 +101,7 @@ export default function AccountManagementPage() {
   const [actionLoading, setActionLoading] = useState(false)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isFirstRender = useRef(true)
+  const tabInitialisedRef = useRef<Tab | null>(null)
 
   // ─── Data fetchers ────────────────────────────────────────────────────────
 
@@ -151,20 +151,15 @@ export default function AccountManagementPage() {
     [search, lecturerStatus],
   )
 
-  // ─── Effect 1: immediate fetch on tab switch ──────────────────────────────
+  // ─── Unified fetch effect ─────────────────────────────────────────────────
+  // Tab changes fire immediately; filter/search changes are debounced 300 ms.
 
   useEffect(() => {
-    setSelectedIds(new Set())
-    if (activeTab === 'students') void fetchStudents(1)
-    else void fetchLecturers(1)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab])
-
-  // ─── Effect 2: debounced fetch on filter/search change ────────────────────
-
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
+    if (tabInitialisedRef.current !== activeTab) {
+      tabInitialisedRef.current = activeTab
+      setSelectedIds(new Set())
+      if (activeTab === 'students') void fetchStudents(1)
+      else void fetchLecturers(1)
       return
     }
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -175,7 +170,7 @@ export default function AccountManagementPage() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [fetchStudents, fetchLecturers])
+  }, [activeTab, fetchStudents, fetchLecturers])
 
   // ─── Tab switch ───────────────────────────────────────────────────────────
 
@@ -368,6 +363,7 @@ export default function AccountManagementPage() {
   }
 
   const lastContentRef = useRef<ReturnType<typeof getDialogContent> | null>(null)
+  // Must update during render (not useEffect) so Radix's exit animation sees retained content.
   if (confirmDialog) lastContentRef.current = getDialogContent()
   const dialogContent = lastContentRef.current ?? getDialogContent()
   const selectedCount = selectedIds.size
