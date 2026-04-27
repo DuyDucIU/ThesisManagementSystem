@@ -96,6 +96,19 @@ export default function AppLayout() {
                 Lecturers
               </NavLink>
               <NavLink
+                to="/admin/accounts"
+                end
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
+                    isActive
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-on-surface hover:bg-surface-container'
+                  }`
+                }
+              >
+                Accounts
+              </NavLink>
+              <NavLink
                 to="/admin/enrollments"
                 end
                 className={({ isActive }) =>
