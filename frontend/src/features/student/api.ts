@@ -7,11 +7,13 @@ export interface StudentItem {
   fullName: string
   email: string
   hasAccount: boolean
+  isActive: boolean | null
 }
 
 export interface StudentQuery {
   search?: string
   hasAccount?: boolean
+  accountStatus?: 'no-account' | 'active' | 'inactive'
   page?: number
   limit?: number
 }

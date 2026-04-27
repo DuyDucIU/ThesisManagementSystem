@@ -4,6 +4,7 @@ import {
   IsString,
   IsBoolean,
   IsInt,
+  IsIn,
   Min,
   Max,
 } from 'class-validator';
@@ -17,10 +18,14 @@ export class QueryStudentDto {
   @Transform(({ value }) => {
     if (value === 'true' || value === true) return true;
     if (value === 'false' || value === false) return false;
-    return undefined;
+    return value; // let @IsBoolean() reject it
   })
   @IsBoolean()
   hasAccount?: boolean;
+
+  @IsOptional()
+  @IsIn(['no-account', 'active', 'inactive'])
+  accountStatus?: 'no-account' | 'active' | 'inactive';
 
   @IsOptional()
   @Type(() => Number)

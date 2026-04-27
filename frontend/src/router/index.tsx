@@ -8,6 +8,7 @@ import StudentListPage from '../features/student/components/StudentListPage'
 import LecturerListPage from '../features/lecturer/components/LecturerListPage'
 import EnrollmentListPage from '../features/enrollment/components/EnrollmentListPage'
 import EnrollmentImportPage from '../features/enrollment/components/EnrollmentImportPage'
+import AccountManagementPage from '../features/account/components/AccountManagementPage'
 
 const router = createBrowserRouter([
   {
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
               { path: '/admin/semesters', element: <SemesterListPage /> },
               { path: '/admin/students', element: <StudentListPage /> },
               { path: '/admin/lecturers', element: <LecturerListPage /> },
+              { path: '/admin/accounts', element: <AccountManagementPage /> },
               { path: '/admin/enrollments', element: <EnrollmentListPage /> },
               { path: '/admin/enrollments/import', element: <EnrollmentImportPage /> },
             ],

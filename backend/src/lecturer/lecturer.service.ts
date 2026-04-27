@@ -10,6 +10,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateLecturerDto } from './dto/create-lecturer.dto';
 import { UpdateLecturerDto } from './dto/update-lecturer.dto';
 import { QueryLecturerDto } from './dto/query-lecturer.dto';
+import { AccountActionDto } from './dto/account-action.dto';
+import { AccountBulkDto } from './dto/account-bulk.dto';
 
 type LecturerRow = {
   id: number;
@@ -19,6 +21,10 @@ type LecturerRow = {
   title: string | null;
   maxStudents: number;
 };
+
+type LecturerRowWithUser = Prisma.LecturerGetPayload<{
+  include: { user: { select: { isActive: true } } };
+}>;
 
 @Injectable()
 export class LecturerService {
@@ -54,7 +60,7 @@ export class LecturerService {
   }
 
   async findAll(query: QueryLecturerDto) {
-    const { search, page = 1, limit = 20 } = query;
+    const { search, accountStatus, page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
     const where: Prisma.LecturerWhereInput = {};
 
@@ -66,9 +72,16 @@ export class LecturerService {
       ];
     }
 
+    if (accountStatus === 'active') {
+      where.user = { isActive: true };
+    } else if (accountStatus === 'inactive') {
+      where.user = { isActive: false };
+    }
+
     const [lecturers, total] = await Promise.all([
       this.prisma.lecturer.findMany({
         where,
+        include: { user: { select: { isActive: true } } },
         skip,
         take: limit,
         orderBy: { fullName: 'asc' },
@@ -77,7 +90,7 @@ export class LecturerService {
     ]);
 
     return {
-      data: lecturers.map((l) => this.toResponse(l)),
+      data: lecturers.map((l) => this.toResponseWithAccount(l)),
       total,
       page,
       limit,
@@ -119,6 +132,46 @@ export class LecturerService {
     }
   }
 
+  async toggleAccount(id: number, dto: AccountActionDto) {
+    const lecturer = await this.prisma.lecturer.findUnique({ where: { id } });
+    if (!lecturer) throw new NotFoundException(`Lecturer #${id} not found`);
+
+    try {
+      await this.prisma.user.update({
+        where: { id: lecturer.userId },
+        data: { isActive: dto.isActive },
+      });
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2025'
+      ) {
+        throw new NotFoundException(`User account for Lecturer #${id} not found`);
+      }
+      throw e;
+    }
+
+    return { ...this.toResponse(lecturer), isActive: dto.isActive };
+  }
+
+  async toggleAccountBulk(dto: AccountBulkDto) {
+    const lecturers = await this.prisma.lecturer.findMany({
+      where: { id: { in: dto.ids } },
+      select: { userId: true },
+    });
+    const skipped = dto.ids.length - lecturers.length;
+    const userIds = lecturers.map((l) => l.userId);
+
+    if (userIds.length > 0) {
+      await this.prisma.user.updateMany({
+        where: { id: { in: userIds } },
+        data: { isActive: dto.isActive },
+      });
+    }
+
+    return { updated: lecturers.length, skipped };
+  }
+
   async remove(id: number): Promise<void> {
     const lecturer = await this.prisma.lecturer.findUnique({ where: { id } });
     if (!lecturer) throw new NotFoundException(`Lecturer #${id} not found`);
@@ -154,6 +207,13 @@ export class LecturerService {
       email: lecturer.email,
       title: lecturer.title,
       maxStudents: lecturer.maxStudents,
+    };
+  }
+
+  private toResponseWithAccount(lecturer: LecturerRowWithUser) {
+    return {
+      ...this.toResponse(lecturer),
+      isActive: lecturer.user.isActive,
     };
   }
 
