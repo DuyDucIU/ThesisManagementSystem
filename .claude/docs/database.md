@@ -89,7 +89,7 @@ Notification (notifications)
 
 ### Key Design Decisions
 
-- **Student/Lecturer ↔ User is deferred** — Excel import creates Student/Lecturer records with no User account. Admin activation is what creates the User record and credentials. Student.userId is optional for this reason; Lecturer.userId is required once activated.
+- **Student ↔ User is deferred; Lecturer ↔ User is immediate** — For students, Excel import creates a `Student` record with no User account. Admin activation (`POST /students/:id/activate`) creates the User record and credentials; `Student.userId` is optional for this reason. For lecturers, the `Lecturer` and `User` records are created atomically in a single `$transaction` — no separate activation step exists. `Lecturer.userId` is always populated and non-nullable.
 - **Enrollment is a join table with state** — tracks a student's participation in a specific semester; thesis is linked here, not directly to Student. Previously named `SemesterStudent`; renamed to `Enrollment` to express the business concept rather than the DB implementation.
 - **Document has two-level review** — lecturer review + admin review, each with feedback, reviewer reference, and timestamp
 - **Files stored in S3** — Document stores `s3Key`, `originalName`, `mimeType`, `fileSize`
