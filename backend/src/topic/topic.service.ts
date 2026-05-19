@@ -102,8 +102,27 @@ export class TopicService {
   }
 
   async update(id: number, dto: UpdateTopicDto, lecturerId: number) {
-    // placeholder
-    return null as any;
+    const topic = await this.prisma.topic.findUnique({ where: { id } });
+    if (!topic) throw new NotFoundException(`Topic #${id} not found`);
+    if (topic.lecturerId !== lecturerId) throw new ForbiddenException('You do not own this topic');
+
+    const data: Prisma.TopicUpdateInput = {};
+    if (dto.title !== undefined) data.title = dto.title;
+    if (dto.description !== undefined) data.description = dto.description;
+    if (dto.requirements !== undefined) data.requirements = dto.requirements;
+    if (dto.note !== undefined) data.note = dto.note;
+
+    if (Object.keys(data).length === 0) {
+      throw new BadRequestException('At least one field must be provided');
+    }
+
+    const updated = await this.prisma.topic.update({
+      where: { id },
+      data,
+      include: this.includeClause,
+    });
+
+    return this.toResponse(updated);
   }
 
   async remove(id: number, lecturerId: number): Promise<void> {

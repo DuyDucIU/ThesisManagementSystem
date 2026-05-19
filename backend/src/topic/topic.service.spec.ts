@@ -235,4 +235,53 @@ describe('TopicService', () => {
       });
     });
   });
+
+  // ─── update ──────────────────────────────────────────────────────────────────
+
+  describe('update', () => {
+    it('throws NotFoundException when topic does not exist', async () => {
+      prisma.topic.findUnique.mockResolvedValue(null);
+
+      await expect(service.update(999, { title: 'New' }, 1)).rejects.toThrow(NotFoundException);
+      expect(prisma.topic.update).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when lecturer does not own the topic', async () => {
+      prisma.topic.findUnique.mockResolvedValue({ ...mockTopic, lecturerId: 5 });
+
+      await expect(service.update(1, { title: 'New' }, 1)).rejects.toThrow(ForbiddenException);
+      expect(prisma.topic.update).not.toHaveBeenCalled();
+    });
+
+    it('updates only provided fields and returns response', async () => {
+      prisma.topic.findUnique.mockResolvedValue(mockTopic);
+      prisma.topic.update.mockResolvedValue({ ...mockTopic, title: 'Updated Title' });
+
+      const result = await service.update(1, { title: 'Updated Title' }, 1);
+
+      expect(prisma.topic.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { title: 'Updated Title' },
+        include: expect.objectContaining({ lecturer: expect.anything() }),
+      });
+      expect(result.title).toBe('Updated Title');
+    });
+
+    it('does not include status in the update data even if status is somehow passed', async () => {
+      prisma.topic.findUnique.mockResolvedValue(mockTopic);
+      prisma.topic.update.mockResolvedValue({ ...mockTopic, note: 'updated note' });
+
+      await service.update(1, { note: 'updated note' }, 1);
+
+      const callData = prisma.topic.update.mock.calls[0][0].data;
+      expect(callData).not.toHaveProperty('status');
+    });
+
+    it('throws BadRequestException when no fields are provided', async () => {
+      prisma.topic.findUnique.mockResolvedValue(mockTopic);
+
+      await expect(service.update(1, {}, 1)).rejects.toThrow(BadRequestException);
+      expect(prisma.topic.update).not.toHaveBeenCalled();
+    });
+  });
 });
