@@ -151,4 +151,26 @@ describe('TopicService', () => {
       expect(result).toEqual([topicResponse]);
     });
   });
+
+  // ─── findOne ─────────────────────────────────────────────────────────────────
+
+  describe('findOne', () => {
+    it('returns the topic response when found', async () => {
+      prisma.topic.findUnique.mockResolvedValue(mockTopic);
+
+      const result = await service.findOne(1);
+
+      expect(prisma.topic.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        include: expect.objectContaining({ lecturer: expect.anything() }),
+      });
+      expect(result).toEqual(topicResponse);
+    });
+
+    it('throws NotFoundException when topic does not exist', async () => {
+      prisma.topic.findUnique.mockResolvedValue(null);
+
+      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+    });
+  });
 });

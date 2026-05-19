@@ -72,8 +72,12 @@ export class TopicService {
   }
 
   async findOne(id: number) {
-    // placeholder
-    return null as any;
+    const topic = await this.prisma.topic.findUnique({
+      where: { id },
+      include: this.includeClause,
+    });
+    if (!topic) throw new NotFoundException(`Topic #${id} not found`);
+    return this.toResponse(topic);
   }
 
   async create(dto: CreateTopicDto, lecturerId: number) {
