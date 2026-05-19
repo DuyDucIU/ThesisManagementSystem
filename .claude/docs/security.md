@@ -86,9 +86,44 @@ getMe(@CurrentUser() user: User) {
 { "username": "admin", "password": "admin123" }
 
 // Response 201 — refresh token set as httpOnly cookie, NOT in body
+// Admin example:
 {
   "accessToken": "<jwt>",
-  "user": { "id": 1, "username": "admin", "role": "ADMIN", "fullName": null, "email": null }
+  "user": {
+    "id": 1,
+    "username": "admin",
+    "role": "ADMIN",
+    "fullName": null,
+    "email": null,
+    "lecturer": null,
+    "student": null
+  }
+}
+// Lecturer example — user.lecturer contains id and maxStudents:
+{
+  "accessToken": "<jwt>",
+  "user": {
+    "id": 2,
+    "username": "smith",
+    "role": "LECTURER",
+    "fullName": "Prof. Smith",
+    "email": "smith@uni.edu",
+    "lecturer": { "id": 2, "maxStudents": 5 },
+    "student": null
+  }
+}
+// Student example — user.student contains id:
+{
+  "accessToken": "<jwt>",
+  "user": {
+    "id": 3,
+    "username": "john.doe",
+    "role": "STUDENT",
+    "fullName": "John Doe",
+    "email": "john@uni.edu",
+    "lecturer": null,
+    "student": { "id": 3 }
+  }
 }
 ```
 
@@ -105,8 +140,13 @@ Response 204 — clears refreshToken cookie; service nulls DB token before cooki
 
 **GET /auth/me** — `Authorization: Bearer <accessToken>`
 ```json
-// Response 200
-{ "id": 1, "username": "admin", "role": "ADMIN", "fullName": null, "email": null }
+// Response 200 — same shape as the user object in /auth/login
+// Admin example:
+{ "id": 1, "username": "admin", "role": "ADMIN", "fullName": null, "email": null, "lecturer": null, "student": null }
+// Lecturer example:
+{ "id": 2, "username": "smith", "role": "LECTURER", "fullName": "Prof. Smith", "email": "smith@uni.edu", "lecturer": { "id": 2, "maxStudents": 5 }, "student": null }
+// Student example:
+{ "id": 3, "username": "john.doe", "role": "STUDENT", "fullName": "John Doe", "email": "john@uni.edu", "lecturer": null, "student": { "id": 3 } }
 ```
 
 ## Password Storage
