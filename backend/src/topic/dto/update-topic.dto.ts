@@ -1,9 +1,9 @@
-import { IsString, IsOptional, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, MaxLength } from 'class-validator';
 
 export class UpdateTopicDto {
   @IsOptional()
   @IsString()
-  @MinLength(1)
+  @IsNotEmpty()
   @MaxLength(300)
   title?: string;
 
