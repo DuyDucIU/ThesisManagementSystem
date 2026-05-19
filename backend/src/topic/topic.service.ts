@@ -126,6 +126,13 @@ export class TopicService {
   }
 
   async remove(id: number, lecturerId: number): Promise<void> {
-    // placeholder
+    const topic = await this.prisma.topic.findUnique({ where: { id } });
+    if (!topic) throw new NotFoundException(`Topic #${id} not found`);
+    if (topic.lecturerId !== lecturerId) throw new ForbiddenException('You do not own this topic');
+
+    const thesisCount = await this.prisma.thesis.count({ where: { topicId: id } });
+    if (thesisCount > 0) throw new BadRequestException('Cannot delete a topic with assigned theses');
+
+    await this.prisma.topic.delete({ where: { id } });
   }
 }

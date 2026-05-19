@@ -284,4 +284,42 @@ describe('TopicService', () => {
       expect(prisma.topic.update).not.toHaveBeenCalled();
     });
   });
+
+  // ─── remove ──────────────────────────────────────────────────────────────────
+
+  describe('remove', () => {
+    it('throws NotFoundException when topic does not exist', async () => {
+      prisma.topic.findUnique.mockResolvedValue(null);
+
+      await expect(service.remove(999, 1)).rejects.toThrow(NotFoundException);
+      expect(prisma.topic.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when lecturer does not own the topic', async () => {
+      prisma.topic.findUnique.mockResolvedValue({ ...mockTopic, lecturerId: 5 });
+
+      await expect(service.remove(1, 1)).rejects.toThrow(ForbiddenException);
+      expect(prisma.topic.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when topic has theses assigned', async () => {
+      prisma.topic.findUnique.mockResolvedValue(mockTopic);
+      prisma.thesis.count.mockResolvedValue(2);
+
+      await expect(service.remove(1, 1)).rejects.toThrow(
+        new BadRequestException('Cannot delete a topic with assigned theses'),
+      );
+      expect(prisma.topic.delete).not.toHaveBeenCalled();
+    });
+
+    it('deletes the topic when owned and no theses assigned', async () => {
+      prisma.topic.findUnique.mockResolvedValue(mockTopic);
+      prisma.thesis.count.mockResolvedValue(0);
+      prisma.topic.delete.mockResolvedValue(mockTopic);
+
+      await service.remove(1, 1);
+
+      expect(prisma.topic.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+    });
+  });
 });
