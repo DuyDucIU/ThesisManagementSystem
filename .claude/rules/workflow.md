@@ -42,8 +42,12 @@ After E2E verification passes, wrap up the branch.
 ## Git Rules
 
 - **Branch naming**: `<type>/<short-description>` — e.g., `feature/thesis-crud`, `fix/auth-redirect`, `chore/add-prisma`
-- **Commit messages**: imperative mood, concise — e.g., "Add thesis submission endpoint"
+- **Commit messages**: use [Conventional Commits](https://www.conventionalcommits.org/) format — `<type>(<scope>): <description>`
+  - Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`
+  - Scope is optional but encouraged for clarity — e.g., `feat(topics): add copy endpoint`, `fix(auth): handle expired refresh token`
+  - Description is imperative mood, lowercase, no trailing period
 - **Commit after each approved task** — when using `subagent-driven-development`, the implementer subagent commits after each task passes both spec compliance and code quality review. In all other workflows, only commit when the user explicitly asks.
+- **Merging**: always use **squash merge** when merging a feature/fix branch into `main` — keeps the main history linear with one commit per feature
 - **Never force-push** without explicit user approval
 
 ## Documentation Maintenance
