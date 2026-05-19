@@ -134,16 +134,7 @@ Returns `403` if lecturer tries to delete another lecturer's topic.
 Returns `400` if any thesis record is linked to the topic (blocked to prevent orphaned theses).
 Returns `404` if topic not found.
 
-### `POST /topics/:id/copy` — lecturer only
-
-Copies source topic (any semester) into the **active semester**. No request body needed.
-
-- Copies: `title`, `description`, `requirements`, `note`
-- Resets: `status` → `OPEN`, `semesterId` → active semester, `lecturerId` → requesting lecturer's ID
-- Source topic can belong to any lecturer (lecturer can copy any topic they find useful)
-
-Returns `201` with newly created topic.
-Returns `400` if no active semester exists.
+There is **no dedicated copy endpoint**. Copying is a frontend UX concern — the client fetches the source topic via `GET /topics/:id`, pre-fills the create form, and the lecturer submits via the normal `POST /topics`.
 
 ---
 
@@ -161,18 +152,19 @@ Returns `400` if no active semester exists.
 - Semester dropdown (defaults to active semester; allows browsing past semesters)
 - Filters: status badge toggles, lecturer name search, title keyword search
 - Topic cards displaying: title, status badge, lecturer name + email (mailto link), description preview, note (if set)
-- If the logged-in user is a lecturer and the card is their own topic → **"Edit"** button on the card that navigates to `/my-topics` (the lecturer manages the topic from there)
+- If the logged-in user is a lecturer and the card is their own topic → **"Edit"** button on the card that navigates to `/my-topics`
+- All topic cards show a **"Copy"** icon (tooltip: "Use as template") visible to lecturers → opens the create form modal pre-filled with that topic's data; lecturer reviews/edits then saves as a new topic in the active semester
 
 ### My Topics (`/my-topics`)
 
 - Capacity counter at top: `X / maxStudents students used` (counts theses across all topics in active semester — shows `0 / maxStudents` until thesis assignment feature is built)
-- **"New Topic"** button → opens create dialog
-- Topic list (own topics in active semester by default; can switch semester to browse own past topics for reference/copy)
+- **"New Topic"** button → opens create form modal (empty), with a **"Pre-fill from existing topic"** link inside the form that opens a topic picker (all semesters, all topics) to auto-fill the fields
+- Topic list showing their own topics with status badges
 - Each topic card has: **Edit**, **Delete**, **Copy** action buttons
 - Delete button is disabled (with tooltip) if the topic has theses assigned
-- Copy opens a topic picker — browse all topics across all semesters — confirm to copy into active semester
+- **Copy** on own topic cards opens the same pre-filled create form modal (same as Copy on Topics Bank)
 
-### Topic Form (shared, create & edit)
+### Topic Form (shared: create & edit)
 
 Fields:
 - `title` — text input, required
@@ -180,19 +172,23 @@ Fields:
 - `requirements` — textarea, optional
 - `note` — textarea, optional, helper text: "Visible to students — use this to set expectations or availability"
 
-Used as a dialog in both My Topics create and edit flows.
+**Create form extras:**
+- "Pre-fill from existing topic" link inside the empty form → opens a topic picker → selecting a topic auto-fills the form fields; lecturer can edit before submitting
+- When triggered by a **Copy** button on any topic card, the form opens already pre-filled (skips the picker step)
+
+Both paths submit via `POST /topics`. Copy is purely a frontend UX concern — no dedicated backend endpoint.
 
 ### State Management
 
 ```
 frontend/src/features/topic/
   api.ts          — axios calls for all topic endpoints
-  store.ts        — Zustand store: topic list, filters, pagination, loading/error
+  store.ts        — Zustand store: topic list, filters, loading/error
   components/
     TopicCard.tsx
-    TopicForm.tsx
+    TopicForm.tsx        — shared create/edit form; accepts optional prefill data
     TopicFilters.tsx
-    TopicCopyPicker.tsx
+    TopicPickerDialog.tsx — picker for pre-filling form from an existing topic
 ```
 
 Single Zustand store with separate slices for bank view and my-topics view (or a shared list with a `scope` flag). The `myTopics` view pre-fills `lecturerId` filter with the logged-in lecturer's ID.
@@ -221,3 +217,4 @@ Single Zustand store with separate slices for bank view and my-topics view (or a
 - `CLOSED` on semester end (triggered by semester management feature)
 - Admin creating/editing/deleting topics (admin is read-only for topics)
 - Pagination on topic lists (can be added later; acceptable to return all for now given expected volume)
+- Dedicated backend copy endpoint — copy is handled entirely on the frontend (fetch source topic, pre-fill form, submit via `POST /topics`)
