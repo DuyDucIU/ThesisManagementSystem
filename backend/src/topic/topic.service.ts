@@ -81,8 +81,24 @@ export class TopicService {
   }
 
   async create(dto: CreateTopicDto, lecturerId: number) {
-    // placeholder
-    return null as any;
+    const active = await this.prisma.semester.findFirst({
+      where: { status: SemesterStatus.ACTIVE },
+    });
+    if (!active) throw new BadRequestException('No active semester found');
+
+    const topic = await this.prisma.topic.create({
+      data: {
+        title: dto.title,
+        ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.requirements !== undefined && { requirements: dto.requirements }),
+        ...(dto.note !== undefined && { note: dto.note }),
+        semesterId: active.id,
+        lecturerId,
+      },
+      include: this.includeClause,
+    });
+
+    return this.toResponse(topic);
   }
 
   async update(id: number, dto: UpdateTopicDto, lecturerId: number) {

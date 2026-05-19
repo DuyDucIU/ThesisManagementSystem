@@ -173,4 +173,66 @@ describe('TopicService', () => {
       await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
     });
   });
+
+  // ─── create ──────────────────────────────────────────────────────────────────
+
+  describe('create', () => {
+    const dto = {
+      title: 'New Topic',
+      description: 'Desc',
+      requirements: 'Req',
+      note: 'Note',
+    };
+
+    it('creates topic in the active semester with the given lecturerId', async () => {
+      prisma.semester.findFirst.mockResolvedValue({ id: 3, status: SemesterStatus.ACTIVE });
+      prisma.topic.create.mockResolvedValue({ ...mockTopic, ...dto, semesterId: 3, lecturerId: 1 });
+
+      const result = await service.create(dto, 1);
+
+      expect(prisma.semester.findFirst).toHaveBeenCalledWith({
+        where: { status: SemesterStatus.ACTIVE },
+      });
+      expect(prisma.topic.create).toHaveBeenCalledWith({
+        data: {
+          title: 'New Topic',
+          description: 'Desc',
+          requirements: 'Req',
+          note: 'Note',
+          semesterId: 3,
+          lecturerId: 1,
+        },
+        include: expect.objectContaining({ lecturer: expect.anything() }),
+      });
+      expect(result).toHaveProperty('id');
+    });
+
+    it('throws BadRequestException when no active semester exists', async () => {
+      prisma.semester.findFirst.mockResolvedValue(null);
+
+      await expect(service.create(dto, 1)).rejects.toThrow(
+        new BadRequestException('No active semester found'),
+      );
+      expect(prisma.topic.create).not.toHaveBeenCalled();
+    });
+
+    it('omits undefined optional fields from the create data', async () => {
+      prisma.semester.findFirst.mockResolvedValue({ id: 3 });
+      prisma.topic.create.mockResolvedValue({
+        ...mockTopic,
+        title: 'Title Only',
+        description: null,
+        requirements: null,
+        note: null,
+        semesterId: 3,
+      });
+
+      await service.create({ title: 'Title Only' }, 2);
+
+      expect(prisma.topic.create).toHaveBeenCalledWith({
+        data: { title: 'Title Only', semesterId: 3, lecturerId: 2 },
+        include: expect.objectContaining({ lecturer: expect.anything() }),
+      });
+    });
+  });
 });
