@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsOptional, IsString, IsInt, IsIn, Min } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsEnum, Min } from 'class-validator';
 import { TopicStatus } from '@prisma/client';
 
 export class QueryTopicDto {
@@ -10,7 +10,7 @@ export class QueryTopicDto {
   semesterId?: number;
 
   @IsOptional()
-  @IsIn(['OPEN', 'FULL', 'CLOSED'])
+  @IsEnum(TopicStatus)
   status?: TopicStatus;
 
   @IsOptional()
