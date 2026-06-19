@@ -19,3 +19,10 @@ export function AdminRoute() {
   if (user.role !== 'ADMIN') return <Navigate to="/" replace />
   return <Outlet />
 }
+
+export function LecturerRoute() {
+  const user = useAuthStore((s) => s.user)
+  if (!user) return <Navigate to="/login" replace />
+  if (user.role !== 'LECTURER') return <Navigate to="/" replace />
+  return <Outlet />
+}
