@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useTopicStore } from '../store'
+import { useTopicStore } from '../store/topicStore'
 import { useAuthStore } from '../../auth/store/authStore'
 import type { TopicItem, CreateTopicDto, UpdateTopicDto } from '../api'
 import { extractErrorMessage } from '../api'

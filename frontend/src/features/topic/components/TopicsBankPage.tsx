@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useTopicStore } from '../store'
+import { useTopicStore } from '../store/topicStore'
 import { useAuthStore } from '../../auth/store/authStore'
 import type { TopicItem, TopicQuery, CreateTopicDto, UpdateTopicDto } from '../api'
 import TopicCard from './TopicCard'

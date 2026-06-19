@@ -1,8 +1,8 @@
 import { create } from 'zustand'
-import { topicApi } from './api'
-import type { TopicItem, TopicQuery, CreateTopicDto, UpdateTopicDto } from './api'
-import { semesterApi } from '../semester/api'
-import type { Semester } from '../semester/api'
+import { topicApi } from '../api'
+import type { TopicItem, TopicQuery, CreateTopicDto, UpdateTopicDto } from '../api'
+import { semesterApi } from '../../semester/api'
+import type { Semester } from '../../semester/api'
 
 interface TopicState {
   // Topics Bank
