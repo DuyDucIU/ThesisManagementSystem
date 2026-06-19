@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTopicStore } from '../store'
 import { useAuthStore } from '../../auth/store/authStore'
-import { TopicItem, CreateTopicDto, UpdateTopicDto, extractErrorMessage } from '../api'
+import type { TopicItem, CreateTopicDto, UpdateTopicDto } from '../api'
+import { extractErrorMessage } from '../api'
 import TopicCard from './TopicCard'
 import TopicForm from './TopicForm'
 import {

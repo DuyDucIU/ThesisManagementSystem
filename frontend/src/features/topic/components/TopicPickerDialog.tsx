@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { topicApi, TopicItem } from '../api'
-import { Semester } from '../../semester/api'
+import { topicApi } from '../api'
+import type { TopicItem } from '../api'
+import type { Semester } from '../../semester/api'
 import {
   Dialog,
   DialogContent,

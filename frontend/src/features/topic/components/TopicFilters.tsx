@@ -1,5 +1,5 @@
-import { TopicStatus, TopicQuery } from '../api'
-import { Semester } from '../../semester/api'
+import type { TopicStatus, TopicQuery } from '../api'
+import type { Semester } from '../../semester/api'
 import { Input } from '../../../components/ui/input'
 import {
   Select,

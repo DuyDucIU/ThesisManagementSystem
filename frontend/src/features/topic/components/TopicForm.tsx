@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { TopicItem, CreateTopicDto, UpdateTopicDto, extractErrorMessage } from '../api'
-import { Semester } from '../../semester/api'
+import type { TopicItem, CreateTopicDto, UpdateTopicDto } from '../api'
+import { extractErrorMessage } from '../api'
+import type { Semester } from '../../semester/api'
 import TopicPickerDialog from './TopicPickerDialog'
 import {
   Dialog,

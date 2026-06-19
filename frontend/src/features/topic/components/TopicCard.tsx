@@ -1,5 +1,5 @@
 import { Copy, Pencil, Trash2 } from 'lucide-react'
-import { TopicItem } from '../api'
+import type { TopicItem } from '../api'
 import { Button } from '../../../components/ui/button'
 import {
   Tooltip,
