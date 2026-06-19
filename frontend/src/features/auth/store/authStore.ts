@@ -6,6 +6,8 @@ export interface UserProfile {
   role: 'ADMIN' | 'LECTURER' | 'STUDENT'
   fullName: string | null
   email: string | null
+  lecturer: { id: number; maxStudents: number } | null
+  student: { id: number } | null
 }
 
 interface AuthState {

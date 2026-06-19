@@ -132,6 +132,10 @@ export class AuthService {
       role: user.role,
       fullName: user.lecturer?.fullName ?? user.student?.fullName ?? null,
       email: user.lecturer?.email ?? user.student?.email ?? null,
+      lecturer: user.lecturer
+        ? { id: user.lecturer.id, maxStudents: user.lecturer.maxStudents }
+        : null,
+      student: user.student ? { id: user.student.id } : null,
     };
   }
 }

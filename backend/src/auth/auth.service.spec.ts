@@ -20,7 +20,7 @@ describe('AuthService', () => {
     isActive: true,
     refreshToken: null,
     lecturer: null,
-    student: { fullName: 'John Doe', email: 'john@uni.edu' },
+    student: { id: 10, fullName: 'John Doe', email: 'john@uni.edu' },
   };
 
   beforeEach(async () => {
@@ -76,6 +76,8 @@ describe('AuthService', () => {
         role: Role.STUDENT,
         fullName: 'John Doe',
         email: 'john@uni.edu',
+        lecturer: null,
+        student: { id: 10 },
       });
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { refreshToken: 'hashed-jti' } }),
@@ -196,6 +198,8 @@ describe('AuthService', () => {
         role: Role.STUDENT,
         fullName: 'John Doe',
         email: 'john@uni.edu',
+        lecturer: null,
+        student: { id: 10 },
       });
     });
 
@@ -204,13 +208,15 @@ describe('AuthService', () => {
         ...mockUser,
         role: Role.LECTURER,
         student: null,
-        lecturer: { fullName: 'Prof. Smith', email: 'smith@uni.edu' },
+        lecturer: { id: 20, fullName: 'Prof. Smith', email: 'smith@uni.edu', maxStudents: 5 },
       } as any);
 
       const result = await service.getMe(1);
 
       expect(result.fullName).toBe('Prof. Smith');
       expect(result.email).toBe('smith@uni.edu');
+      expect(result.lecturer).toEqual({ id: 20, maxStudents: 5 });
+      expect(result.student).toBeNull();
     });
 
     it('returns null fullName and email for ADMIN user', async () => {
@@ -225,6 +231,8 @@ describe('AuthService', () => {
 
       expect(result.fullName).toBeNull();
       expect(result.email).toBeNull();
+      expect(result.lecturer).toBeNull();
+      expect(result.student).toBeNull();
     });
 
     it('throws UnauthorizedException when user does not exist', async () => {

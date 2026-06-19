@@ -9,6 +9,13 @@ const roleBadgeClass: Record<string, string> = {
   STUDENT: 'bg-surface-container-high text-on-surface',
 }
 
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
+    isActive
+      ? 'bg-primary/10 text-primary font-medium'
+      : 'text-on-surface hover:bg-surface-container'
+  }`
+
 export default function AppLayout() {
   const user = useAuthStore((s) => s.user)
   const clearAuth = useAuthStore((s) => s.clearAuth)
@@ -25,6 +32,8 @@ export default function AppLayout() {
   }
 
   const isAdmin = user?.role === 'ADMIN'
+  const isLecturer = user?.role === 'LECTURER'
+  const isStudent = user?.role === 'STUDENT'
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -49,93 +58,47 @@ export default function AppLayout() {
       </header>
 
       <div className="flex flex-1">
-        {/* Admin sidebar */}
-        {isAdmin && (
-          <aside className="w-56 bg-surface-container-highest shrink-0 px-3 py-6">
-            <p className="font-label text-xs font-medium text-muted-foreground uppercase tracking-widest px-3 mb-3">
-              Administration
+        {/* Sidebar */}
+        <aside className="w-56 bg-surface-container-highest shrink-0 px-3 py-6">
+          {/* Shared: Topics Bank — visible to all roles */}
+          <p className="font-label text-xs font-medium text-muted-foreground uppercase tracking-widest px-3 mb-3">
+            Topics
+          </p>
+          <nav className="space-y-0.5 mb-6">
+            <NavLink to="/topics" end className={navLinkClass}>
+              Topics Bank
+            </NavLink>
+            {isLecturer && (
+              <NavLink to="/my-topics" end className={navLinkClass}>
+                My Topics
+              </NavLink>
+            )}
+          </nav>
+
+          {/* Admin-only section */}
+          {isAdmin && (
+            <>
+              <p className="font-label text-xs font-medium text-muted-foreground uppercase tracking-widest px-3 mb-3">
+                Administration
+              </p>
+              <nav className="space-y-0.5">
+                <NavLink to="/admin/semesters" end className={navLinkClass}>Semesters</NavLink>
+                <NavLink to="/admin/students" end className={navLinkClass}>Students</NavLink>
+                <NavLink to="/admin/lecturers" end className={navLinkClass}>Lecturers</NavLink>
+                <NavLink to="/admin/accounts" end className={navLinkClass}>Accounts</NavLink>
+                <NavLink to="/admin/enrollments" end className={navLinkClass}>Enrollments</NavLink>
+                <NavLink to="/admin/enrollments/import" className={navLinkClass}>Import Enrollments</NavLink>
+              </nav>
+            </>
+          )}
+
+          {/* Student-only section — placeholder for future student features */}
+          {isStudent && (
+            <p className="font-label text-xs text-muted-foreground px-3">
+              Browse topics and contact lecturers via email.
             </p>
-            <nav className="space-y-0.5">
-              <NavLink
-                to="/admin/semesters"
-                end
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-on-surface hover:bg-surface-container'
-                  }`
-                }
-              >
-                Semesters
-              </NavLink>
-              <NavLink
-                to="/admin/students"
-                end
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-on-surface hover:bg-surface-container'
-                  }`
-                }
-              >
-                Students
-              </NavLink>
-              <NavLink
-                to="/admin/lecturers"
-                end
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-on-surface hover:bg-surface-container'
-                  }`
-                }
-              >
-                Lecturers
-              </NavLink>
-              <NavLink
-                to="/admin/accounts"
-                end
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-on-surface hover:bg-surface-container'
-                  }`
-                }
-              >
-                Accounts
-              </NavLink>
-              <NavLink
-                to="/admin/enrollments"
-                end
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-on-surface hover:bg-surface-container'
-                  }`
-                }
-              >
-                Enrollments
-              </NavLink>
-              <NavLink
-                to="/admin/enrollments/import"
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-md font-sans text-sm transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-on-surface hover:bg-surface-container'
-                  }`
-                }
-              >
-                Import Enrollments
-              </NavLink>
-            </nav>
-          </aside>
-        )}
+          )}
+        </aside>
 
         {/* Main content */}
         <main className="flex-1 p-6 min-w-0">

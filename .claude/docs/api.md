@@ -168,7 +168,7 @@ export class TopicController {
 
   @Delete(':id')
   @HttpCode(204)
-  @Roles(Role.ADMIN)
+  @Roles(Role.LECTURER)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.topicService.remove(id);
   }

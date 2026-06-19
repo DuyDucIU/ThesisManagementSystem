@@ -9,6 +9,7 @@ import { SemesterModule } from './semester/semester.module';
 import { StudentModule } from './student/student.module';
 import { EnrollmentModule } from './enrollment/enrollment.module';
 import { LecturerModule } from './lecturer/lecturer.module';
+import { TopicModule } from './topic/topic.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -21,6 +22,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     StudentModule,
     EnrollmentModule,
     LecturerModule,
+    TopicModule,
   ],
   controllers: [AppController],
   providers: [

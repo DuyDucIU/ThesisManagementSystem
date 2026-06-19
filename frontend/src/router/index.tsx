@@ -1,6 +1,6 @@
 // frontend/src/router/index.tsx
 import { createBrowserRouter, Navigate } from 'react-router'
-import { ProtectedRoute, PublicRoute, AdminRoute } from './guards'
+import { ProtectedRoute, PublicRoute, AdminRoute, LecturerRoute } from './guards'
 import LoginPage from '../features/auth/components/LoginPage'
 import AppLayout from '../layouts/AppLayout'
 import SemesterListPage from '../features/semester/components/SemesterListPage'
@@ -9,6 +9,8 @@ import LecturerListPage from '../features/lecturer/components/LecturerListPage'
 import EnrollmentListPage from '../features/enrollment/components/EnrollmentListPage'
 import EnrollmentImportPage from '../features/enrollment/components/EnrollmentImportPage'
 import AccountManagementPage from '../features/account/components/AccountManagementPage'
+import TopicsBankPage from '../features/topic/components/TopicsBankPage'
+import MyTopicsPage from '../features/topic/components/MyTopicsPage'
 
 const router = createBrowserRouter([
   {
@@ -21,7 +23,8 @@ const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          { path: '/', element: <Navigate to="/admin/semesters" replace /> },
+          { path: '/', element: <Navigate to="/topics" replace /> },
+          { path: '/topics', element: <TopicsBankPage /> },
           {
             element: <AdminRoute />,
             children: [
@@ -31,6 +34,12 @@ const router = createBrowserRouter([
               { path: '/admin/accounts', element: <AccountManagementPage /> },
               { path: '/admin/enrollments', element: <EnrollmentListPage /> },
               { path: '/admin/enrollments/import', element: <EnrollmentImportPage /> },
+            ],
+          },
+          {
+            element: <LecturerRoute />,
+            children: [
+              { path: '/my-topics', element: <MyTopicsPage /> },
             ],
           },
         ],

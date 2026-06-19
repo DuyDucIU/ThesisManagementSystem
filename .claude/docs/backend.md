@@ -37,6 +37,15 @@ backend/src/
 │   └── dto/
 │       ├── query-enrollment.dto.ts
 │       └── import-enrollment.dto.ts
+├── topic/                          # Topic management module (lecturer CRUD, all-role browse)
+│   ├── topic.module.ts
+│   ├── topic.controller.ts         # GET/POST/PATCH/DELETE /topics — mixed role access
+│   ├── topic.service.ts            # CRUD with active-semester scoping, ownership checks
+│   ├── topic.service.spec.ts
+│   └── dto/
+│       ├── create-topic.dto.ts
+│       ├── update-topic.dto.ts
+│       └── query-topic.dto.ts
 └── <feature>/                      # Each feature module follows the same shape
     ├── <feature>.module.ts
     ├── <feature>.controller.ts

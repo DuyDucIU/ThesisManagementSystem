@@ -5,6 +5,7 @@ import router from './router'
 import { useAuthStore } from './features/auth/store/authStore'
 import type { UserProfile } from './features/auth/store/authStore'
 import { Toaster } from './components/ui/sonner'
+import { TooltipProvider } from './components/ui/tooltip'
 
 export default function App() {
   const [ready, setReady] = useState(false)
@@ -45,9 +46,9 @@ export default function App() {
   }
 
   return (
-    <>
+    <TooltipProvider>
       <RouterProvider router={router} />
       <Toaster position="top-right" richColors />
-    </>
+    </TooltipProvider>
   )
 }

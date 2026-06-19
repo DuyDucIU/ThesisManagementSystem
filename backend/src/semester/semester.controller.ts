@@ -24,6 +24,7 @@ export class SemesterController {
   constructor(private readonly semesterService: SemesterService) {}
 
   @Get()
+  @Roles(Role.ADMIN, Role.LECTURER, Role.STUDENT)
   findAll(@Query() query: QuerySemesterDto) {
     return this.semesterService.findAll(query);
   }

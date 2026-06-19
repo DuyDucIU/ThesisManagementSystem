@@ -42,6 +42,17 @@ frontend/src/
 │   │   ├── store/
 │   │   │   └── enrollmentStore.ts      # Zustand store for enrollment state
 │   │   └── api.ts                      # Enrollment list + import API calls
+│   ├── topic/
+│   │   ├── components/
+│   │   │   ├── TopicsBankPage.tsx      # All-role browse page with filters, copy, inline edit
+│   │   │   ├── MyTopicsPage.tsx        # Lecturer-only CRUD page (create, edit, delete, copy)
+│   │   │   ├── TopicCard.tsx           # Topic card component with role-aware actions
+│   │   │   ├── TopicFilters.tsx        # Semester picker, status toggles, search input
+│   │   │   ├── TopicForm.tsx           # Create/edit dialog with optional pre-fill
+│   │   │   └── TopicPickerDialog.tsx   # Dialog to browse/select topics as templates
+│   │   ├── store/
+│   │   │   └── topicStore.ts           # Zustand store for bank/my-topics state
+│   │   └── api.ts                      # Topic CRUD API calls + types
 │   └── account/
 │       ├── components/
 │       │   └── AccountManagementPage.tsx  # Admin page — tabbed Students/Lecturers view, bulk activate/toggle
@@ -95,7 +106,9 @@ React Router v7 (`react-router` package):
 | Path | Component | Guard |
 |------|-----------|-------|
 | `/login` | `LoginPage` | `PublicRoute` — redirects to `/` if already authenticated |
-| `/` | Redirect → `/admin/semesters` | `ProtectedRoute` |
+| `/` | Redirect → `/topics` | `ProtectedRoute` |
+| `/topics` | `TopicsBankPage` | `ProtectedRoute` |
+| `/my-topics` | `MyTopicsPage` | `ProtectedRoute` → `LecturerRoute` |
 | `/admin/semesters` | `SemesterListPage` | `ProtectedRoute` → `AdminRoute` |
 | `/admin/students` | `StudentListPage` | `ProtectedRoute` → `AdminRoute` |
 | `/admin/lecturers` | `LecturerListPage` | `ProtectedRoute` → `AdminRoute` |
@@ -109,6 +122,7 @@ Guards live in `src/router/guards.tsx` (separate from route config to satisfy re
 - **`ProtectedRoute`** — redirects to `/login` if no authenticated user
 - **`PublicRoute`** — redirects to `/` if already authenticated
 - **`AdminRoute`** — requires `user.role === 'ADMIN'`; redirects to `/` otherwise. Nest inside `ProtectedRoute` so the user check runs first.
+- **`LecturerRoute`** — requires `user.role === 'LECTURER'`; redirects to `/` otherwise. Nest inside `ProtectedRoute`.
 
 Admin routes are nested: `ProtectedRoute` → `AppLayout` → `AdminRoute` → page component.
 
@@ -207,9 +221,13 @@ Components use `@/lib/utils` (the `cn()` helper). Style: Default, Color: Oxford 
 
 ## AppLayout
 
-`AppLayout` renders the authenticated shell: a sticky topbar (app name, username, role badge, sign-out button) and a two-column body. When `user.role === 'ADMIN'`, a fixed-width left sidebar (`w-56`) is shown with role-specific nav links using `NavLink` (active state via `isActive` callback). Non-admin users see no sidebar.
+`AppLayout` renders the authenticated shell: a sticky topbar (app name, username, role badge, sign-out button) and a two-column body with a fixed-width left sidebar (`w-56`). The sidebar is visible to all roles with role-specific sections:
 
-Add new admin nav entries to the sidebar's `<nav>` block in `AppLayout.tsx`.
+- **Topics section** (all roles) — Topics Bank link; lecturers also see My Topics
+- **Administration section** (admin only) — Semesters, Students, Lecturers, Accounts, Enrollments, Import Enrollments
+- **Student section** (student only) — placeholder text for future student features
+
+Nav links use `NavLink` with `end` prop and `isActive` callback for active state styling.
 
 ## Gotchas
 
@@ -230,4 +248,6 @@ Add new admin nav entries to the sidebar's `<nav>` block in `AppLayout.tsx`.
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [deps])
   ```
+- **Vite 8 + rolldown `import type` requirement** — Vite 8's rolldown bundler strips type-only exports at build time. If a component imports an interface/type via `import { SomeType }` (value import) from a file that only `export interface`/`export type`s it, the build fails with "Missing export." Always use `import type { SomeType }` for type-only imports; use plain `import` only for runtime values (functions, objects, constants). `tsc --noEmit` will NOT catch this — only `vite build` will.
+- **Radix `TooltipProvider` required** — any component using shadcn/ui `Tooltip` must be wrapped in `<TooltipProvider>`. This is mounted at the app root in `App.tsx`. Without it, a runtime error fires: "Tooltip must be used within TooltipProvider."
 - **Post-delete pagination clamp** — after deleting the last item on the last page, clamp to the new valid last page before re-fetching: `Math.max(1, Math.min(page, Math.ceil((total - 1) / PAGE_LIMIT)))`. Without this the user lands on an empty page.
