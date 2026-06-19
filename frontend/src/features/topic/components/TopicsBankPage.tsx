@@ -1,15 +1,13 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useNavigate } from 'react-router'
 import { useTopicStore } from '../store'
 import { useAuthStore } from '../../auth/store/authStore'
-import type { TopicItem, TopicQuery, CreateTopicDto } from '../api'
+import type { TopicItem, TopicQuery, CreateTopicDto, UpdateTopicDto } from '../api'
 import TopicCard from './TopicCard'
 import TopicFilters from './TopicFilters'
 import TopicForm from './TopicForm'
 
 export default function TopicsBankPage() {
   const user = useAuthStore((s) => s.user)
-  const navigate = useNavigate()
 
   const {
     bankTopics,
@@ -19,10 +17,13 @@ export default function TopicsBankPage() {
     fetchBankTopics,
     fetchSemesters,
     createTopic,
+    updateTopic,
   } = useTopicStore()
 
   const [filters, setFilters] = useState<TopicQuery>({})
   const [formOpen, setFormOpen] = useState(false)
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
+  const [editingTopic, setEditingTopic] = useState<TopicItem | undefined>()
   const [prefill, setPrefill] = useState<Partial<CreateTopicDto> | undefined>()
 
   const isLecturer = user?.role === 'LECTURER'
@@ -39,6 +40,8 @@ export default function TopicsBankPage() {
   }, [fetchBankTopics])
 
   const handleCopy = (topic: TopicItem) => {
+    setFormMode('create')
+    setEditingTopic(undefined)
     setPrefill({
       title: topic.title,
       description: topic.description ?? undefined,
@@ -48,12 +51,19 @@ export default function TopicsBankPage() {
     setFormOpen(true)
   }
 
-  const handleEditShortcut = () => {
-    navigate('/my-topics')
+  const handleEdit = (topic: TopicItem) => {
+    setFormMode('edit')
+    setEditingTopic(topic)
+    setPrefill(undefined)
+    setFormOpen(true)
   }
 
-  const handleCreate = async (dto: CreateTopicDto) => {
-    await createTopic(dto)
+  const handleSubmit = async (dto: CreateTopicDto | UpdateTopicDto) => {
+    if (formMode === 'edit' && editingTopic) {
+      await updateTopic(editingTopic.id, dto as UpdateTopicDto)
+    } else {
+      await createTopic(dto as CreateTopicDto)
+    }
     fetchBankTopics(filters)
   }
 
@@ -90,7 +100,7 @@ export default function TopicsBankPage() {
             topic={topic}
             myLecturerId={myLecturerId}
             onCopy={isLecturer ? handleCopy : undefined}
-            onEdit={isLecturer ? handleEditShortcut : undefined}
+            onEdit={isLecturer ? handleEdit : undefined}
           />
         ))}
       </div>
@@ -100,12 +110,16 @@ export default function TopicsBankPage() {
           open={formOpen}
           onOpenChange={(open) => {
             setFormOpen(open)
-            if (!open) setPrefill(undefined)
+            if (!open) {
+              setPrefill(undefined)
+              setEditingTopic(undefined)
+            }
           }}
-          mode="create"
+          mode={formMode}
+          topic={editingTopic}
           prefill={prefill}
           semesters={semesters}
-          onSubmit={handleCreate}
+          onSubmit={handleSubmit}
         />
       )}
     </div>
