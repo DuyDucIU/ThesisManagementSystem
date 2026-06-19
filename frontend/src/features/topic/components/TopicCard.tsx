@@ -56,10 +56,10 @@ export default function TopicCard({
       {/* Lecturer info */}
       <div className="flex flex-col gap-0.5">
         <span className="font-sans text-sm font-medium text-on-surface">
-          {topic.lecturer.fullName}
           {topic.lecturer.title && (
-            <span className="text-muted-foreground font-normal"> · {topic.lecturer.title}</span>
+            <span className="text-muted-foreground font-normal">{topic.lecturer.title} </span>
           )}
+          {topic.lecturer.fullName}
         </span>
         <a
           href={`mailto:${topic.lecturer.email}`}
