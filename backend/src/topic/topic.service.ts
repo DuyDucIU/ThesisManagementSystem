@@ -5,6 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Prisma, TopicStatus, SemesterStatus } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
@@ -116,13 +117,20 @@ export class TopicService {
       throw new BadRequestException('At least one field must be provided');
     }
 
-    const updated = await this.prisma.topic.update({
-      where: { id },
-      data,
-      include: this.includeClause,
-    });
+    try {
+      const updated = await this.prisma.topic.update({
+        where: { id },
+        data,
+        include: this.includeClause,
+      });
 
-    return this.toResponse(updated);
+      return this.toResponse(updated);
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException(`Topic #${id} not found`);
+      }
+      throw error;
+    }
   }
 
   async remove(id: number, lecturerId: number): Promise<void> {
@@ -133,6 +141,16 @@ export class TopicService {
     const thesisCount = await this.prisma.thesis.count({ where: { topicId: id } });
     if (thesisCount > 0) throw new BadRequestException('Cannot delete a topic with assigned theses');
 
-    await this.prisma.topic.delete({ where: { id } });
+    try {
+      await this.prisma.topic.delete({ where: { id } });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException(`Topic #${id} not found`);
+      }
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2003') {
+        throw new BadRequestException('Cannot delete a topic with assigned theses');
+      }
+      throw error;
+    }
   }
 }

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { TopicStatus, SemesterStatus } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { TopicService } from './topic.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -283,6 +284,15 @@ describe('TopicService', () => {
       await expect(service.update(1, {}, 1)).rejects.toThrow(BadRequestException);
       expect(prisma.topic.update).not.toHaveBeenCalled();
     });
+
+    it('throws NotFoundException when topic is deleted between check and update (P2025)', async () => {
+      prisma.topic.findUnique.mockResolvedValue(mockTopic);
+      prisma.topic.update.mockRejectedValue(
+        new PrismaClientKnownRequestError('Record not found', { code: 'P2025', clientVersion: '6.0.0' }),
+      );
+
+      await expect(service.update(1, { title: 'New' }, 1)).rejects.toThrow(NotFoundException);
+    });
   });
 
   // ─── remove ──────────────────────────────────────────────────────────────────
@@ -320,6 +330,26 @@ describe('TopicService', () => {
       await service.remove(1, 1);
 
       expect(prisma.topic.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+    });
+
+    it('throws NotFoundException when topic is deleted between check and delete (P2025)', async () => {
+      prisma.topic.findUnique.mockResolvedValue(mockTopic);
+      prisma.thesis.count.mockResolvedValue(0);
+      prisma.topic.delete.mockRejectedValue(
+        new PrismaClientKnownRequestError('Record not found', { code: 'P2025', clientVersion: '6.0.0' }),
+      );
+
+      await expect(service.remove(1, 1)).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException when thesis is assigned between count and delete (P2003)', async () => {
+      prisma.topic.findUnique.mockResolvedValue(mockTopic);
+      prisma.thesis.count.mockResolvedValue(0);
+      prisma.topic.delete.mockRejectedValue(
+        new PrismaClientKnownRequestError('Foreign key constraint failed', { code: 'P2003', clientVersion: '6.0.0' }),
+      );
+
+      await expect(service.remove(1, 1)).rejects.toThrow(BadRequestException);
     });
   });
 });
