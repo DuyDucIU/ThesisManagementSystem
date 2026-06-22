@@ -16,8 +16,17 @@ import {
   lecturerSemesterApi,
   thesisApi,
 } from '../api'
-import type { LecturerSemesterItem } from '../api'
 import { topicApi } from '../../topic/api'
+import { lecturerApi } from '../../lecturer/api'
+
+const LECTURERS_LIMIT = 200
+
+interface CapacityRow {
+  lecturerId: number
+  lecturer: { fullName: string; email: string }
+  /** Effective max for this semester (persisted config or the lecturer default). */
+  maxStudents: number
+}
 
 interface ManageCapacityDialogProps {
   open: boolean
@@ -33,7 +42,7 @@ export default function ManageCapacityDialog({
   semesterId,
   onSaved,
 }: ManageCapacityDialogProps) {
-  const [configs, setConfigs] = useState<LecturerSemesterItem[]>([])
+  const [rows, setRows] = useState<CapacityRow[]>([])
   const [loading, setLoading] = useState(false)
   // Current assigned counts keyed by lecturerId.
   const [assignedCounts, setAssignedCounts] = useState<Record<number, number>>(
@@ -51,21 +60,36 @@ export default function ManageCapacityDialog({
     () => async () => {
       setLoading(true)
       try {
-        const [configsRes, thesesRes] = await Promise.all([
-          lecturerSemesterApi.list(semesterId),
-          thesisApi.list({ semesterId }),
-        ])
+        // lecturerSemesterApi.list only returns lecturers with a persisted
+        // config row, so merge with the full lecturer list and fall back to the
+        // lecturer's default maxStudents — matching the backend's resolveCapacity.
+        const [lecturersRes, configsRes, thesesRes, topicsRes] =
+          await Promise.all([
+            lecturerApi.list({ limit: LECTURERS_LIMIT }),
+            lecturerSemesterApi.list(semesterId),
+            thesisApi.list({ semesterId }),
+            topicApi.list({ semesterId }),
+          ])
 
-        const list = configsRes.data
-        setConfigs(list)
+        const configByLecturer = new Map(
+          configsRes.data.map((c) => [c.lecturerId, c.maxStudents]),
+        )
+        const merged: CapacityRow[] = lecturersRes.data.data.map((l) => ({
+          lecturerId: l.id,
+          lecturer: { fullName: l.fullName, email: l.email },
+          maxStudents: configByLecturer.get(l.id) ?? l.maxStudents,
+        }))
+        merged.sort((a, b) =>
+          a.lecturer.fullName.localeCompare(b.lecturer.fullName),
+        )
+        setRows(merged)
         setDrafts(
           Object.fromEntries(
-            list.map((c) => [c.lecturerId, String(c.maxStudents)]),
+            merged.map((r) => [r.lecturerId, String(r.maxStudents)]),
           ),
         )
 
         // The thesis response lacks lecturerId, so resolve via the topic list.
-        const topicsRes = await topicApi.list({ semesterId })
         const topicToLecturer: Record<number, number> = {}
         for (const t of topicsRes.data) {
           topicToLecturer[t.id] = t.lecturer.id
@@ -93,24 +117,24 @@ export default function ManageCapacityDialog({
     void load()
   }, [open, load])
 
-  const filteredConfigs = useMemo(() => {
+  const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return configs
-    return configs.filter(
-      (c) =>
-        c.lecturer.fullName.toLowerCase().includes(q) ||
-        c.lecturer.email.toLowerCase().includes(q),
+    if (!q) return rows
+    return rows.filter(
+      (r) =>
+        r.lecturer.fullName.toLowerCase().includes(q) ||
+        r.lecturer.email.toLowerCase().includes(q),
     )
-  }, [configs, search])
+  }, [rows, search])
 
-  const handleSave = async (config: LecturerSemesterItem) => {
-    const raw = drafts[config.lecturerId]
+  const handleSave = async (row: CapacityRow) => {
+    const raw = drafts[row.lecturerId]
     const value = Number(raw)
     if (!Number.isInteger(value) || value < 0) {
       toast.error('Max students must be a non-negative whole number.')
       return
     }
-    const assigned = assignedCounts[config.lecturerId] ?? 0
+    const assigned = assignedCounts[row.lecturerId] ?? 0
     if (value < assigned) {
       toast.error(
         `Max students cannot be below the ${assigned} already assigned.`,
@@ -118,18 +142,16 @@ export default function ManageCapacityDialog({
       return
     }
 
-    setSavingId(config.lecturerId)
+    setSavingId(row.lecturerId)
     try {
-      await lecturerSemesterApi.upsert(config.lecturerId, {
+      await lecturerSemesterApi.upsert(row.lecturerId, {
         semesterId,
         maxStudents: value,
       })
-      toast.success(`Capacity updated for ${config.lecturer.fullName}.`)
-      setConfigs((prev) =>
-        prev.map((c) =>
-          c.lecturerId === config.lecturerId
-            ? { ...c, maxStudents: value }
-            : c,
+      toast.success(`Capacity updated for ${row.lecturer.fullName}.`)
+      setRows((prev) =>
+        prev.map((r) =>
+          r.lecturerId === row.lecturerId ? { ...r, maxStudents: value } : r,
         ),
       )
       onSaved?.()
@@ -192,7 +214,7 @@ export default function ManageCapacityDialog({
                     </td>
                   </tr>
                 )}
-                {!loading && filteredConfigs.length === 0 && (
+                {!loading && filteredRows.length === 0 && (
                   <tr>
                     <td
                       colSpan={4}
@@ -203,21 +225,21 @@ export default function ManageCapacityDialog({
                   </tr>
                 )}
                 {!loading &&
-                  filteredConfigs.map((config) => {
-                    const assigned = assignedCounts[config.lecturerId] ?? 0
-                    const draft = drafts[config.lecturerId] ?? ''
-                    const changed = draft !== String(config.maxStudents)
+                  filteredRows.map((row) => {
+                    const assigned = assignedCounts[row.lecturerId] ?? 0
+                    const draft = drafts[row.lecturerId] ?? ''
+                    const changed = draft !== String(row.maxStudents)
                     return (
                       <tr
-                        key={config.lecturerId}
+                        key={row.lecturerId}
                         className="hover:bg-surface-container transition-colors"
                       >
                         <td className="px-4 py-3">
                           <span className="block font-sans text-sm font-medium text-on-surface">
-                            {config.lecturer.fullName}
+                            {row.lecturer.fullName}
                           </span>
                           <span className="block font-label text-xs text-muted-foreground">
-                            {config.lecturer.email}
+                            {row.lecturer.email}
                           </span>
                         </td>
                         <td className="px-4 py-3 font-sans text-sm text-muted-foreground">
@@ -231,7 +253,7 @@ export default function ManageCapacityDialog({
                             onChange={(e) =>
                               setDrafts((prev) => ({
                                 ...prev,
-                                [config.lecturerId]: e.target.value,
+                                [row.lecturerId]: e.target.value,
                               }))
                             }
                             className="w-24 font-sans text-sm"
@@ -240,15 +262,11 @@ export default function ManageCapacityDialog({
                         <td className="px-4 py-3 text-right">
                           <Button
                             size="sm"
-                            disabled={
-                              !changed || savingId === config.lecturerId
-                            }
-                            onClick={() => void handleSave(config)}
+                            disabled={!changed || savingId === row.lecturerId}
+                            onClick={() => void handleSave(row)}
                             className="font-label bg-gradient-to-br from-primary to-primary-container text-primary-foreground"
                           >
-                            {savingId === config.lecturerId
-                              ? 'Saving…'
-                              : 'Save'}
+                            {savingId === row.lecturerId ? 'Saving…' : 'Save'}
                           </Button>
                         </td>
                       </tr>

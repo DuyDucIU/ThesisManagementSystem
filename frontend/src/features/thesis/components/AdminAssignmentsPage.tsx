@@ -20,7 +20,7 @@ import {
   AlertDialogTitle,
 } from '../../../components/ui/alert-dialog'
 import { useThesisStore } from '../store/thesisStore'
-import { extractErrorMessage } from '../api'
+import { extractErrorMessage, thesisApi } from '../api'
 import type { ThesisItem, ThesisStatus, CreateThesisDto } from '../api'
 import { topicApi } from '../../topic/api'
 import { lecturerApi } from '../../lecturer/api'
@@ -76,6 +76,10 @@ export default function AdminAssignmentsPage() {
   // topicId → lecturer full name, used to render the Lecturer column since the
   // thesis list response does not carry lecturer info.
   const [topicLecturer, setTopicLecturer] = useState<Record<number, string>>({})
+  // Unfiltered topicId → assignment count for the assign dialog's "N assigned"
+  // hint. Derived from an all-status/all-lecturer thesis fetch so the hint stays
+  // correct regardless of the page's active filters.
+  const [topicCounts, setTopicCounts] = useState<Record<number, number>>({})
 
   const [assignOpen, setAssignOpen] = useState(false)
   const [capacityOpen, setCapacityOpen] = useState(false)
@@ -101,18 +105,36 @@ export default function AdminAssignmentsPage() {
       .catch((err) => toast.error(extractErrorMessage(err)))
   }, [])
 
-  // Build the topicId → lecturer name map for the current semester.
+  // Build the topicId → lecturer name map and the unfiltered topic counts for
+  // the current semester. Both are independent of the page's status/lecturer
+  // filters, so they key on semesterId alone.
+  const loadSemesterMaps = useMemo(
+    () => async (sid: number) => {
+      try {
+        const [topicsRes, allThesesRes] = await Promise.all([
+          topicApi.list({ semesterId: sid }),
+          thesisApi.list({ semesterId: sid }),
+        ])
+        const map: Record<number, string> = {}
+        for (const t of topicsRes.data) map[t.id] = t.lecturer.fullName
+        setTopicLecturer(map)
+
+        const counts: Record<number, number> = {}
+        for (const thesis of allThesesRes.data) {
+          counts[thesis.topic.id] = (counts[thesis.topic.id] ?? 0) + 1
+        }
+        setTopicCounts(counts)
+      } catch (err) {
+        toast.error(extractErrorMessage(err))
+      }
+    },
+    [],
+  )
+
   useEffect(() => {
     if (semesterId === null) return
-    topicApi
-      .list({ semesterId })
-      .then((res) => {
-        const map: Record<number, string> = {}
-        for (const t of res.data) map[t.id] = t.lecturer.fullName
-        setTopicLecturer(map)
-      })
-      .catch((err) => toast.error(extractErrorMessage(err)))
-  }, [semesterId])
+    void loadSemesterMaps(semesterId)
+  }, [semesterId, loadSemesterMaps])
 
   // Re-fetch theses whenever the scope changes.
   useEffect(() => {
@@ -128,14 +150,6 @@ export default function AdminAssignmentsPage() {
     if (error) toast.error(error)
   }, [error])
 
-  const topicCounts = useMemo(() => {
-    const counts: Record<number, number> = {}
-    for (const t of theses) {
-      counts[t.topic.id] = (counts[t.topic.id] ?? 0) + 1
-    }
-    return counts
-  }, [theses])
-
   const refresh = () => {
     if (semesterId === null) return
     void fetchTheses({
@@ -143,15 +157,8 @@ export default function AdminAssignmentsPage() {
       status: statusFilter !== 'all' ? statusFilter : undefined,
       lecturerId: lecturerFilter !== 'all' ? lecturerFilter : undefined,
     })
-    // Topic statuses / ownership can shift after an assign or unassign.
-    topicApi
-      .list({ semesterId })
-      .then((res) => {
-        const map: Record<number, string> = {}
-        for (const t of res.data) map[t.id] = t.lecturer.fullName
-        setTopicLecturer(map)
-      })
-      .catch(() => {})
+    // Topic ownership and per-topic counts can shift after an assign/unassign.
+    void loadSemesterMaps(semesterId)
   }
 
   const handleAssign = async (dto: CreateThesisDto) => {
