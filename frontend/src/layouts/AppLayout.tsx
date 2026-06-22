@@ -73,6 +73,11 @@ export default function AppLayout() {
                 My Topics
               </NavLink>
             )}
+            {isLecturer && (
+              <NavLink to="/my-assignments" end className={navLinkClass}>
+                My Assignments
+              </NavLink>
+            )}
           </nav>
 
           {/* Admin-only section */}

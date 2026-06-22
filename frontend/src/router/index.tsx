@@ -11,6 +11,7 @@ import EnrollmentImportPage from '../features/enrollment/components/EnrollmentIm
 import AccountManagementPage from '../features/account/components/AccountManagementPage'
 import TopicsBankPage from '../features/topic/components/TopicsBankPage'
 import MyTopicsPage from '../features/topic/components/MyTopicsPage'
+import MyAssignmentsPage from '../features/thesis/components/MyAssignmentsPage'
 
 const router = createBrowserRouter([
   {
@@ -40,6 +41,7 @@ const router = createBrowserRouter([
             element: <LecturerRoute />,
             children: [
               { path: '/my-topics', element: <MyTopicsPage /> },
+              { path: '/my-assignments', element: <MyAssignmentsPage /> },
             ],
           },
         ],
