@@ -21,7 +21,12 @@ import type { CreateThesisDto } from '../api'
 interface AssignStudentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  lecturerId: number
+  /**
+   * When provided, only this lecturer's open topics are listed (lecturer view).
+   * When omitted, every lecturer's open topics are listed (admin view) and each
+   * topic row shows its owning lecturer.
+   */
+  lecturerId?: number
   semesterId: number
   /** Map of topicId → current assignment count, used to display topic load. */
   topicCounts?: Record<number, number>
@@ -63,7 +68,11 @@ export default function AssignStudentDialog({
 
     setTopicsLoading(true)
     topicApi
-      .list({ lecturerId, semesterId, status: 'OPEN' })
+      .list({
+        ...(lecturerId !== undefined && { lecturerId }),
+        semesterId,
+        status: 'OPEN',
+      })
       .then((res) => setTopics(res.data))
       .catch((err) => {
         setTopics([])
@@ -123,7 +132,9 @@ export default function AssignStudentDialog({
           </DialogTitle>
           <DialogDescription className="font-sans text-sm">
             {step === 1
-              ? 'Choose one of your open topics in this semester.'
+              ? lecturerId !== undefined
+                ? 'Choose one of your open topics in this semester.'
+                : 'Choose any lecturer’s open topic in this semester.'
               : 'Choose an available student to assign to this topic.'}
           </DialogDescription>
         </DialogHeader>
@@ -191,8 +202,15 @@ export default function AssignStudentDialog({
                             : 'hover:bg-surface-container'
                         }`}
                       >
-                        <span className="font-sans text-sm text-on-surface line-clamp-2">
-                          {topic.title}
+                        <span className="min-w-0 flex flex-col">
+                          <span className="font-sans text-sm text-on-surface line-clamp-2">
+                            {topic.title}
+                          </span>
+                          {lecturerId === undefined && (
+                            <span className="font-label text-xs text-muted-foreground mt-0.5">
+                              {topic.lecturer.fullName}
+                            </span>
+                          )}
                         </span>
                         <span className="shrink-0 flex items-center gap-2">
                           <span className="font-label text-xs text-muted-foreground">

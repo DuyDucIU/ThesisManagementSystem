@@ -12,6 +12,7 @@ import AccountManagementPage from '../features/account/components/AccountManagem
 import TopicsBankPage from '../features/topic/components/TopicsBankPage'
 import MyTopicsPage from '../features/topic/components/MyTopicsPage'
 import MyAssignmentsPage from '../features/thesis/components/MyAssignmentsPage'
+import AdminAssignmentsPage from '../features/thesis/components/AdminAssignmentsPage'
 
 const router = createBrowserRouter([
   {
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
               { path: '/admin/lecturers', element: <LecturerListPage /> },
               { path: '/admin/accounts', element: <AccountManagementPage /> },
               { path: '/admin/enrollments', element: <EnrollmentListPage /> },
+              { path: '/admin/assignments', element: <AdminAssignmentsPage /> },
               { path: '/admin/enrollments/import', element: <EnrollmentImportPage /> },
             ],
           },

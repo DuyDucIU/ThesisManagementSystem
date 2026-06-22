@@ -92,6 +92,7 @@ export default function AppLayout() {
                 <NavLink to="/admin/lecturers" end className={navLinkClass}>Lecturers</NavLink>
                 <NavLink to="/admin/accounts" end className={navLinkClass}>Accounts</NavLink>
                 <NavLink to="/admin/enrollments" end className={navLinkClass}>Enrollments</NavLink>
+                <NavLink to="/admin/assignments" end className={navLinkClass}>Topic Assignments</NavLink>
                 <NavLink to="/admin/enrollments/import" className={navLinkClass}>Import Enrollments</NavLink>
               </nav>
             </>

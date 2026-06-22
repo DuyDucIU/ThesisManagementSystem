@@ -1,0 +1,264 @@
+import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '../../../components/ui/dialog'
+import { Input } from '../../../components/ui/input'
+import { Button } from '../../../components/ui/button'
+import { ScrollArea } from '../../../components/ui/scroll-area'
+import { Search } from 'lucide-react'
+import {
+  extractErrorMessage,
+  lecturerSemesterApi,
+  thesisApi,
+} from '../api'
+import type { LecturerSemesterItem } from '../api'
+import { topicApi } from '../../topic/api'
+
+interface ManageCapacityDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  semesterId: number
+  /** Called after a successful save so the parent can refresh counts. */
+  onSaved?: () => void
+}
+
+export default function ManageCapacityDialog({
+  open,
+  onOpenChange,
+  semesterId,
+  onSaved,
+}: ManageCapacityDialogProps) {
+  const [configs, setConfigs] = useState<LecturerSemesterItem[]>([])
+  const [loading, setLoading] = useState(false)
+  // Current assigned counts keyed by lecturerId.
+  const [assignedCounts, setAssignedCounts] = useState<Record<number, number>>(
+    {},
+  )
+  // Editable draft of maxStudents keyed by lecturerId.
+  const [drafts, setDrafts] = useState<Record<number, string>>({})
+  const [savingId, setSavingId] = useState<number | null>(null)
+  const [search, setSearch] = useState('')
+
+  // Build a topicId → lecturerId map so we can tally theses by lecturer.
+  // We fetch the unfiltered theses list (all lecturers, all statuses) plus the
+  // unfiltered topic list to resolve each thesis to its owning lecturer.
+  const load = useMemo(
+    () => async () => {
+      setLoading(true)
+      try {
+        const [configsRes, thesesRes] = await Promise.all([
+          lecturerSemesterApi.list(semesterId),
+          thesisApi.list({ semesterId }),
+        ])
+
+        const list = configsRes.data
+        setConfigs(list)
+        setDrafts(
+          Object.fromEntries(
+            list.map((c) => [c.lecturerId, String(c.maxStudents)]),
+          ),
+        )
+
+        // The thesis response lacks lecturerId, so resolve via the topic list.
+        const topicsRes = await topicApi.list({ semesterId })
+        const topicToLecturer: Record<number, number> = {}
+        for (const t of topicsRes.data) {
+          topicToLecturer[t.id] = t.lecturer.id
+        }
+
+        const counts: Record<number, number> = {}
+        for (const thesis of thesesRes.data) {
+          const lecturerId = topicToLecturer[thesis.topic.id]
+          if (lecturerId === undefined) continue
+          counts[lecturerId] = (counts[lecturerId] ?? 0) + 1
+        }
+        setAssignedCounts(counts)
+      } catch (err) {
+        toast.error(extractErrorMessage(err))
+      } finally {
+        setLoading(false)
+      }
+    },
+    [semesterId],
+  )
+
+  useEffect(() => {
+    if (!open) return
+    setSearch('')
+    void load()
+  }, [open, load])
+
+  const filteredConfigs = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return configs
+    return configs.filter(
+      (c) =>
+        c.lecturer.fullName.toLowerCase().includes(q) ||
+        c.lecturer.email.toLowerCase().includes(q),
+    )
+  }, [configs, search])
+
+  const handleSave = async (config: LecturerSemesterItem) => {
+    const raw = drafts[config.lecturerId]
+    const value = Number(raw)
+    if (!Number.isInteger(value) || value < 0) {
+      toast.error('Max students must be a non-negative whole number.')
+      return
+    }
+    const assigned = assignedCounts[config.lecturerId] ?? 0
+    if (value < assigned) {
+      toast.error(
+        `Max students cannot be below the ${assigned} already assigned.`,
+      )
+      return
+    }
+
+    setSavingId(config.lecturerId)
+    try {
+      await lecturerSemesterApi.upsert(config.lecturerId, {
+        semesterId,
+        maxStudents: value,
+      })
+      toast.success(`Capacity updated for ${config.lecturer.fullName}.`)
+      setConfigs((prev) =>
+        prev.map((c) =>
+          c.lecturerId === config.lecturerId
+            ? { ...c, maxStudents: value }
+            : c,
+        ),
+      )
+      onSaved?.()
+    } catch (err) {
+      toast.error(extractErrorMessage(err))
+    } finally {
+      setSavingId(null)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="font-display text-xl">
+            Manage capacity
+          </DialogTitle>
+          <DialogDescription className="font-sans text-sm">
+            Set how many students each lecturer can supervise this semester.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search lecturers…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 font-sans text-sm"
+          />
+        </div>
+
+        <ScrollArea className="h-96 -mx-1 px-1">
+          <div className="bg-surface-container-low rounded-lg overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-surface-container">
+                  <th className="text-left px-4 py-3 font-label text-xs text-muted-foreground">
+                    Lecturer
+                  </th>
+                  <th className="text-left px-4 py-3 font-label text-xs text-muted-foreground w-28">
+                    Assigned
+                  </th>
+                  <th className="text-left px-4 py-3 font-label text-xs text-muted-foreground w-32">
+                    Max students
+                  </th>
+                  <th className="text-right px-4 py-3 font-label text-xs text-muted-foreground w-24">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-4 py-8 text-center font-sans text-sm text-muted-foreground"
+                    >
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+                {!loading && filteredConfigs.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-4 py-8 text-center font-sans text-sm text-muted-foreground"
+                    >
+                      No lecturers found for this semester.
+                    </td>
+                  </tr>
+                )}
+                {!loading &&
+                  filteredConfigs.map((config) => {
+                    const assigned = assignedCounts[config.lecturerId] ?? 0
+                    const draft = drafts[config.lecturerId] ?? ''
+                    const changed = draft !== String(config.maxStudents)
+                    return (
+                      <tr
+                        key={config.lecturerId}
+                        className="hover:bg-surface-container transition-colors"
+                      >
+                        <td className="px-4 py-3">
+                          <span className="block font-sans text-sm font-medium text-on-surface">
+                            {config.lecturer.fullName}
+                          </span>
+                          <span className="block font-label text-xs text-muted-foreground">
+                            {config.lecturer.email}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 font-sans text-sm text-muted-foreground">
+                          {assigned}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Input
+                            type="number"
+                            min={0}
+                            value={draft}
+                            onChange={(e) =>
+                              setDrafts((prev) => ({
+                                ...prev,
+                                [config.lecturerId]: e.target.value,
+                              }))
+                            }
+                            className="w-24 font-sans text-sm"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Button
+                            size="sm"
+                            disabled={
+                              !changed || savingId === config.lecturerId
+                            }
+                            onClick={() => void handleSave(config)}
+                            className="font-label bg-gradient-to-br from-primary to-primary-container text-primary-foreground"
+                          >
+                            {savingId === config.lecturerId
+                              ? 'Saving…'
+                              : 'Save'}
+                          </Button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  )
+}
