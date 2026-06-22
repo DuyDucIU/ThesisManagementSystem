@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpsertLecturerSemesterDto } from './dto/upsert-lecturer-semester.dto';
 
@@ -63,5 +63,13 @@ export class LecturerSemesterService {
       maxStudents: r.maxStudents,
       lecturer: r.lecturer,
     }));
+  }
+
+  async resolveActiveSemesterId(): Promise<number> {
+    const active = await this.prisma.semester.findFirst({
+      where: { status: 'ACTIVE' },
+    });
+    if (!active) throw new BadRequestException('No active semester found');
+    return active.id;
   }
 }

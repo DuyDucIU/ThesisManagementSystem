@@ -10,6 +10,7 @@ import { StudentModule } from './student/student.module';
 import { EnrollmentModule } from './enrollment/enrollment.module';
 import { LecturerModule } from './lecturer/lecturer.module';
 import { TopicModule } from './topic/topic.module';
+import { LecturerSemesterModule } from './lecturer-semester/lecturer-semester.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -23,6 +24,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     EnrollmentModule,
     LecturerModule,
     TopicModule,
+    LecturerSemesterModule,
   ],
   controllers: [AppController],
   providers: [
