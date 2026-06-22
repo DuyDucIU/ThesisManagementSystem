@@ -28,6 +28,10 @@ export default function TopicsBankPage() {
 
   const isLecturer = user?.role === 'LECTURER'
   const myLecturerId = user?.lecturer?.id
+  const isStudent = user?.role === 'STUDENT'
+  const studentInfo = isStudent && user?.student
+    ? { fullName: user.fullName ?? user.username, studentId: user.student.studentId }
+    : null
 
   useEffect(() => {
     fetchSemesters()
@@ -99,6 +103,7 @@ export default function TopicsBankPage() {
             key={topic.id}
             topic={topic}
             myLecturerId={myLecturerId}
+            student={studentInfo}
             onCopy={isLecturer ? handleCopy : undefined}
             onEdit={isLecturer ? handleEdit : undefined}
           />

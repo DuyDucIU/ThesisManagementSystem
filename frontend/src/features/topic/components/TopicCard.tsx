@@ -1,4 +1,4 @@
-import { Copy, Pencil, Trash2 } from 'lucide-react'
+import { Copy, Mail, Pencil, Trash2 } from 'lucide-react'
 import type { TopicItem } from '../api'
 import { Button } from '../../../components/ui/button'
 import {
@@ -27,6 +27,25 @@ interface TopicCardProps {
   showActions?: boolean
   /** When true, delete button is disabled (topic has theses) */
   deleteDisabled?: boolean
+  /** Current student info for Contact button */
+  student?: { fullName: string; studentId: string } | null
+}
+
+function buildMailtoUrl(
+  topic: TopicItem,
+  student: { fullName: string; studentId: string },
+) {
+  const subject = encodeURIComponent(
+    `[${topic.title}] — Thesis Topic Interest`,
+  )
+  const body = encodeURIComponent(
+    `Dear ${topic.lecturer.title ? topic.lecturer.title + ' ' : ''}${topic.lecturer.fullName},\n\n` +
+    `I am ${student.fullName} (Student ID: ${student.studentId}), ` +
+    `and I am interested in your topic "${topic.title}".\n\n` +
+    `I would like to discuss the possibility of working on this topic for my thesis.\n\n` +
+    `Best regards,\n${student.fullName}`,
+  )
+  return `mailto:${topic.lecturer.email}?subject=${subject}&body=${body}`
 }
 
 export default function TopicCard({
@@ -37,6 +56,7 @@ export default function TopicCard({
   onDelete,
   showActions = false,
   deleteDisabled = false,
+  student,
 }: TopicCardProps) {
   const isOwn = myLecturerId !== undefined && topic.lecturer.id === myLecturerId
   const isLecturer = myLecturerId !== undefined
@@ -136,6 +156,21 @@ export default function TopicCard({
               </Tooltip>
             </>
           )}
+        </div>
+      )}
+
+      {/* Student Contact — visible only to students */}
+      {student && (
+        <div className="flex items-center gap-2 pt-1">
+          <a
+            href={buildMailtoUrl(topic, student)}
+            className="inline-flex"
+          >
+            <Button size="sm" variant="outline">
+              <Mail className="w-3.5 h-3.5 mr-1.5" />
+              Contact
+            </Button>
+          </a>
         </div>
       )}
     </div>
