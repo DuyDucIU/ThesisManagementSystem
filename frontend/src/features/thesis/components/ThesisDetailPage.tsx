@@ -69,8 +69,7 @@ export default function ThesisDetailPage() {
   const canUnassign = (() => {
     if (!thesis || thesis.status !== 'IN_PROGRESS') return false
     if (isAdmin) return true
-    // Lecturer must own the topic — backend enforces this, but we also hide the
-    // button when the logged-in lecturer's ID doesn't match.
+    // Show button if user has a lecturer profile; backend enforces topic ownership.
     return user?.lecturer?.id !== undefined
   })()
 
