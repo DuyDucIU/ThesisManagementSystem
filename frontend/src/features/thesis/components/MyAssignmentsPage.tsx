@@ -22,7 +22,7 @@ import {
 } from '../../../components/ui/alert-dialog'
 import { useThesisStore } from '../store/thesisStore'
 import { useAuthStore } from '../../auth/store/authStore'
-import { extractErrorMessage } from '../api'
+import { extractErrorMessage, thesisApi } from '../api'
 import type { ThesisItem, ThesisStatus, CreateThesisDto } from '../api'
 import AssignStudentDialog from './AssignStudentDialog'
 
@@ -75,6 +75,7 @@ export default function MyAssignmentsPage() {
   const [assignOpen, setAssignOpen] = useState(false)
   const [unassignTarget, setUnassignTarget] = useState<ThesisItem | null>(null)
   const [unassigning, setUnassigning] = useState(false)
+  const [totalAssigned, setTotalAssigned] = useState(0)
 
   // Load semesters once and default to the active one (or the first).
   useEffect(() => {
@@ -96,6 +97,10 @@ export default function MyAssignmentsPage() {
       status: statusFilter !== 'all' ? statusFilter : undefined,
     })
     void fetchCapacity(lecturerId, semesterId)
+    // Fetch unfiltered total for accurate capacity count
+    void thesisApi
+      .list({ lecturerId, semesterId })
+      .then((res) => setTotalAssigned(res.data.length))
   }, [lecturerId, semesterId, statusFilter, fetchTheses, fetchCapacity])
 
   useEffect(() => {
@@ -112,7 +117,7 @@ export default function MyAssignmentsPage() {
     return counts
   }, [theses])
 
-  const assignedCount = theses.length
+  const assignedCount = totalAssigned
   const maxStudents = capacity?.maxStudents ?? user?.lecturer?.maxStudents
   const atCapacity =
     maxStudents !== undefined && assignedCount >= maxStudents
@@ -125,6 +130,9 @@ export default function MyAssignmentsPage() {
       status: statusFilter !== 'all' ? statusFilter : undefined,
     })
     void fetchCapacity(lecturerId, semesterId)
+    void thesisApi
+      .list({ lecturerId, semesterId })
+      .then((res) => setTotalAssigned(res.data.length))
   }
 
   const handleAssign = async (dto: CreateThesisDto) => {
@@ -278,7 +286,7 @@ export default function MyAssignmentsPage() {
                   <tr
                     key={t.id}
                     onClick={() => navigate(`/my-assignments/${t.id}`)}
-                    className="border-t border-surface-container hover:bg-surface-container-low transition-colors cursor-pointer"
+                    className="hover:bg-surface-container transition-colors cursor-pointer"
                   >
                     <td className="px-4 py-3 font-sans text-sm text-muted-foreground">
                       {idx + 1}
