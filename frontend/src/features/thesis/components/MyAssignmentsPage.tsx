@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { Plus, Users } from 'lucide-react'
@@ -76,6 +76,7 @@ export default function MyAssignmentsPage() {
   const [unassignTarget, setUnassignTarget] = useState<ThesisItem | null>(null)
   const [unassigning, setUnassigning] = useState(false)
   const [totalAssigned, setTotalAssigned] = useState(0)
+  const [topicCounts, setTopicCounts] = useState<Record<number, number>>({})
 
   // Load semesters once and default to the active one (or the first).
   useEffect(() => {
@@ -97,25 +98,20 @@ export default function MyAssignmentsPage() {
       status: statusFilter !== 'all' ? statusFilter : undefined,
     })
     void fetchCapacity(lecturerId, semesterId)
-    // Fetch unfiltered total for accurate capacity count
-    void thesisApi
-      .list({ lecturerId, semesterId })
-      .then((res) => setTotalAssigned(res.data.length))
+    // Fetch unfiltered totals for accurate capacity count and topic hints
+    void thesisApi.list({ lecturerId, semesterId }).then((res) => {
+      setTotalAssigned(res.data.length)
+      const counts: Record<number, number> = {}
+      for (const thesis of res.data) {
+        counts[thesis.topic.id] = (counts[thesis.topic.id] ?? 0) + 1
+      }
+      setTopicCounts(counts)
+    })
   }, [lecturerId, semesterId, statusFilter, fetchTheses, fetchCapacity])
 
   useEffect(() => {
     if (error) toast.error(error)
   }, [error])
-
-  // Count of assignments per topic — drives the dialog's "N assigned" hint.
-  // Note: theses are already scoped to the selected semester.
-  const topicCounts = useMemo(() => {
-    const counts: Record<number, number> = {}
-    for (const t of theses) {
-      counts[t.topic.id] = (counts[t.topic.id] ?? 0) + 1
-    }
-    return counts
-  }, [theses])
 
   const assignedCount = totalAssigned
   const maxStudents = capacity?.maxStudents ?? user?.lecturer?.maxStudents
@@ -130,9 +126,14 @@ export default function MyAssignmentsPage() {
       status: statusFilter !== 'all' ? statusFilter : undefined,
     })
     void fetchCapacity(lecturerId, semesterId)
-    void thesisApi
-      .list({ lecturerId, semesterId })
-      .then((res) => setTotalAssigned(res.data.length))
+    void thesisApi.list({ lecturerId, semesterId }).then((res) => {
+      setTotalAssigned(res.data.length)
+      const counts: Record<number, number> = {}
+      for (const thesis of res.data) {
+        counts[thesis.topic.id] = (counts[thesis.topic.id] ?? 0) + 1
+      }
+      setTopicCounts(counts)
+    })
   }
 
   const handleAssign = async (dto: CreateThesisDto) => {
