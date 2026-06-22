@@ -46,10 +46,12 @@ Students browse topics in the Topics Bank and contact lecturers via email to exp
 ### Capacity Resolution Logic
 
 ```
-1. LecturerSemester record for current semester? → use its maxStudents
-2. LecturerSemester record for most recent semester? → use its maxStudents
+1. LecturerSemester record for the target semester? → use its maxStudents
+2. LecturerSemester record for the most recent prior semester (by startDate DESC)? → use its maxStudents
 3. Fallback → Lecturer.maxStudents (default 5)
 ```
+
+"Most recent" means: order semesters by `startDate DESC`, find the first one (before the target semester) that has a `LecturerSemester` row for this lecturer.
 
 ---
 
@@ -91,9 +93,9 @@ Students browse topics in the Topics Bank and contact lecturers via email to exp
 - Lecturer has not exceeded resolved capacity
 - Lecturer: can only assign to own topics. Admin: any topic.
 
-**Side effects on assign:**
+**Side effects on assign (all within a single `prisma.$transaction`):**
 - `Enrollment.status`: `AVAILABLE` → `ASSIGNED`
-- If lecturer reaches capacity: set all their `OPEN` topics to `FULL`
+- Recompute topic statuses for this lecturer (see "Idempotent Status Recompute" below)
 
 #### `DELETE /theses/:id` — Unassign
 
@@ -101,10 +103,10 @@ Students browse topics in the Topics Bank and contact lecturers via email to exp
 - Guard: only if `Thesis.status === IN_PROGRESS`
 - Lecturer: own topics only. Admin: any topic.
 
-**Side effects on unassign:**
+**Side effects on unassign (all within a single `prisma.$transaction`):**
 - Delete `Thesis` record
 - `Enrollment.status`: `ASSIGNED` → `AVAILABLE`
-- If lecturer was at capacity: revert their `FULL` topics to `OPEN`
+- Recompute topic statuses for this lecturer (see "Idempotent Status Recompute" below)
 
 #### `GET /theses` — List
 
@@ -126,7 +128,7 @@ Query params: `?semesterId=&status=&lecturerId=&topicId=`
 |--------|-----|------|-------------|
 | `GET` | `/lecturer-semesters` | ADMIN | List capacity configs |
 | `PATCH` | `/lecturer-semesters/:lecturerId` | ADMIN | Set capacity (upsert) |
-| `GET` | `/lecturer-semesters/capacity/:lecturerId` | ADMIN, LECTURER | Get resolved capacity |
+| `GET` | `/lecturer-semesters/capacity/:lecturerId` | ADMIN, LECTURER | Get resolved capacity (`?semesterId=`, defaults to active) |
 
 #### `PATCH /lecturer-semesters/:lecturerId`
 
@@ -246,15 +248,30 @@ mailto:{lecturer.email}?subject={encoded subject}&body={encoded body}
 - Topic and enrollment must belong to the same semester
 - Capacity checked via fallback chain
 
+### Idempotent Status Recompute
+
+After every assign or unassign, run the same recompute function for the topic owner's lecturer:
+
+1. Count the lecturer's assigned theses in that semester (`Thesis` records where `topic.lecturerId = X` and `topic.semesterId = Y`)
+2. Resolve the lecturer's capacity for that semester (fallback chain)
+3. If `assignedCount >= capacity`: set all the lecturer's `OPEN` topics in that semester to `FULL`
+4. If `assignedCount < capacity`: set all the lecturer's `FULL` topics in that semester to `OPEN`
+5. Never touch `CLOSED` topics — those are manually closed by the lecturer
+
+This avoids the bug where a conditional "was at capacity" flip produces wrong results when capacity has been reduced below the current assignment count.
+
+**Capacity is always checked against the topic owner's lecturer**, not the current user. When an admin assigns to Dr. X's topic, the capacity check is against Dr. X.
+
 ### Auto-Status Updates
 
-**On assign:**
+**On assign (within `$transaction`):**
 - `Enrollment.status`: `AVAILABLE` → `ASSIGNED`
-- `Topic.status`: if lecturer reaches capacity → all their OPEN topics become `FULL`
+- Run idempotent recompute for the topic's lecturer
 
-**On unassign:**
+**On unassign (within `$transaction`):**
+- Delete `Thesis` record
 - `Enrollment.status`: `ASSIGNED` → `AVAILABLE`
-- `Topic.status`: if lecturer was at capacity → revert FULL topics to `OPEN`
+- Run idempotent recompute for the topic's lecturer
 
 ### Unassign Guard Rails
 - Only allowed when `Thesis.status === IN_PROGRESS`
