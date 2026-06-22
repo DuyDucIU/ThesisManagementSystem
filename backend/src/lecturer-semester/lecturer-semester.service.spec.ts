@@ -71,6 +71,24 @@ describe('LecturerSemesterService', () => {
 
       expect(result).toBe(5);
     });
+
+    it('throws NotFoundException when semester does not exist', async () => {
+      prisma.lecturerSemester.findUnique.mockResolvedValue(null);
+      prisma.semester.findUnique.mockResolvedValue(null);
+
+      await expect(service.resolveCapacity(1, 999))
+        .rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when lecturer does not exist', async () => {
+      prisma.lecturerSemester.findUnique.mockResolvedValue(null);
+      prisma.semester.findUnique.mockResolvedValue({ startDate: new Date('2026-06-01') });
+      prisma.lecturerSemester.findFirst.mockResolvedValue(null);
+      prisma.lecturer.findUnique.mockResolvedValue(null);
+
+      await expect(service.resolveCapacity(999, 3))
+        .rejects.toThrow(NotFoundException);
+    });
   });
 
   describe('upsert', () => {

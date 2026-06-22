@@ -16,24 +16,24 @@ export class LecturerSemesterService {
       where: { id: semesterId },
       select: { startDate: true },
     });
+    if (!targetSemester) throw new NotFoundException(`Semester #${semesterId} not found`);
 
-    if (targetSemester) {
-      const previous = await this.prisma.lecturerSemester.findFirst({
-        where: {
-          lecturerId,
-          semester: { startDate: { lt: targetSemester.startDate } },
-        },
-        orderBy: { semester: { startDate: 'desc' } },
-      });
-      if (previous) return previous.maxStudents;
-    }
+    const previous = await this.prisma.lecturerSemester.findFirst({
+      where: {
+        lecturerId,
+        semester: { startDate: { lt: targetSemester.startDate } },
+      },
+      orderBy: { semester: { startDate: 'desc' } },
+    });
+    if (previous) return previous.maxStudents;
 
     const lecturer = await this.prisma.lecturer.findUnique({
       where: { id: lecturerId },
       select: { maxStudents: true },
     });
+    if (!lecturer) throw new NotFoundException(`Lecturer #${lecturerId} not found`);
 
-    return lecturer?.maxStudents ?? 5;
+    return lecturer.maxStudents;
   }
 
   async upsert(lecturerId: number, dto: UpsertLecturerSemesterDto) {
