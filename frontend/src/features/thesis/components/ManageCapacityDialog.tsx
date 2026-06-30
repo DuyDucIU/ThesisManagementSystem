@@ -19,7 +19,8 @@ import {
 import { topicApi } from '../../topic/api'
 import { lecturerApi } from '../../lecturer/api'
 
-const LECTURERS_LIMIT = 200
+// Backend QueryLecturerDto caps limit at 100 (class-validator @Max(100)).
+const LECTURERS_LIMIT = 100
 
 interface CapacityRow {
   lecturerId: number

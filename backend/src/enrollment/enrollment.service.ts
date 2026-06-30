@@ -3,7 +3,13 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, Semester, SemesterStatus } from '@prisma/client';
+import {
+  EnrollmentStatus,
+  Prisma,
+  Role,
+  Semester,
+  SemesterStatus,
+} from '@prisma/client';
 import * as XLSX from 'xlsx';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryEnrollmentDto } from './dto/query-enrollment.dto';
@@ -57,8 +63,10 @@ export class EnrollmentService {
     return active;
   }
 
-  async findAll(query: QueryEnrollmentDto) {
-    const { semesterId, status, search, page = 1, limit = 20 } = query;
+  async findAll(query: QueryEnrollmentDto, role?: Role) {
+    const { semesterId, search, page = 1, limit = 20 } = query;
+    const status =
+      role === Role.LECTURER ? EnrollmentStatus.AVAILABLE : query.status;
     const skip = (page - 1) * limit;
 
     const semester = await this.resolveTargetSemester(semesterId, {

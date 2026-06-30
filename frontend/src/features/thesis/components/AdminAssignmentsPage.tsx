@@ -44,7 +44,8 @@ const statusBadgeClass: Record<ThesisStatus, string> = {
   APPROVED: 'bg-primary/10 text-primary',
 }
 
-const LECTURERS_LIMIT = 200
+// Backend QueryLecturerDto caps limit at 100 (class-validator @Max(100)).
+const LECTURERS_LIMIT = 100
 
 function formatDate(iso: string): string {
   const d = new Date(iso)

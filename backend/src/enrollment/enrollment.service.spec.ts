@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { EnrollmentStatus, SemesterStatus } from '@prisma/client';
+import { EnrollmentStatus, Role, SemesterStatus } from '@prisma/client';
 import { EnrollmentService } from './enrollment.service';
 import { PrismaService } from '../prisma/prisma.service';
 import * as XLSX from 'xlsx';
@@ -228,6 +228,42 @@ describe('EnrollmentService', () => {
       const result = await service.findAll({});
 
       expect(result.data[0].student.hasAccount).toBe(false);
+    });
+
+    it('forces status=AVAILABLE for LECTURER role, ignoring requested status', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      prisma.enrollment.findMany.mockResolvedValue([]);
+      prisma.enrollment.count.mockResolvedValue(0);
+
+      await service.findAll({ status: EnrollmentStatus.ASSIGNED }, Role.LECTURER);
+
+      expect(prisma.enrollment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          where: expect.objectContaining({
+            semesterId: 1,
+            status: 'AVAILABLE',
+          }),
+        }),
+      );
+    });
+
+    it('does not restrict status for ADMIN role', async () => {
+      prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
+      prisma.enrollment.findMany.mockResolvedValue([]);
+      prisma.enrollment.count.mockResolvedValue(0);
+
+      await service.findAll({ status: EnrollmentStatus.ASSIGNED }, Role.ADMIN);
+
+      expect(prisma.enrollment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          where: expect.objectContaining({
+            semesterId: 1,
+            status: 'ASSIGNED',
+          }),
+        }),
+      );
     });
   });
 
