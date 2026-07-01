@@ -135,7 +135,9 @@ export class AuthService {
       lecturer: user.lecturer
         ? { id: user.lecturer.id, maxStudents: user.lecturer.maxStudents }
         : null,
-      student: user.student ? { id: user.student.id } : null,
+      student: user.student
+        ? { id: user.student.id, studentId: user.student.studentId }
+        : null,
     };
   }
 }

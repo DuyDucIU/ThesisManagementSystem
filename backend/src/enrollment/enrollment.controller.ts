@@ -12,20 +12,24 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
 import { Role } from '@prisma/client';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { EnrollmentService } from './enrollment.service';
 import { QueryEnrollmentDto } from './dto/query-enrollment.dto';
 
+type AuthUser = { role: Role };
+
 @Controller('enrollments')
-@Roles(Role.ADMIN)
 export class EnrollmentController {
   constructor(private readonly enrollmentService: EnrollmentService) {}
 
   @Get()
-  findAll(@Query() query: QueryEnrollmentDto) {
-    return this.enrollmentService.findAll(query);
+  @Roles(Role.ADMIN, Role.LECTURER)
+  findAll(@Query() query: QueryEnrollmentDto, @CurrentUser() user: AuthUser) {
+    return this.enrollmentService.findAll(query, user.role);
   }
 
   @Post('import')
+  @Roles(Role.ADMIN)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: multer.memoryStorage(),

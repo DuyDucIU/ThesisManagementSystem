@@ -96,27 +96,42 @@ model Semester {
 
   enrollments Enrollment[]
   topics      Topic[]
+  lecturerSemesters LecturerSemester[]
 
   @@map("semesters")
 }
 
 model Lecturer {
-  id          Int    @id @default(autoincrement())
-  userId      Int    @unique @map("user_id")
-  lecturerId  String @unique @map("lecturer_id")
-  fullName    String @map("full_name")
-  email       String @unique
+  id          Int     @id @default(autoincrement())
+  userId      Int     @unique @map("user_id")
+  lecturerId  String  @unique @map("lecturer_id")
+  fullName    String  @map("full_name")
+  email       String  @unique
   title       String?
-  maxStudents Int    @default(5) @map("max_students")
+  maxStudents Int     @default(5) @map("max_students")
 
   user User @relation(fields: [userId], references: [id])
 
-  topics                   Topic[]
-  reviewedTheses           Thesis[]        @relation("Reviewer")
-  thesisReviews            ThesisReview[]
+  topics                    Topic[]
+  reviewedTheses            Thesis[]       @relation("Reviewer")
+  thesisReviews             ThesisReview[]
   lecturerReviewedDocuments Document[]     @relation("LecturerReviewer")
+  lecturerSemesters         LecturerSemester[]
 
   @@map("lecturers")
+}
+
+model LecturerSemester {
+  id          Int @id @default(autoincrement())
+  lecturerId  Int @map("lecturer_id")
+  semesterId  Int @map("semester_id")
+  maxStudents Int @default(5) @map("max_students")
+
+  lecturer Lecturer @relation(fields: [lecturerId], references: [id])
+  semester Semester @relation(fields: [semesterId], references: [id])
+
+  @@unique([lecturerId, semesterId])
+  @@map("lecturer_semesters")
 }
 
 model Student {
@@ -168,7 +183,7 @@ model Topic {
 }
 
 model Thesis {
-  id                Int          @id @default(autoincrement())
+  id           Int          @id @default(autoincrement())
   enrollmentId Int          @unique @map("enrollment_id")
   topicId      Int          @map("topic_id")
   reviewerId   Int?         @map("reviewer_id")
@@ -179,8 +194,8 @@ model Thesis {
   updatedAt    DateTime     @updatedAt @map("updated_at")
 
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
-  topic           Topic           @relation(fields: [topicId], references: [id])
-  reviewer        Lecturer?       @relation("Reviewer", fields: [reviewerId], references: [id])
+  topic      Topic      @relation(fields: [topicId], references: [id])
+  reviewer   Lecturer?  @relation("Reviewer", fields: [reviewerId], references: [id])
 
   documents    Document[]
   thesisReview ThesisReview?
@@ -189,22 +204,22 @@ model Thesis {
 }
 
 model Document {
-  id                Int            @id @default(autoincrement())
-  thesisId          Int            @map("thesis_id")
-  docType           DocumentType   @map("doc_type")
-  originalName      String         @map("original_name")
-  s3Key             String         @map("s3_key")
-  mimeType          String         @map("mime_type")
-  fileSize          Int            @map("file_size")
-  version           Int            @default(1)
-  status            DocumentStatus @default(PENDING)
-  lecturerFeedback  String?        @map("lecturer_feedback") @db.Text
-  lecturerReviewedBy Int?          @map("lecturer_reviewed_by")
-  lecturerReviewedAt DateTime?     @map("lecturer_reviewed_at")
-  adminFeedback     String?        @map("admin_feedback") @db.Text
-  adminReviewedBy   Int?           @map("admin_reviewed_by")
-  adminReviewedAt   DateTime?      @map("admin_reviewed_at")
-  createdAt         DateTime       @default(now()) @map("created_at")
+  id                 Int            @id @default(autoincrement())
+  thesisId           Int            @map("thesis_id")
+  docType            DocumentType   @map("doc_type")
+  originalName       String         @map("original_name")
+  s3Key              String         @map("s3_key")
+  mimeType           String         @map("mime_type")
+  fileSize           Int            @map("file_size")
+  version            Int            @default(1)
+  status             DocumentStatus @default(PENDING)
+  lecturerFeedback   String?        @map("lecturer_feedback") @db.Text
+  lecturerReviewedBy Int?           @map("lecturer_reviewed_by")
+  lecturerReviewedAt DateTime?      @map("lecturer_reviewed_at")
+  adminFeedback      String?        @map("admin_feedback") @db.Text
+  adminReviewedBy    Int?           @map("admin_reviewed_by")
+  adminReviewedAt    DateTime?      @map("admin_reviewed_at")
+  createdAt          DateTime       @default(now()) @map("created_at")
 
   thesis           Thesis    @relation(fields: [thesisId], references: [id])
   lecturerReviewer Lecturer? @relation("LecturerReviewer", fields: [lecturerReviewedBy], references: [id])

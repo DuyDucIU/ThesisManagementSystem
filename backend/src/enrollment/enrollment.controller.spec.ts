@@ -56,10 +56,11 @@ describe('EnrollmentController', () => {
     buffer: Buffer.from(''),
   } as Express.Multer.File;
 
-  it('delegates findAll to service with query', async () => {
+  it('delegates findAll to service with query and current user role', async () => {
     const query = { page: 1, limit: 10 };
-    await controller.findAll(query as any);
-    expect(service.findAll).toHaveBeenCalledWith(query);
+    const user = { role: 'ADMIN' };
+    await controller.findAll(query as any, user as any);
+    expect(service.findAll).toHaveBeenCalledWith(query, user.role);
   });
 
   it('calls parseImport when action=parse', async () => {

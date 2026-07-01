@@ -7,7 +7,7 @@ export interface UserProfile {
   fullName: string | null
   email: string | null
   lecturer: { id: number; maxStudents: number } | null
-  student: { id: number } | null
+  student: { id: number; studentId: string } | null
 }
 
 interface AuthState {

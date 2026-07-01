@@ -11,6 +11,9 @@ import EnrollmentImportPage from '../features/enrollment/components/EnrollmentIm
 import AccountManagementPage from '../features/account/components/AccountManagementPage'
 import TopicsBankPage from '../features/topic/components/TopicsBankPage'
 import MyTopicsPage from '../features/topic/components/MyTopicsPage'
+import MyAssignmentsPage from '../features/thesis/components/MyAssignmentsPage'
+import AdminAssignmentsPage from '../features/thesis/components/AdminAssignmentsPage'
+import ThesisDetailPage from '../features/thesis/components/ThesisDetailPage'
 
 const router = createBrowserRouter([
   {
@@ -33,6 +36,8 @@ const router = createBrowserRouter([
               { path: '/admin/lecturers', element: <LecturerListPage /> },
               { path: '/admin/accounts', element: <AccountManagementPage /> },
               { path: '/admin/enrollments', element: <EnrollmentListPage /> },
+              { path: '/admin/assignments', element: <AdminAssignmentsPage /> },
+              { path: '/admin/assignments/:id', element: <ThesisDetailPage /> },
               { path: '/admin/enrollments/import', element: <EnrollmentImportPage /> },
             ],
           },
@@ -40,6 +45,8 @@ const router = createBrowserRouter([
             element: <LecturerRoute />,
             children: [
               { path: '/my-topics', element: <MyTopicsPage /> },
+              { path: '/my-assignments', element: <MyAssignmentsPage /> },
+              { path: '/my-assignments/:id', element: <ThesisDetailPage /> },
             ],
           },
         ],

@@ -46,6 +46,22 @@ backend/src/
 │       ├── create-topic.dto.ts
 │       ├── update-topic.dto.ts
 │       └── query-topic.dto.ts
+├── lecturer-semester/              # Per-semester capacity overrides for lecturers
+│   ├── lecturer-semester.module.ts
+│   ├── lecturer-semester.controller.ts  # GET / GET capacity/:lecturerId / PATCH :lecturerId — admin manages, lecturer reads own
+│   ├── lecturer-semester.service.ts     # resolveCapacity() fallback chain — see database.md
+│   ├── lecturer-semester.service.spec.ts
+│   └── dto/
+│       ├── upsert-lecturer-semester.dto.ts
+│       └── query-lecturer-semester.dto.ts
+├── thesis/                         # Student-topic assignment (manual, by lecturer or admin)
+│   ├── thesis.module.ts
+│   ├── thesis.controller.ts        # GET/POST/DELETE /theses — lecturer scoped to own topics, admin unrestricted
+│   ├── thesis.service.ts           # assign/unassign in a $transaction — also updates Enrollment status and recomputes Topic OPEN/FULL
+│   ├── thesis.service.spec.ts
+│   └── dto/
+│       ├── create-thesis.dto.ts
+│       └── query-thesis.dto.ts
 └── <feature>/                      # Each feature module follows the same shape
     ├── <feature>.module.ts
     ├── <feature>.controller.ts
@@ -168,6 +184,8 @@ pnpm add -D @types/multer
 - **Query DTO with `@Transform`** — when a query param can arrive as an empty string (e.g. from a cleared filter), use `@Transform(({ value }) => value || undefined)` before the validator so empty strings don't fail `@IsDateString()` or similar. Requires `enableImplicitConversion: false` (the default) — explicit transforms run regardless.
 - **Numeric query params — use `@Type(() => Number)` not `@Transform`** — because `ValidationPipe` is configured with `transform: true`, you can coerce string query params to numbers with `@Type(() => Number)` from `class-transformer`. This is cleaner than a manual `@Transform`. Example: `@IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number`. Do not use `@Transform(({ value }) => parseInt(value))` for this — `@Type` is the idiomatic path when `transform: true` is set.
 - **Static routes before parametric routes** — declare fixed-segment routes before `:id` routes in the same controller, or NestJS/Express will match the static string as a param value. The required order is: `@Patch('account-bulk')` → `@Patch(':id/account')` → `@Patch(':id')`. This applies to any method (`@Get`, `@Post`, `@Patch`, `@Delete`). Violating this causes silent wrong-handler routing — no error, just unexpected behavior.
+- **Restricting a query's effective filters by role, not just gating the route** — when a `@Roles()` route serves multiple roles but each role should only see a subset of data (e.g. `GET /enrollments` lets ADMIN browse any status but LECTURER must only see `AVAILABLE` enrollments), don't trust the query DTO's value as-is. Pass `@CurrentUser()`'s role into the service and override the filter server-side regardless of what the client requested: `const status = role === Role.LECTURER ? EnrollmentStatus.AVAILABLE : query.status`. Adding the role to `@Roles()` alone only gates *whether* the route is reachable — it does not restrict *what* a permitted caller can request from it.
+- **A query DTO's `@Max(n)` on `limit` is a contract frontend callers must respect** — frontend code that hardcodes a `limit` param (e.g. to fetch "all lecturers" in one call for a dropdown) will get a `400` if that constant exceeds the DTO's `@Max()`. There's no automatic link between the two — when raising or lowering a `@Max()` constraint, grep the frontend for hardcoded limit constants calling that endpoint.
 
 ## Configuration
 

@@ -50,7 +50,13 @@ Lecturer (lecturers)
  ├── 1:N → Topic
  ├── 1:N → Thesis (as reviewer)
  ├── 1:N → ThesisReview
- └── 1:N → Document (as lecturer reviewer)
+ ├── 1:N → Document (as lecturer reviewer)
+ └── 1:N → LecturerSemester
+
+LecturerSemester (lecturer_semesters)
+ ├── N:1 → Lecturer
+ ├── N:1 → Semester
+ └── @@unique([lecturerId, semesterId])
 
 Student (students)
  ├── N:1 → User (optional — student may exist before account)
@@ -94,6 +100,7 @@ Notification (notifications)
 - **Document has two-level review** — lecturer review + admin review, each with feedback, reviewer reference, and timestamp
 - **Files stored in S3** — Document stores `s3Key`, `originalName`, `mimeType`, `fileSize`
 - **All table names use `@@map` for snake_case** — Prisma model names are PascalCase, DB tables are snake_case
+- **Per-semester capacity overrides base capacity, with a fallback chain** — `Lecturer.maxStudents` is the base default. `LecturerSemester` optionally overrides it for one semester. `LecturerSemesterService.resolveCapacity(lecturerId, semesterId)` resolves in order: (1) a `LecturerSemester` row for the exact semester, (2) the most recent `LecturerSemester` row from an earlier semester (by `startDate`), (3) `Lecturer.maxStudents`. This lets a capacity set once carry forward to future semesters until explicitly overridden again.
 
 ## Key Commands
 
