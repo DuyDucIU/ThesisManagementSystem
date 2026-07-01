@@ -22,40 +22,15 @@ import {
 import { useThesisStore } from '../store/thesisStore'
 import { extractErrorMessage, thesisApi } from '../api'
 import type { ThesisItem, ThesisStatus, CreateThesisDto } from '../api'
+import { STATUS_VALUES, statusBadgeClass, formatDate } from '../utils'
 import { topicApi } from '../../topic/api'
 import { lecturerApi } from '../../lecturer/api'
 import type { LecturerItem } from '../../lecturer/api'
 import AssignStudentDialog from './AssignStudentDialog'
 import ManageCapacityDialog from './ManageCapacityDialog'
 
-const STATUS_VALUES: ThesisStatus[] = [
-  'IN_PROGRESS',
-  'SUBMITTED',
-  'APPROVED',
-  'UNDER_REVIEW',
-  'REVIEWED',
-]
-
-const statusBadgeClass: Record<ThesisStatus, string> = {
-  IN_PROGRESS: 'bg-primary/10 text-primary',
-  SUBMITTED: 'bg-tertiary/10 text-tertiary',
-  UNDER_REVIEW: 'bg-tertiary/10 text-tertiary',
-  REVIEWED: 'bg-surface-container-high text-on-surface',
-  APPROVED: 'bg-primary/10 text-primary',
-}
-
 // Backend QueryLecturerDto caps limit at 100 (class-validator @Max(100)).
 const LECTURERS_LIMIT = 100
-
-function formatDate(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
 
 export default function AdminAssignmentsPage() {
   const {

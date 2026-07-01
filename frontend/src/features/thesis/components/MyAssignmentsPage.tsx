@@ -24,33 +24,8 @@ import { useThesisStore } from '../store/thesisStore'
 import { useAuthStore } from '../../auth/store/authStore'
 import { extractErrorMessage, thesisApi } from '../api'
 import type { ThesisItem, ThesisStatus, CreateThesisDto } from '../api'
+import { STATUS_VALUES, statusBadgeClass, formatDate } from '../utils'
 import AssignStudentDialog from './AssignStudentDialog'
-
-const STATUS_VALUES: ThesisStatus[] = [
-  'IN_PROGRESS',
-  'SUBMITTED',
-  'APPROVED',
-  'UNDER_REVIEW',
-  'REVIEWED',
-]
-
-const statusBadgeClass: Record<ThesisStatus, string> = {
-  IN_PROGRESS: 'bg-primary/10 text-primary',
-  SUBMITTED: 'bg-tertiary/10 text-tertiary',
-  UNDER_REVIEW: 'bg-tertiary/10 text-tertiary',
-  REVIEWED: 'bg-surface-container-high text-on-surface',
-  APPROVED: 'bg-primary/10 text-primary',
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
 
 export default function MyAssignmentsPage() {
   const navigate = useNavigate()
@@ -108,7 +83,7 @@ export default function MyAssignmentsPage() {
         counts[thesis.topic.id] = (counts[thesis.topic.id] ?? 0) + 1
       }
       setTopicCounts(counts)
-    })
+    }).catch((err) => toast.error(extractErrorMessage(err)))
   }, [lecturerId, semesterId, statusFilter, fetchTheses, fetchCapacity])
 
   useEffect(() => {
@@ -137,7 +112,7 @@ export default function MyAssignmentsPage() {
         counts[thesis.topic.id] = (counts[thesis.topic.id] ?? 0) + 1
       }
       setTopicCounts(counts)
-    })
+    }).catch((err) => toast.error(extractErrorMessage(err)))
   }
 
   const handleAssign = async (dto: CreateThesisDto) => {

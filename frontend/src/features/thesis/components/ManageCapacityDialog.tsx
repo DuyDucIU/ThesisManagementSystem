@@ -135,14 +135,6 @@ export default function ManageCapacityDialog({
       toast.error('Max students must be a positive whole number.')
       return
     }
-    const assigned = assignedCounts[row.lecturerId] ?? 0
-    if (value < assigned) {
-      toast.error(
-        `Max students cannot be below the ${assigned} already assigned.`,
-      )
-      return
-    }
-
     setSavingId(row.lecturerId)
     try {
       await lecturerSemesterApi.upsert(row.lecturerId, {
