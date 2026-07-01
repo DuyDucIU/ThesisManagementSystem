@@ -52,15 +52,16 @@ export class ThesisService {
     };
   }
 
+  // capacity is resolved outside the transaction and passed in to avoid a non-tx read inside.
   private async recomputeTopicStatuses(
     tx: Prisma.TransactionClient,
     lecturerId: number,
     semesterId: number,
+    capacity: number,
   ) {
     const assignedCount = await tx.thesis.count({
       where: { topic: { lecturerId, semesterId } },
     });
-    const capacity = await this.lecturerSemesterService.resolveCapacity(lecturerId, semesterId);
 
     if (assignedCount >= capacity) {
       await tx.topic.updateMany({
@@ -95,21 +96,29 @@ export class ThesisService {
     }
 
     if (currentUser.role === Role.LECTURER) {
-      if (currentUser.lecturer!.id !== topic.lecturerId) {
+      if (!currentUser.lecturer) {
+        throw new ForbiddenException('Lecturer profile not found');
+      }
+      if (currentUser.lecturer.id !== topic.lecturerId) {
         throw new ForbiddenException('You do not own this topic');
       }
     }
 
     const capacity = await this.lecturerSemesterService.resolveCapacity(topic.lecturerId, topic.semesterId);
-    const currentCount = await this.prisma.thesis.count({
-      where: { topic: { lecturerId: topic.lecturerId, semesterId: topic.semesterId } },
-    });
-    if (currentCount >= capacity) {
-      throw new BadRequestException('Lecturer has reached maximum student capacity for this semester');
-    }
 
     try {
       const thesis = await this.prisma.$transaction(async (tx) => {
+        // Lock the lecturer row so concurrent assign() calls for the same lecturer
+        // serialize here rather than racing past the count check below.
+        await tx.$queryRaw`SELECT id FROM lecturers WHERE id = ${topic.lecturerId} FOR UPDATE`;
+
+        const currentCount = await tx.thesis.count({
+          where: { topic: { lecturerId: topic.lecturerId, semesterId: topic.semesterId } },
+        });
+        if (currentCount >= capacity) {
+          throw new BadRequestException('Lecturer has reached maximum student capacity for this semester');
+        }
+
         const created = await tx.thesis.create({
           data: {
             enrollmentId: dto.enrollmentId,
@@ -124,15 +133,20 @@ export class ThesisService {
           data: { status: EnrollmentStatus.ASSIGNED },
         });
 
-        await this.recomputeTopicStatuses(tx, topic.lecturerId, topic.semesterId);
+        await this.recomputeTopicStatuses(tx, topic.lecturerId, topic.semesterId, capacity);
 
         return created;
       });
 
       return this.toResponse(thesis);
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ConflictException('Student already has a thesis this semester');
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ConflictException('Student already has a thesis this semester');
+        }
+        if (error.code === 'P2034') {
+          throw new BadRequestException('Assignment failed due to a concurrent conflict — please try again');
+        }
       }
       throw error;
     }
@@ -150,10 +164,18 @@ export class ThesisService {
     }
 
     if (currentUser.role === Role.LECTURER) {
-      if (currentUser.lecturer!.id !== thesis.topic.lecturerId) {
+      if (!currentUser.lecturer) {
+        throw new ForbiddenException('Lecturer profile not found');
+      }
+      if (currentUser.lecturer.id !== thesis.topic.lecturerId) {
         throw new ForbiddenException('You do not own this topic');
       }
     }
+
+    const capacity = await this.lecturerSemesterService.resolveCapacity(
+      thesis.topic.lecturerId,
+      thesis.topic.semesterId,
+    );
 
     await this.prisma.$transaction(async (tx) => {
       await tx.thesis.delete({ where: { id } });
@@ -163,7 +185,7 @@ export class ThesisService {
         data: { status: EnrollmentStatus.AVAILABLE },
       });
 
-      await this.recomputeTopicStatuses(tx, thesis.topic.lecturerId, thesis.topic.semesterId);
+      await this.recomputeTopicStatuses(tx, thesis.topic.lecturerId, thesis.topic.semesterId, capacity);
     });
   }
 
@@ -183,7 +205,10 @@ export class ThesisService {
     };
 
     if (currentUser.role === Role.LECTURER) {
-      where.topic = { ...where.topic as object, lecturerId: currentUser.lecturer!.id };
+      if (!currentUser.lecturer) {
+        throw new ForbiddenException('Lecturer profile not found');
+      }
+      where.topic = { ...where.topic as object, lecturerId: currentUser.lecturer.id };
     } else if (query.lecturerId) {
       where.topic = { ...where.topic as object, lecturerId: query.lecturerId };
     }
@@ -208,7 +233,10 @@ export class ThesisService {
     if (!thesis) throw new NotFoundException(`Thesis #${id} not found`);
 
     if (currentUser.role === Role.LECTURER) {
-      if (currentUser.lecturer!.id !== thesis.topic.lecturerId) {
+      if (!currentUser.lecturer) {
+        throw new ForbiddenException('Lecturer profile not found');
+      }
+      if (currentUser.lecturer.id !== thesis.topic.lecturerId) {
         throw new ForbiddenException('You do not own this topic');
       }
     }

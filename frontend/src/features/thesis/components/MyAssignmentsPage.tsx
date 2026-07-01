@@ -97,7 +97,9 @@ export default function MyAssignmentsPage() {
       semesterId,
       status: statusFilter !== 'all' ? statusFilter : undefined,
     })
-    void fetchCapacity(lecturerId, semesterId)
+    fetchCapacity(lecturerId, semesterId).catch((err) =>
+      toast.error(extractErrorMessage(err)),
+    )
     // Fetch unfiltered totals for accurate capacity count and topic hints
     void thesisApi.list({ lecturerId, semesterId }).then((res) => {
       setTotalAssigned(res.data.length)
@@ -114,9 +116,9 @@ export default function MyAssignmentsPage() {
   }, [error])
 
   const assignedCount = totalAssigned
-  const maxStudents = capacity?.maxStudents ?? user?.lecturer?.maxStudents
-  const atCapacity =
-    maxStudents !== undefined && assignedCount >= maxStudents
+  const maxStudents = capacity?.maxStudents
+  // When capacity is null (not yet loaded or error), disable the assign button as a safe default.
+  const atCapacity = maxStudents === undefined || assignedCount >= maxStudents
 
   const refresh = () => {
     if (lecturerId === undefined || semesterId === null) return
@@ -125,7 +127,9 @@ export default function MyAssignmentsPage() {
       semesterId,
       status: statusFilter !== 'all' ? statusFilter : undefined,
     })
-    void fetchCapacity(lecturerId, semesterId)
+    fetchCapacity(lecturerId, semesterId).catch((err) =>
+      toast.error(extractErrorMessage(err)),
+    )
     void thesisApi.list({ lecturerId, semesterId }).then((res) => {
       setTotalAssigned(res.data.length)
       const counts: Record<number, number> = {}

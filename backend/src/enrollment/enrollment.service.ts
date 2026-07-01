@@ -65,6 +65,9 @@ export class EnrollmentService {
 
   async findAll(query: QueryEnrollmentDto, role?: Role) {
     const { semesterId, search, page = 1, limit = 20 } = query;
+    // Lecturers query enrollments to pick students to assign; force AVAILABLE so
+    // they only see unassigned students eligible for assignment, regardless of
+    // any status filter they pass.
     const status =
       role === Role.LECTURER ? EnrollmentStatus.AVAILABLE : query.status;
     const skip = (page - 1) * limit;

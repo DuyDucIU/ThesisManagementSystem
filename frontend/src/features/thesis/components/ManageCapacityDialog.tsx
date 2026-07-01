@@ -131,8 +131,8 @@ export default function ManageCapacityDialog({
   const handleSave = async (row: CapacityRow) => {
     const raw = drafts[row.lecturerId]
     const value = Number(raw)
-    if (!Number.isInteger(value) || value < 0) {
-      toast.error('Max students must be a non-negative whole number.')
+    if (!Number.isInteger(value) || value < 1) {
+      toast.error('Max students must be a positive whole number.')
       return
     }
     const assigned = assignedCounts[row.lecturerId] ?? 0
@@ -249,7 +249,7 @@ export default function ManageCapacityDialog({
                         <td className="px-4 py-3">
                           <Input
                             type="number"
-                            min={0}
+                            min={1}
                             value={draft}
                             onChange={(e) =>
                               setDrafts((prev) => ({

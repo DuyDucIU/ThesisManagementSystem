@@ -41,6 +41,7 @@ describe('ThesisService', () => {
   beforeEach(async () => {
     prisma = {
       $transaction: jest.fn((fn) => fn(prisma)),
+      $queryRaw: jest.fn().mockResolvedValue([{ id: 1 }]),
       enrollment: { findUnique: jest.fn(), update: jest.fn() },
       topic: { findUnique: jest.fn(), updateMany: jest.fn() },
       thesis: {
@@ -147,7 +148,7 @@ describe('ThesisService', () => {
       prisma.topic.findUnique.mockResolvedValue(mockTopic);
       lecturerSemesterService.resolveCapacity.mockResolvedValue(5);
       prisma.thesis.count
-        .mockResolvedValueOnce(1)   // pre-assign capacity check
+        .mockResolvedValueOnce(1)   // capacity check inside tx
         .mockResolvedValueOnce(2);  // post-assign recompute
       prisma.thesis.create.mockResolvedValue({
         id: 1, title: 'AI in Healthcare', status: ThesisStatus.IN_PROGRESS,
@@ -182,6 +183,28 @@ describe('ThesisService', () => {
       await expect(service.assign(dto, lecturerUser))
         .rejects.toThrow(ConflictException);
     });
+
+    it('maps P2034 (serialization failure) to 400 BadRequest', async () => {
+      prisma.enrollment.findUnique.mockResolvedValue(mockEnrollment);
+      prisma.topic.findUnique.mockResolvedValue(mockTopic);
+      lecturerSemesterService.resolveCapacity.mockResolvedValue(5);
+      prisma.$transaction.mockRejectedValue(
+        new PrismaClientKnownRequestError('Transaction failed due to write conflict', {
+          code: 'P2034', clientVersion: '6.0.0',
+        }),
+      );
+
+      await expect(service.assign(dto, lecturerUser))
+        .rejects.toThrow(new BadRequestException('Assignment failed due to a concurrent conflict — please try again'));
+    });
+
+    it('throws ForbiddenException when LECTURER has no linked lecturer profile', async () => {
+      const orphanUser = { role: Role.LECTURER, lecturer: null };
+      prisma.enrollment.findUnique.mockResolvedValue(mockEnrollment);
+      prisma.topic.findUnique.mockResolvedValue(mockTopic);
+
+      await expect(service.assign(dto, orphanUser)).rejects.toThrow(ForbiddenException);
+    });
   });
 
   describe('unassign', () => {
@@ -208,6 +231,16 @@ describe('ThesisService', () => {
       });
 
       await expect(service.unassign(1, lecturerUser)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws ForbiddenException when LECTURER has no linked lecturer profile', async () => {
+      const orphanUser = { role: Role.LECTURER, lecturer: null };
+      prisma.thesis.findUnique.mockResolvedValue({
+        id: 1, status: ThesisStatus.IN_PROGRESS, enrollmentId: 10,
+        topic: { lecturerId: 2, semesterId: 3 },
+      });
+
+      await expect(service.unassign(1, orphanUser)).rejects.toThrow(ForbiddenException);
     });
 
     it('allows admin to unassign from any topic', async () => {

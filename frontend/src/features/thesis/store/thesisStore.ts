@@ -58,12 +58,8 @@ export const useThesisStore = create<ThesisState>((set) => ({
   },
 
   fetchCapacity: async (lecturerId, semesterId?) => {
-    try {
-      const res = await lecturerSemesterApi.getCapacity(lecturerId, semesterId)
-      set({ capacity: res.data })
-    } catch {
-      set({ capacity: null })
-    }
+    const res = await lecturerSemesterApi.getCapacity(lecturerId, semesterId)
+    set({ capacity: res.data })
   },
 
   fetchSemesters: async () => {
