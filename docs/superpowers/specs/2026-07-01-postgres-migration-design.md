@@ -57,6 +57,14 @@ No changes needed in `backend/src/`. Verified during brainstorming:
 - Only one raw query exists (`thesis.service.ts:113`, `SELECT id FROM lecturers WHERE id = ${topic.lecturerId} FOR UPDATE`) — standard SQL, behaves identically on both engines.
 - No MySQL-specific Prisma type annotations (`@db.VarChar`, `@db.TinyInt`, etc.) are used. Existing `@db.Text`, `@db.Date`, `@db.Decimal(4,2)` all map cleanly to Postgres equivalents.
 
+### 4a. Known caveat: collation / case-sensitivity change
+
+MySQL's migrations declared `COLLATE utf8mb4_unicode_ci`, making unique constraints and equality lookups on `username`, `email`, `code`, `student_id`, and `lecturer_id` case- and accent-insensitive. Postgres `TEXT` columns use the database's default collation, which is case-sensitive, and no application code normalizes case (`auth.service.ts`'s login lookup is a plain `where: { username }`, no `mode: 'insensitive'` or `toLowerCase()`). This is harmless today since `tms` starts empty, but it's a real, silent behavior change:
+- Excel imports of near-duplicate emails (`John@x.com` vs `john@x.com`) that MySQL rejected as unique-constraint violations will now both insert successfully.
+- Exact-match lookups (e.g. login) become case-sensitive going forward.
+
+Not addressed in Phase 1 (would require either the `citext` extension or `@db` type annotations + `mode: 'insensitive'` in Prisma queries — both are application-level decisions, out of scope for an engine-swap-only phase). Flagged here as a conscious, deferred decision for Phase 2 or before real data is imported.
+
 ### 5. Admin bootstrap
 
 The fresh `tms` database has zero rows, including no admin account, and there is no seed script in the codebase (the current MySQL admin user was created via manual SQL insert). After migrating, a bcrypt hash will be generated for a chosen password and provided as an `INSERT` statement to create the first `User` row (`role = 'ADMIN'`) directly via DataGrip — matching the existing manual-provisioning approach, no new code.
