@@ -6,7 +6,7 @@ import { UpsertLecturerSemesterDto } from './dto/upsert-lecturer-semester.dto';
 export class LecturerSemesterService {
   constructor(private prisma: PrismaService) {}
 
-  async resolveCapacity(lecturerId: number, semesterId: number): Promise<number> {
+  async resolveCapacity(lecturerId: string, semesterId: string): Promise<number> {
     const direct = await this.prisma.lecturerSemester.findUnique({
       where: { lecturerId_semesterId: { lecturerId, semesterId } },
     });
@@ -36,7 +36,7 @@ export class LecturerSemesterService {
     return lecturer.maxStudents;
   }
 
-  async upsert(lecturerId: number, dto: UpsertLecturerSemesterDto) {
+  async upsert(lecturerId: string, dto: UpsertLecturerSemesterDto) {
     const lecturer = await this.prisma.lecturer.findUnique({ where: { id: lecturerId } });
     if (!lecturer) throw new NotFoundException(`Lecturer #${lecturerId} not found`);
 
@@ -49,7 +49,7 @@ export class LecturerSemesterService {
     return { lecturerId: record.lecturerId, semesterId: record.semesterId, maxStudents: record.maxStudents };
   }
 
-  async findAll(semesterId?: number) {
+  async findAll(semesterId?: string) {
     const where = semesterId ? { semesterId } : {};
     const records = await this.prisma.lecturerSemester.findMany({
       where,
@@ -65,7 +65,7 @@ export class LecturerSemesterService {
     }));
   }
 
-  async resolveActiveSemesterId(): Promise<number> {
+  async resolveActiveSemesterId(): Promise<string> {
     const active = await this.prisma.semester.findFirst({
       where: { status: 'ACTIVE' },
     });

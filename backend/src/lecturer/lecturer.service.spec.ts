@@ -5,18 +5,24 @@ import * as bcrypt from 'bcrypt';
 import { LecturerService } from './lecturer.service';
 import { PrismaService } from '../prisma/prisma.service';
 
+const LECTURER_ID = '11111111-1111-1111-1111-111111111111';
+const LECTURER_ID_2 = '22222222-2222-2222-2222-222222222222';
+const NON_EXISTENT_ID = '99999999-9999-9999-9999-999999999999';
+const USER_ID = 'a1111111-1111-1111-1111-111111111111';
+const USER_ID_2 = 'a2222222-2222-2222-2222-222222222222';
+
 const mockLecturer = {
-  id: 1,
+  id: LECTURER_ID,
   lecturerId: 'GV001',
   fullName: 'Nguyen Van A',
   email: 'nguyen@hcmiu.edu.vn',
   title: 'Dr.',
   maxStudents: 5,
-  userId: 99,
+  userId: USER_ID,
 };
 
 const lecturerResponse = {
-  id: 1,
+  id: LECTURER_ID,
   lecturerId: 'GV001',
   fullName: 'Nguyen Van A',
   email: 'nguyen@hcmiu.edu.vn',
@@ -94,7 +100,7 @@ describe('LecturerService', () => {
     });
 
     it('hashes lecturerId and creates user + lecturer in a transaction', async () => {
-      const mockUser = { id: 99 };
+      const mockUser = { id: USER_ID };
       prisma.user.create.mockResolvedValue(mockUser);
       prisma.lecturer.create.mockResolvedValue(mockLecturer);
 
@@ -124,14 +130,14 @@ describe('LecturerService', () => {
           email: 'nguyen@hcmiu.edu.vn',
           title: 'Dr.',
           maxStudents: 5,
-          userId: 99,
+          userId: USER_ID,
         },
       });
       expect(result).toEqual(lecturerResponse);
     });
 
     it('defaults maxStudents to 5 when not provided', async () => {
-      prisma.user.create.mockResolvedValue({ id: 99 });
+      prisma.user.create.mockResolvedValue({ id: USER_ID });
       prisma.lecturer.create.mockResolvedValue({ ...mockLecturer, maxStudents: 5 });
 
       await service.create({
@@ -162,7 +168,7 @@ describe('LecturerService', () => {
         'Unique constraint failed',
         { code: 'P2002', clientVersion: '5.0.0', meta: { target: 'lecturers_email_key' } },
       );
-      prisma.user.create.mockResolvedValue({ id: 99 });
+      prisma.user.create.mockResolvedValue({ id: USER_ID });
       prisma.lecturer.create.mockRejectedValue(p2002);
 
       await expect(
@@ -175,8 +181,8 @@ describe('LecturerService', () => {
 
   describe('findAll', () => {
     const mockLecturers = [
-      { id: 1, lecturerId: 'GV001', fullName: 'Nguyen Van A', email: 'nva@x.com', title: 'Dr.', maxStudents: 5, userId: 99, user: { isActive: true } },
-      { id: 2, lecturerId: 'GV002', fullName: 'Tran Thi B', email: 'ttb@x.com', title: null, maxStudents: 3, userId: 100, user: { isActive: true } },
+      { id: LECTURER_ID, lecturerId: 'GV001', fullName: 'Nguyen Van A', email: 'nva@x.com', title: 'Dr.', maxStudents: 5, userId: USER_ID, user: { isActive: true } },
+      { id: LECTURER_ID_2, lecturerId: 'GV002', fullName: 'Tran Thi B', email: 'ttb@x.com', title: null, maxStudents: 3, userId: USER_ID_2, user: { isActive: true } },
     ];
 
     it('returns paginated lecturers with default page and limit', async () => {
@@ -190,8 +196,8 @@ describe('LecturerService', () => {
       );
       expect(result).toEqual({
         data: [
-          { id: 1, lecturerId: 'GV001', fullName: 'Nguyen Van A', email: 'nva@x.com', title: 'Dr.', maxStudents: 5, isActive: true },
-          { id: 2, lecturerId: 'GV002', fullName: 'Tran Thi B', email: 'ttb@x.com', title: null, maxStudents: 3, isActive: true },
+          { id: LECTURER_ID, lecturerId: 'GV001', fullName: 'Nguyen Van A', email: 'nva@x.com', title: 'Dr.', maxStudents: 5, isActive: true },
+          { id: LECTURER_ID_2, lecturerId: 'GV002', fullName: 'Tran Thi B', email: 'ttb@x.com', title: null, maxStudents: 3, isActive: true },
         ],
         total: 2,
         page: 1,
@@ -280,16 +286,16 @@ describe('LecturerService', () => {
     it('returns the lecturer response when found', async () => {
       prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
 
-      const result = await service.findOne(1);
+      const result = await service.findOne(LECTURER_ID);
 
-      expect(prisma.lecturer.findUnique).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(prisma.lecturer.findUnique).toHaveBeenCalledWith({ where: { id: LECTURER_ID } });
       expect(result).toEqual(lecturerResponse);
     });
 
     it('throws NotFoundException when lecturer does not exist', async () => {
       prisma.lecturer.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(NON_EXISTENT_ID)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -299,13 +305,13 @@ describe('LecturerService', () => {
     it('throws NotFoundException when lecturer does not exist', async () => {
       prisma.lecturer.findUnique.mockResolvedValue(null);
 
-      await expect(service.update(999, { fullName: 'New Name' })).rejects.toThrow(NotFoundException);
+      await expect(service.update(NON_EXISTENT_ID, { fullName: 'New Name' })).rejects.toThrow(NotFoundException);
     });
 
     it('throws BadRequestException when no fields are provided', async () => {
       prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
 
-      await expect(service.update(1, {})).rejects.toThrow(
+      await expect(service.update(LECTURER_ID, {})).rejects.toThrow(
         new BadRequestException('At least one field must be provided'),
       );
     });
@@ -314,10 +320,10 @@ describe('LecturerService', () => {
       prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
       prisma.lecturer.update.mockResolvedValue({ ...mockLecturer, fullName: 'Updated Name' });
 
-      const result = await service.update(1, { fullName: 'Updated Name' });
+      const result = await service.update(LECTURER_ID, { fullName: 'Updated Name' });
 
       expect(prisma.lecturer.update).toHaveBeenCalledWith({
-        where: { id: 1 },
+        where: { id: LECTURER_ID },
         data: { fullName: 'Updated Name' },
       });
       expect(result).toEqual({ ...lecturerResponse, fullName: 'Updated Name' });
@@ -328,10 +334,10 @@ describe('LecturerService', () => {
       prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
       prisma.lecturer.update.mockResolvedValue({ ...mockLecturer, maxStudents: 8 });
 
-      await service.update(1, { maxStudents: 8 });
+      await service.update(LECTURER_ID, { maxStudents: 8 });
 
       expect(prisma.lecturer.update).toHaveBeenCalledWith({
-        where: { id: 1 },
+        where: { id: LECTURER_ID },
         data: { maxStudents: 8 },
       });
     });
@@ -344,7 +350,7 @@ describe('LecturerService', () => {
       );
       prisma.lecturer.update.mockRejectedValue(p2002);
 
-      await expect(service.update(1, { email: 'dup@x.com' })).rejects.toThrow(ConflictException);
+      await expect(service.update(LECTURER_ID, { email: 'dup@x.com' })).rejects.toThrow(ConflictException);
     });
   });
 
@@ -354,14 +360,14 @@ describe('LecturerService', () => {
     it('throws NotFoundException when lecturer does not exist', async () => {
       prisma.lecturer.findUnique.mockResolvedValue(null);
 
-      await expect(service.remove(999)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(NON_EXISTENT_ID)).rejects.toThrow(NotFoundException);
     });
 
     it('throws ConflictException when lecturer has topics', async () => {
       prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
       prisma.topic.count.mockResolvedValue(2);
 
-      await expect(service.remove(1)).rejects.toThrow(
+      await expect(service.remove(LECTURER_ID)).rejects.toThrow(
         new ConflictException('Cannot delete lecturer with existing topics'),
       );
       expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -372,7 +378,7 @@ describe('LecturerService', () => {
       prisma.topic.count.mockResolvedValue(0);
       prisma.thesis.count.mockResolvedValue(1);
 
-      await expect(service.remove(1)).rejects.toThrow(
+      await expect(service.remove(LECTURER_ID)).rejects.toThrow(
         new ConflictException('Cannot delete lecturer assigned as thesis reviewer'),
       );
       expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -384,7 +390,7 @@ describe('LecturerService', () => {
       prisma.thesis.count.mockResolvedValue(0);
       prisma.thesisReview.count.mockResolvedValue(1);
 
-      await expect(service.remove(1)).rejects.toThrow(
+      await expect(service.remove(LECTURER_ID)).rejects.toThrow(
         new ConflictException('Cannot delete lecturer with existing thesis reviews'),
       );
       expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -397,7 +403,7 @@ describe('LecturerService', () => {
       prisma.thesisReview.count.mockResolvedValue(0);
       prisma.document.count.mockResolvedValue(1);
 
-      await expect(service.remove(1)).rejects.toThrow(
+      await expect(service.remove(LECTURER_ID)).rejects.toThrow(
         new ConflictException('Cannot delete lecturer who has reviewed documents'),
       );
       expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -412,10 +418,10 @@ describe('LecturerService', () => {
       prisma.lecturer.delete.mockResolvedValue(mockLecturer);
       prisma.user.delete.mockResolvedValue({});
 
-      await service.remove(1);
+      await service.remove(LECTURER_ID);
 
-      expect(prisma.lecturer.delete).toHaveBeenCalledWith({ where: { id: 1 } });
-      expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 99 } });
+      expect(prisma.lecturer.delete).toHaveBeenCalledWith({ where: { id: LECTURER_ID } });
+      expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: USER_ID } });
       expect(prisma.$transaction).toHaveBeenCalledWith([
         expect.anything(),
         expect.anything(),
@@ -429,33 +435,33 @@ describe('LecturerService', () => {
     it('skips lecturers not found in ids', async () => {
       prisma.lecturer.findMany.mockResolvedValue([]);
 
-      const result = await service.toggleAccountBulk({ ids: [1, 2], isActive: false });
+      const result = await service.toggleAccountBulk({ ids: [LECTURER_ID, LECTURER_ID_2], isActive: false });
 
       expect(prisma.user.updateMany).not.toHaveBeenCalled();
       expect(result).toEqual({ updated: 0, skipped: 2 });
     });
 
     it('calls user.updateMany with all resolved userIds', async () => {
-      prisma.lecturer.findMany.mockResolvedValue([{ userId: 99 }, { userId: 100 }]);
+      prisma.lecturer.findMany.mockResolvedValue([{ userId: USER_ID }, { userId: USER_ID_2 }]);
       prisma.user.updateMany.mockResolvedValue({ count: 2 });
 
-      const result = await service.toggleAccountBulk({ ids: [1, 2], isActive: false });
+      const result = await service.toggleAccountBulk({ ids: [LECTURER_ID, LECTURER_ID_2], isActive: false });
 
       expect(prisma.user.updateMany).toHaveBeenCalledWith({
-        where: { id: { in: [99, 100] } },
+        where: { id: { in: [USER_ID, USER_ID_2] } },
         data: { isActive: false },
       });
       expect(result).toEqual({ updated: 2, skipped: 0 });
     });
 
     it('reactivates accounts — passes isActive:true to updateMany', async () => {
-      prisma.lecturer.findMany.mockResolvedValue([{ userId: 99 }]);
+      prisma.lecturer.findMany.mockResolvedValue([{ userId: USER_ID }]);
       prisma.user.updateMany.mockResolvedValue({ count: 1 });
 
-      const result = await service.toggleAccountBulk({ ids: [1], isActive: true });
+      const result = await service.toggleAccountBulk({ ids: [LECTURER_ID], isActive: true });
 
       expect(prisma.user.updateMany).toHaveBeenCalledWith({
-        where: { id: { in: [99] } },
+        where: { id: { in: [USER_ID] } },
         data: { isActive: true },
       });
       expect(result).toEqual({ updated: 1, skipped: 0 });
@@ -468,7 +474,7 @@ describe('LecturerService', () => {
     it('throws NotFoundException when lecturer not found', async () => {
       prisma.lecturer.findUnique.mockResolvedValue(null);
 
-      await expect(service.toggleAccount(999, { isActive: false })).rejects.toThrow(
+      await expect(service.toggleAccount(NON_EXISTENT_ID, { isActive: false })).rejects.toThrow(
         NotFoundException,
       );
       expect(prisma.user.update).not.toHaveBeenCalled();
@@ -478,10 +484,10 @@ describe('LecturerService', () => {
       prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
       prisma.user.update.mockResolvedValue({});
 
-      const result = await service.toggleAccount(1, { isActive: false });
+      const result = await service.toggleAccount(LECTURER_ID, { isActive: false });
 
       expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 99 },
+        where: { id: USER_ID },
         data: { isActive: false },
       });
       expect(result).toEqual({ ...lecturerResponse, isActive: false });
@@ -491,10 +497,10 @@ describe('LecturerService', () => {
       prisma.lecturer.findUnique.mockResolvedValue(mockLecturer);
       prisma.user.update.mockResolvedValue({});
 
-      const result = await service.toggleAccount(1, { isActive: true });
+      const result = await service.toggleAccount(LECTURER_ID, { isActive: true });
 
       expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 99 },
+        where: { id: USER_ID },
         data: { isActive: true },
       });
       expect(result).toEqual({ ...lecturerResponse, isActive: true });

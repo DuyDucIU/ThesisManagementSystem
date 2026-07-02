@@ -1,5 +1,5 @@
 export interface SemesterSummary {
-  id: number;
+  id: string;
   code: string;
   name: string;
 }

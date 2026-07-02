@@ -5,30 +5,38 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { TopicService } from './topic.service';
 import { PrismaService } from '../prisma/prisma.service';
 
-const mockLecturer = { id: 1, fullName: 'Dr. Nguyen Van A', email: 'nva@uni.edu', title: 'Dr.' };
+const LECTURER_ID = '11111111-1111-1111-1111-111111111111';
+const LECTURER_ID_2 = '22222222-2222-2222-2222-222222222222';
+const OTHER_LECTURER_ID = '55555555-5555-5555-5555-555555555555';
+const TOPIC_ID = '11111111-2222-3333-4444-555555555555';
+const SEMESTER_ID = '33333333-3333-3333-3333-333333333333';
+const OTHER_SEMESTER_ID = '55555555-5555-5555-5555-555555555550';
+const NON_EXISTENT_ID = '99999999-9999-9999-9999-999999999999';
+
+const mockLecturer = { id: LECTURER_ID, fullName: 'Dr. Nguyen Van A', email: 'nva@uni.edu', title: 'Dr.' };
 
 const mockTopic = {
-  id: 1,
+  id: TOPIC_ID,
   title: 'Deep Learning for Medical Imaging',
   description: 'Description text',
   requirements: 'Requirements text',
   note: 'Note text',
   status: TopicStatus.OPEN,
   createdAt: new Date('2026-05-01'),
-  semesterId: 3,
-  lecturerId: 1,
+  semesterId: SEMESTER_ID,
+  lecturerId: LECTURER_ID,
   lecturer: mockLecturer,
 };
 
 const topicResponse = {
-  id: 1,
+  id: TOPIC_ID,
   title: 'Deep Learning for Medical Imaging',
   description: 'Description text',
   requirements: 'Requirements text',
   note: 'Note text',
   status: TopicStatus.OPEN,
   createdAt: new Date('2026-05-01'),
-  semesterId: 3,
+  semesterId: SEMESTER_ID,
   lecturer: mockLecturer,
 };
 
@@ -77,7 +85,7 @@ describe('TopicService', () => {
 
   describe('findAll', () => {
     it('defaults to the active semester when semesterId is not provided', async () => {
-      prisma.semester.findFirst.mockResolvedValue({ id: 3, status: SemesterStatus.ACTIVE });
+      prisma.semester.findFirst.mockResolvedValue({ id: SEMESTER_ID, status: SemesterStatus.ACTIVE });
       prisma.topic.findMany.mockResolvedValue([mockTopic]);
 
       await service.findAll({});
@@ -86,7 +94,7 @@ describe('TopicService', () => {
         where: { status: SemesterStatus.ACTIVE },
       });
       expect(prisma.topic.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: expect.objectContaining({ semesterId: 3 }) }),
+        expect.objectContaining({ where: expect.objectContaining({ semesterId: SEMESTER_ID }) }),
       );
     });
 
@@ -102,18 +110,18 @@ describe('TopicService', () => {
     it('uses the provided semesterId directly without querying for active semester', async () => {
       prisma.topic.findMany.mockResolvedValue([mockTopic]);
 
-      await service.findAll({ semesterId: 5 });
+      await service.findAll({ semesterId: OTHER_SEMESTER_ID });
 
       expect(prisma.semester.findFirst).not.toHaveBeenCalled();
       expect(prisma.topic.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: expect.objectContaining({ semesterId: 5 }) }),
+        expect.objectContaining({ where: expect.objectContaining({ semesterId: OTHER_SEMESTER_ID }) }),
       );
     });
 
     it('applies status filter', async () => {
       prisma.topic.findMany.mockResolvedValue([]);
 
-      await service.findAll({ semesterId: 3, status: TopicStatus.OPEN });
+      await service.findAll({ semesterId: SEMESTER_ID, status: TopicStatus.OPEN });
 
       expect(prisma.topic.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ status: TopicStatus.OPEN }) }),
@@ -123,17 +131,17 @@ describe('TopicService', () => {
     it('applies lecturerId filter', async () => {
       prisma.topic.findMany.mockResolvedValue([]);
 
-      await service.findAll({ semesterId: 3, lecturerId: 2 });
+      await service.findAll({ semesterId: SEMESTER_ID, lecturerId: LECTURER_ID_2 });
 
       expect(prisma.topic.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: expect.objectContaining({ lecturerId: 2 }) }),
+        expect.objectContaining({ where: expect.objectContaining({ lecturerId: LECTURER_ID_2 }) }),
       );
     });
 
     it('applies title search filter', async () => {
       prisma.topic.findMany.mockResolvedValue([]);
 
-      await service.findAll({ semesterId: 3, search: 'neural' });
+      await service.findAll({ semesterId: SEMESTER_ID, search: 'neural' });
 
       expect(prisma.topic.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -147,7 +155,7 @@ describe('TopicService', () => {
     it('returns mapped topic responses including lecturer info', async () => {
       prisma.topic.findMany.mockResolvedValue([mockTopic]);
 
-      const result = await service.findAll({ semesterId: 3 });
+      const result = await service.findAll({ semesterId: SEMESTER_ID });
 
       expect(result).toEqual([topicResponse]);
     });
@@ -159,10 +167,10 @@ describe('TopicService', () => {
     it('returns the topic response when found', async () => {
       prisma.topic.findUnique.mockResolvedValue(mockTopic);
 
-      const result = await service.findOne(1);
+      const result = await service.findOne(TOPIC_ID);
 
       expect(prisma.topic.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 },
+        where: { id: TOPIC_ID },
         include: expect.objectContaining({ lecturer: expect.anything() }),
       });
       expect(result).toEqual(topicResponse);
@@ -171,7 +179,7 @@ describe('TopicService', () => {
     it('throws NotFoundException when topic does not exist', async () => {
       prisma.topic.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(NON_EXISTENT_ID)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -186,10 +194,10 @@ describe('TopicService', () => {
     };
 
     it('creates topic in the active semester with the given lecturerId', async () => {
-      prisma.semester.findFirst.mockResolvedValue({ id: 3, status: SemesterStatus.ACTIVE });
-      prisma.topic.create.mockResolvedValue({ ...mockTopic, ...dto, semesterId: 3, lecturerId: 1 });
+      prisma.semester.findFirst.mockResolvedValue({ id: SEMESTER_ID, status: SemesterStatus.ACTIVE });
+      prisma.topic.create.mockResolvedValue({ ...mockTopic, ...dto, semesterId: SEMESTER_ID, lecturerId: LECTURER_ID });
 
-      const result = await service.create(dto, 1);
+      const result = await service.create(dto, LECTURER_ID);
 
       expect(prisma.semester.findFirst).toHaveBeenCalledWith({
         where: { status: SemesterStatus.ACTIVE },
@@ -200,8 +208,8 @@ describe('TopicService', () => {
           description: 'Desc',
           requirements: 'Req',
           note: 'Note',
-          semesterId: 3,
-          lecturerId: 1,
+          semesterId: SEMESTER_ID,
+          lecturerId: LECTURER_ID,
         },
         include: expect.objectContaining({ lecturer: expect.anything() }),
       });
@@ -211,27 +219,27 @@ describe('TopicService', () => {
     it('throws BadRequestException when no active semester exists', async () => {
       prisma.semester.findFirst.mockResolvedValue(null);
 
-      await expect(service.create(dto, 1)).rejects.toThrow(
+      await expect(service.create(dto, LECTURER_ID)).rejects.toThrow(
         new BadRequestException('No active semester found'),
       );
       expect(prisma.topic.create).not.toHaveBeenCalled();
     });
 
     it('omits undefined optional fields from the create data', async () => {
-      prisma.semester.findFirst.mockResolvedValue({ id: 3 });
+      prisma.semester.findFirst.mockResolvedValue({ id: SEMESTER_ID });
       prisma.topic.create.mockResolvedValue({
         ...mockTopic,
         title: 'Title Only',
         description: null,
         requirements: null,
         note: null,
-        semesterId: 3,
+        semesterId: SEMESTER_ID,
       });
 
-      await service.create({ title: 'Title Only' }, 2);
+      await service.create({ title: 'Title Only' }, LECTURER_ID_2);
 
       expect(prisma.topic.create).toHaveBeenCalledWith({
-        data: { title: 'Title Only', semesterId: 3, lecturerId: 2 },
+        data: { title: 'Title Only', semesterId: SEMESTER_ID, lecturerId: LECTURER_ID_2 },
         include: expect.objectContaining({ lecturer: expect.anything() }),
       });
     });
@@ -243,14 +251,14 @@ describe('TopicService', () => {
     it('throws NotFoundException when topic does not exist', async () => {
       prisma.topic.findUnique.mockResolvedValue(null);
 
-      await expect(service.update(999, { title: 'New' }, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.update(NON_EXISTENT_ID, { title: 'New' }, LECTURER_ID)).rejects.toThrow(NotFoundException);
       expect(prisma.topic.update).not.toHaveBeenCalled();
     });
 
     it('throws ForbiddenException when lecturer does not own the topic', async () => {
-      prisma.topic.findUnique.mockResolvedValue({ ...mockTopic, lecturerId: 5 });
+      prisma.topic.findUnique.mockResolvedValue({ ...mockTopic, lecturerId: OTHER_LECTURER_ID });
 
-      await expect(service.update(1, { title: 'New' }, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.update(TOPIC_ID, { title: 'New' }, LECTURER_ID)).rejects.toThrow(ForbiddenException);
       expect(prisma.topic.update).not.toHaveBeenCalled();
     });
 
@@ -258,10 +266,10 @@ describe('TopicService', () => {
       prisma.topic.findUnique.mockResolvedValue(mockTopic);
       prisma.topic.update.mockResolvedValue({ ...mockTopic, title: 'Updated Title' });
 
-      const result = await service.update(1, { title: 'Updated Title' }, 1);
+      const result = await service.update(TOPIC_ID, { title: 'Updated Title' }, LECTURER_ID);
 
       expect(prisma.topic.update).toHaveBeenCalledWith({
-        where: { id: 1 },
+        where: { id: TOPIC_ID },
         data: { title: 'Updated Title' },
         include: expect.objectContaining({ lecturer: expect.anything() }),
       });
@@ -272,7 +280,7 @@ describe('TopicService', () => {
       prisma.topic.findUnique.mockResolvedValue(mockTopic);
       prisma.topic.update.mockResolvedValue({ ...mockTopic, note: 'updated note' });
 
-      await service.update(1, { note: 'updated note' }, 1);
+      await service.update(TOPIC_ID, { note: 'updated note' }, LECTURER_ID);
 
       const callData = prisma.topic.update.mock.calls[0][0].data;
       expect(callData).not.toHaveProperty('status');
@@ -281,7 +289,7 @@ describe('TopicService', () => {
     it('throws BadRequestException when no fields are provided', async () => {
       prisma.topic.findUnique.mockResolvedValue(mockTopic);
 
-      await expect(service.update(1, {}, 1)).rejects.toThrow(BadRequestException);
+      await expect(service.update(TOPIC_ID, {}, LECTURER_ID)).rejects.toThrow(BadRequestException);
       expect(prisma.topic.update).not.toHaveBeenCalled();
     });
 
@@ -291,7 +299,7 @@ describe('TopicService', () => {
         new PrismaClientKnownRequestError('Record not found', { code: 'P2025', clientVersion: '6.0.0' }),
       );
 
-      await expect(service.update(1, { title: 'New' }, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.update(TOPIC_ID, { title: 'New' }, LECTURER_ID)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -301,14 +309,14 @@ describe('TopicService', () => {
     it('throws NotFoundException when topic does not exist', async () => {
       prisma.topic.findUnique.mockResolvedValue(null);
 
-      await expect(service.remove(999, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(NON_EXISTENT_ID, LECTURER_ID)).rejects.toThrow(NotFoundException);
       expect(prisma.topic.delete).not.toHaveBeenCalled();
     });
 
     it('throws ForbiddenException when lecturer does not own the topic', async () => {
-      prisma.topic.findUnique.mockResolvedValue({ ...mockTopic, lecturerId: 5 });
+      prisma.topic.findUnique.mockResolvedValue({ ...mockTopic, lecturerId: OTHER_LECTURER_ID });
 
-      await expect(service.remove(1, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.remove(TOPIC_ID, LECTURER_ID)).rejects.toThrow(ForbiddenException);
       expect(prisma.topic.delete).not.toHaveBeenCalled();
     });
 
@@ -316,7 +324,7 @@ describe('TopicService', () => {
       prisma.topic.findUnique.mockResolvedValue(mockTopic);
       prisma.thesis.count.mockResolvedValue(2);
 
-      await expect(service.remove(1, 1)).rejects.toThrow(
+      await expect(service.remove(TOPIC_ID, LECTURER_ID)).rejects.toThrow(
         new BadRequestException('Cannot delete a topic with assigned theses'),
       );
       expect(prisma.topic.delete).not.toHaveBeenCalled();
@@ -327,9 +335,9 @@ describe('TopicService', () => {
       prisma.thesis.count.mockResolvedValue(0);
       prisma.topic.delete.mockResolvedValue(mockTopic);
 
-      await service.remove(1, 1);
+      await service.remove(TOPIC_ID, LECTURER_ID);
 
-      expect(prisma.topic.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(prisma.topic.delete).toHaveBeenCalledWith({ where: { id: TOPIC_ID } });
     });
 
     it('throws NotFoundException when topic is deleted between check and delete (P2025)', async () => {
@@ -339,7 +347,7 @@ describe('TopicService', () => {
         new PrismaClientKnownRequestError('Record not found', { code: 'P2025', clientVersion: '6.0.0' }),
       );
 
-      await expect(service.remove(1, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(TOPIC_ID, LECTURER_ID)).rejects.toThrow(NotFoundException);
     });
 
     it('throws BadRequestException when thesis is assigned between count and delete (P2003)', async () => {
@@ -349,7 +357,7 @@ describe('TopicService', () => {
         new PrismaClientKnownRequestError('Foreign key constraint failed', { code: 'P2003', clientVersion: '6.0.0' }),
       );
 
-      await expect(service.remove(1, 1)).rejects.toThrow(BadRequestException);
+      await expect(service.remove(TOPIC_ID, LECTURER_ID)).rejects.toThrow(BadRequestException);
     });
   });
 });

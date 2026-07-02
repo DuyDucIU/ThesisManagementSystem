@@ -4,7 +4,7 @@ import { EnrollmentController } from './enrollment.controller';
 import { EnrollmentService } from './enrollment.service';
 
 const mockParseResult = {
-  semester: { id: 1, code: 'HK1-2025', name: 'HK1' },
+  semester: { id: '11111111-1111-1111-1111-111111111111', code: 'HK1-2025', name: 'HK1' },
   total: 1,
   valid: 1,
   alreadyEnrolled: 0,
@@ -14,7 +14,7 @@ const mockParseResult = {
 };
 
 const mockImportResult = {
-  semester: { id: 1, code: 'HK1-2025', name: 'HK1' },
+  semester: { id: '11111111-1111-1111-1111-111111111111', code: 'HK1-2025', name: 'HK1' },
   imported: 1,
   skipped: 0,
   skippedDetails: [],
@@ -36,7 +36,7 @@ describe('EnrollmentController', () => {
               total: 0,
               page: 1,
               limit: 20,
-              semester: { id: 1, code: 'HK1-2025', name: 'HK1' },
+              semester: { id: '11111111-1111-1111-1111-111111111111', code: 'HK1-2025', name: 'HK1' },
             }),
             parseImport: jest.fn().mockResolvedValue(mockParseResult),
             importEnrollments: jest.fn().mockResolvedValue(mockImportResult),
@@ -71,9 +71,9 @@ describe('EnrollmentController', () => {
   });
 
   it('passes semesterId to parseImport when provided', async () => {
-    await controller.importEnrollments(mockFile, 'parse', 5);
+    await controller.importEnrollments(mockFile, 'parse', '22222222-2222-2222-2222-222222222222');
 
-    expect(service.parseImport).toHaveBeenCalledWith(mockFile.buffer, 5);
+    expect(service.parseImport).toHaveBeenCalledWith(mockFile.buffer, '22222222-2222-2222-2222-222222222222');
   });
 
   it('calls importEnrollments when action=import', async () => {

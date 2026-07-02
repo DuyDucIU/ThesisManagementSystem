@@ -9,6 +9,16 @@ import * as bcrypt from 'bcrypt';
 import { StudentService } from './student.service';
 import { PrismaService } from '../prisma/prisma.service';
 
+const STUDENT_ID_1 = '11111111-1111-1111-1111-111111111111';
+const STUDENT_ID_2 = '22222222-2222-2222-2222-222222222222';
+const STUDENT_ID_3 = '33333333-3333-3333-3333-333333333333';
+const STUDENT_ID_10 = '10101010-1010-1010-1010-101010101010';
+const NON_EXISTENT_ID = '99999999-9999-9999-9999-999999999999';
+const USER_ID_5 = 'a5555555-5555-5555-5555-555555555555';
+const USER_ID_8 = 'a8888888-8888-8888-8888-888888888888';
+const USER_ID_10 = 'a1010101-1010-1010-1010-101010101010';
+const USER_ID_11 = 'a1111111-1111-1111-1111-111111111111';
+
 describe('StudentService', () => {
   let service: StudentService;
   let prisma: {
@@ -74,15 +84,15 @@ describe('StudentService', () => {
   describe('findAll', () => {
     const mockStudents = [
       {
-        id: 1, studentId: 'ITITWE22055', fullName: 'Vo Gia Kiet',
+        id: STUDENT_ID_1, studentId: 'ITITWE22055', fullName: 'Vo Gia Kiet',
         email: 'ititwe22055@student.hcmiu.edu.vn',
         userId: null,
         user: null,
       },
       {
-        id: 2, studentId: 'ITIT22001', fullName: 'Nguyen Van An',
+        id: STUDENT_ID_2, studentId: 'ITIT22001', fullName: 'Nguyen Van An',
         email: 'itit22001@student.hcmiu.edu.vn',
-        userId: 5,
+        userId: USER_ID_5,
         user: { isActive: true },
       },
     ];
@@ -157,8 +167,8 @@ describe('StudentService', () => {
 
     it('includes isActive from the linked user (active)', async () => {
       prisma.student.findMany.mockResolvedValue([
-        { id: 1, studentId: 'ITITIU21001', fullName: 'Nguyen Van A', email: 'a@b.com', userId: 5, user: { isActive: true } },
-        { id: 2, studentId: 'ITITIU21002', fullName: 'Tran Thi B',   email: 'b@b.com', userId: null, user: null },
+        { id: STUDENT_ID_1, studentId: 'ITITIU21001', fullName: 'Nguyen Van A', email: 'a@b.com', userId: USER_ID_5, user: { isActive: true } },
+        { id: STUDENT_ID_2, studentId: 'ITITIU21002', fullName: 'Tran Thi B',   email: 'b@b.com', userId: null, user: null },
       ]);
       prisma.student.count.mockResolvedValue(2);
 
@@ -206,7 +216,7 @@ describe('StudentService', () => {
 
   describe('update', () => {
     const mockStudent = {
-      id: 1,
+      id: STUDENT_ID_1,
       studentId: 'ITITWE22055',
       fullName: 'Vo Gia Kiet',
       email: 'ititwe22055@student.hcmiu.edu.vn',
@@ -217,14 +227,14 @@ describe('StudentService', () => {
       prisma.student.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.update(999, { fullName: 'New Name' }),
+        service.update(NON_EXISTENT_ID, { fullName: 'New Name' }),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('throws BadRequestException when no fields are provided', async () => {
       prisma.student.findUnique.mockResolvedValue(mockStudent);
 
-      await expect(service.update(1, {})).rejects.toThrow(
+      await expect(service.update(STUDENT_ID_1, {})).rejects.toThrow(
         new BadRequestException('At least one field must be provided'),
       );
     });
@@ -236,14 +246,14 @@ describe('StudentService', () => {
         fullName: 'Updated Name',
       });
 
-      const result = await service.update(1, { fullName: 'Updated Name' });
+      const result = await service.update(STUDENT_ID_1, { fullName: 'Updated Name' });
 
       expect(prisma.student.update).toHaveBeenCalledWith({
-        where: { id: 1 },
+        where: { id: STUDENT_ID_1 },
         data: { fullName: 'Updated Name' },
       });
       expect(result).toEqual({
-        id: 1,
+        id: STUDENT_ID_1,
         studentId: 'ITITWE22055',
         fullName: 'Updated Name',
         email: 'ititwe22055@student.hcmiu.edu.vn',
@@ -264,7 +274,7 @@ describe('StudentService', () => {
       prisma.student.update.mockRejectedValue(p2002);
 
       await expect(
-        service.update(1, { studentId: 'DUPLICATE' }),
+        service.update(STUDENT_ID_1, { studentId: 'DUPLICATE' }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -281,7 +291,7 @@ describe('StudentService', () => {
       prisma.student.update.mockRejectedValue(p2002);
 
       await expect(
-        service.update(1, { email: 'dup@student.hcmiu.edu.vn' }),
+        service.update(STUDENT_ID_1, { email: 'dup@student.hcmiu.edu.vn' }),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -290,7 +300,7 @@ describe('StudentService', () => {
 
   describe('remove', () => {
     const mockStudent = {
-      id: 1,
+      id: STUDENT_ID_1,
       studentId: 'ITITWE22055',
       fullName: 'Vo Gia Kiet',
       email: 'ititwe22055@student.hcmiu.edu.vn',
@@ -300,14 +310,14 @@ describe('StudentService', () => {
     it('throws NotFoundException when student does not exist', async () => {
       prisma.student.findUnique.mockResolvedValue(null);
 
-      await expect(service.remove(999)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(NON_EXISTENT_ID)).rejects.toThrow(NotFoundException);
     });
 
     it('throws ConflictException when student has thesis records', async () => {
       prisma.student.findUnique.mockResolvedValue(mockStudent);
       prisma.thesis.count.mockResolvedValue(1);
 
-      await expect(service.remove(1)).rejects.toThrow(
+      await expect(service.remove(STUDENT_ID_1)).rejects.toThrow(
         new ConflictException('Cannot delete student with active thesis work'),
       );
       expect(prisma.enrollment.deleteMany).not.toHaveBeenCalled();
@@ -320,12 +330,12 @@ describe('StudentService', () => {
       prisma.enrollment.deleteMany.mockResolvedValue({ count: 1 });
       prisma.student.delete.mockResolvedValue(mockStudent);
 
-      await service.remove(1);
+      await service.remove(STUDENT_ID_1);
 
       expect(prisma.enrollment.deleteMany).toHaveBeenCalledWith({
-        where: { studentId: 1 },
+        where: { studentId: STUDENT_ID_1 },
       });
-      expect(prisma.student.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(prisma.student.delete).toHaveBeenCalledWith({ where: { id: STUDENT_ID_1 } });
     });
 
     it('deletes student with no semesterStudent records', async () => {
@@ -334,12 +344,12 @@ describe('StudentService', () => {
       prisma.enrollment.deleteMany.mockResolvedValue({ count: 0 });
       prisma.student.delete.mockResolvedValue(mockStudent);
 
-      await service.remove(1);
+      await service.remove(STUDENT_ID_1);
 
       expect(prisma.enrollment.deleteMany).toHaveBeenCalledWith({
-        where: { studentId: 1 },
+        where: { studentId: STUDENT_ID_1 },
       });
-      expect(prisma.student.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(prisma.student.delete).toHaveBeenCalledWith({ where: { id: STUDENT_ID_1 } });
     });
   });
 
@@ -353,7 +363,7 @@ describe('StudentService', () => {
         email: 'nvana@student.hcmiu.edu.vn',
       };
       prisma.student.create.mockResolvedValue({
-        id: 10,
+        id: STUDENT_ID_10,
         studentId: dto.studentId,
         fullName: dto.fullName,
         email: dto.email,
@@ -370,7 +380,7 @@ describe('StudentService', () => {
         },
       });
       expect(result).toEqual({
-        id: 10,
+        id: STUDENT_ID_10,
         studentId: dto.studentId,
         fullName: dto.fullName,
         email: dto.email,
@@ -423,7 +433,7 @@ describe('StudentService', () => {
 
   describe('activateAccount', () => {
     const mockStudent = {
-      id: 1,
+      id: STUDENT_ID_1,
       studentId: 'ITITIU21001',
       fullName: 'Nguyen Van A',
       email: 'a@student.hcmiu.edu.vn',
@@ -437,23 +447,23 @@ describe('StudentService', () => {
     it('throws NotFoundException when student not found', async () => {
       prisma.student.findUnique.mockResolvedValue(null);
 
-      await expect(service.activateAccount(999)).rejects.toThrow(NotFoundException);
+      await expect(service.activateAccount(NON_EXISTENT_ID)).rejects.toThrow(NotFoundException);
     });
 
     it('throws ConflictException when student already has an account', async () => {
-      prisma.student.findUnique.mockResolvedValue({ ...mockStudent, userId: 5 });
+      prisma.student.findUnique.mockResolvedValue({ ...mockStudent, userId: USER_ID_5 });
 
-      await expect(service.activateAccount(1)).rejects.toThrow(
+      await expect(service.activateAccount(STUDENT_ID_1)).rejects.toThrow(
         new ConflictException('Student already has an account'),
       );
     });
 
     it('hashes studentId, creates user + links student, returns account shape', async () => {
       prisma.student.findUnique.mockResolvedValue(mockStudent);
-      prisma.user.create.mockResolvedValue({ id: 10 });
+      prisma.user.create.mockResolvedValue({ id: USER_ID_10 });
       prisma.student.update.mockResolvedValue({});
 
-      const result = await service.activateAccount(1);
+      const result = await service.activateAccount(STUDENT_ID_1);
 
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(bcrypt.hash).toHaveBeenCalledWith('ITITIU21001', 10);
@@ -466,11 +476,11 @@ describe('StudentService', () => {
         },
       });
       expect(prisma.student.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { userId: 10 },
+        where: { id: STUDENT_ID_1 },
+        data: { userId: USER_ID_10 },
       });
       expect(result).toEqual({
-        id: 1,
+        id: STUDENT_ID_1,
         studentId: 'ITITIU21001',
         fullName: 'Nguyen Van A',
         email: 'a@student.hcmiu.edu.vn',
@@ -484,17 +494,17 @@ describe('StudentService', () => {
 
   describe('toggleAccount', () => {
     const mockStudentWithAccount = {
-      id: 1,
+      id: STUDENT_ID_1,
       studentId: 'ITITIU21001',
       fullName: 'Nguyen Van A',
       email: 'a@student.hcmiu.edu.vn',
-      userId: 5,
+      userId: USER_ID_5,
     };
 
     it('throws NotFoundException when student not found', async () => {
       prisma.student.findUnique.mockResolvedValue(null);
 
-      await expect(service.toggleAccount(999, { isActive: false })).rejects.toThrow(
+      await expect(service.toggleAccount(NON_EXISTENT_ID, { isActive: false })).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -502,7 +512,7 @@ describe('StudentService', () => {
     it('throws ConflictException when student has no account', async () => {
       prisma.student.findUnique.mockResolvedValue({ ...mockStudentWithAccount, userId: null });
 
-      await expect(service.toggleAccount(1, { isActive: false })).rejects.toThrow(
+      await expect(service.toggleAccount(STUDENT_ID_1, { isActive: false })).rejects.toThrow(
         new ConflictException('Student has no account to modify'),
       );
     });
@@ -511,14 +521,14 @@ describe('StudentService', () => {
       prisma.student.findUnique.mockResolvedValue(mockStudentWithAccount);
       prisma.user.update.mockResolvedValue({});
 
-      const result = await service.toggleAccount(1, { isActive: false });
+      const result = await service.toggleAccount(STUDENT_ID_1, { isActive: false });
 
       expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 5 },
+        where: { id: USER_ID_5 },
         data: { isActive: false },
       });
       expect(result).toEqual({
-        id: 1,
+        id: STUDENT_ID_1,
         studentId: 'ITITIU21001',
         fullName: 'Nguyen Van A',
         email: 'a@student.hcmiu.edu.vn',
@@ -531,14 +541,14 @@ describe('StudentService', () => {
       prisma.student.findUnique.mockResolvedValue(mockStudentWithAccount);
       prisma.user.update.mockResolvedValue({});
 
-      const result = await service.toggleAccount(1, { isActive: true });
+      const result = await service.toggleAccount(STUDENT_ID_1, { isActive: true });
 
       expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 5 },
+        where: { id: USER_ID_5 },
         data: { isActive: true },
       });
       expect(result).toEqual({
-        id: 1,
+        id: STUDENT_ID_1,
         studentId: 'ITITIU21001',
         fullName: 'Nguyen Van A',
         email: 'a@student.hcmiu.edu.vn',
@@ -558,7 +568,7 @@ describe('StudentService', () => {
     it('skips all when all ids already have accounts', async () => {
       prisma.student.findMany.mockResolvedValue([]);  // none without account
 
-      const result = await service.activateBulk({ ids: [1, 2] });
+      const result = await service.activateBulk({ ids: [STUDENT_ID_1, STUDENT_ID_2] });
 
       expect(prisma.user.create).not.toHaveBeenCalled();
       expect(result).toEqual({ activated: 0, skipped: 2 });
@@ -566,36 +576,36 @@ describe('StudentService', () => {
 
     it('activates students without accounts and skips those with', async () => {
       const noAccountStudents = [
-        { id: 1, studentId: 'ITITIU21001', fullName: 'A', email: 'a@b.com', userId: null },
+        { id: STUDENT_ID_1, studentId: 'ITITIU21001', fullName: 'A', email: 'a@b.com', userId: null },
       ];
       prisma.student.findMany.mockResolvedValue(noAccountStudents);
-      prisma.user.create.mockResolvedValue({ id: 10 });
+      prisma.user.create.mockResolvedValue({ id: USER_ID_10 });
       prisma.student.update.mockResolvedValue({});
 
-      const result = await service.activateBulk({ ids: [1, 2] });
+      const result = await service.activateBulk({ ids: [STUDENT_ID_1, STUDENT_ID_2] });
 
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(bcrypt.hash).toHaveBeenCalledWith('ITITIU21001', 10);
       expect(prisma.user.create).toHaveBeenCalledTimes(1);
       expect(prisma.student.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { userId: 10 },
+        where: { id: STUDENT_ID_1 },
+        data: { userId: USER_ID_10 },
       });
       expect(result).toEqual({ activated: 1, skipped: 1 });
     });
 
     it('activates multiple students — creates user and links each', async () => {
       const students = [
-        { id: 1, studentId: 'ITITIU21001', fullName: 'A', email: 'a@b.com', userId: null },
-        { id: 2, studentId: 'ITITIU21002', fullName: 'B', email: 'b@b.com', userId: null },
+        { id: STUDENT_ID_1, studentId: 'ITITIU21001', fullName: 'A', email: 'a@b.com', userId: null },
+        { id: STUDENT_ID_2, studentId: 'ITITIU21002', fullName: 'B', email: 'b@b.com', userId: null },
       ];
       prisma.student.findMany.mockResolvedValue(students);
       prisma.user.create
-        .mockResolvedValueOnce({ id: 10 })
-        .mockResolvedValueOnce({ id: 11 });
+        .mockResolvedValueOnce({ id: USER_ID_10 })
+        .mockResolvedValueOnce({ id: USER_ID_11 });
       prisma.student.update.mockResolvedValue({});
 
-      const result = await service.activateBulk({ ids: [1, 2] });
+      const result = await service.activateBulk({ ids: [STUDENT_ID_1, STUDENT_ID_2] });
 
       expect(bcrypt.hash).toHaveBeenCalledTimes(2);
       expect(prisma.user.create).toHaveBeenCalledTimes(2);
@@ -610,7 +620,7 @@ describe('StudentService', () => {
     it('skips students with no account', async () => {
       prisma.student.findMany.mockResolvedValue([]);  // none with account
 
-      const result = await service.toggleAccountBulk({ ids: [1, 2], isActive: false });
+      const result = await service.toggleAccountBulk({ ids: [STUDENT_ID_1, STUDENT_ID_2], isActive: false });
 
       expect(prisma.user.updateMany).not.toHaveBeenCalled();
       expect(result).toEqual({ updated: 0, skipped: 2 });
@@ -618,28 +628,28 @@ describe('StudentService', () => {
 
     it('updates isActive for all students that have accounts', async () => {
       prisma.student.findMany.mockResolvedValue([
-        { userId: 5 },
-        { userId: 8 },
+        { userId: USER_ID_5 },
+        { userId: USER_ID_8 },
       ]);
       prisma.user.updateMany.mockResolvedValue({ count: 2 });
 
-      const result = await service.toggleAccountBulk({ ids: [1, 2, 3], isActive: false });
+      const result = await service.toggleAccountBulk({ ids: [STUDENT_ID_1, STUDENT_ID_2, STUDENT_ID_3], isActive: false });
 
       expect(prisma.user.updateMany).toHaveBeenCalledWith({
-        where: { id: { in: [5, 8] } },
+        where: { id: { in: [USER_ID_5, USER_ID_8] } },
         data: { isActive: false },
       });
       expect(result).toEqual({ updated: 2, skipped: 1 });
     });
 
     it('reactivates accounts — passes isActive:true to updateMany', async () => {
-      prisma.student.findMany.mockResolvedValue([{ userId: 5 }]);
+      prisma.student.findMany.mockResolvedValue([{ userId: USER_ID_5 }]);
       prisma.user.updateMany.mockResolvedValue({ count: 1 });
 
-      const result = await service.toggleAccountBulk({ ids: [1], isActive: true });
+      const result = await service.toggleAccountBulk({ ids: [STUDENT_ID_1], isActive: true });
 
       expect(prisma.user.updateMany).toHaveBeenCalledWith({
-        where: { id: { in: [5] } },
+        where: { id: { in: [USER_ID_5] } },
         data: { isActive: true },
       });
       expect(result).toEqual({ updated: 1, skipped: 0 });
