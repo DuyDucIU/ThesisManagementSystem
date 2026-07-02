@@ -59,7 +59,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(
-    @CurrentUser() user: { id: number },
+    @CurrentUser() user: { id: string },
     @Res({ passthrough: true }) res: Response,
   ) {
     await this.authService.logout(user.id);
@@ -67,7 +67,7 @@ export class AuthController {
   }
 
   @Get('me')
-  getMe(@CurrentUser() user: { id: number }) {
+  getMe(@CurrentUser() user: { id: string }) {
     return this.authService.getMe(user.id);
   }
 }
