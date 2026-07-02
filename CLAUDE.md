@@ -7,7 +7,7 @@ A web application for managing academic theses — tracking submissions, reviews
 | Layer       | Technology                    | Version |
 |-------------|-------------------------------|---------|
 | Backend     | NestJS (Node.js + TypeScript) | 11.x    |
-| ORM         | Prisma (MySQL)                | 6.x     |
+| ORM         | Prisma (PostgreSQL)            | 6.x     |
 | Auth        | JWT + Passport.js + bcrypt    | —       |
 | Excel parse | xlsx                          | 0.18.x  |
 | Frontend    | React + Vite (TypeScript)     | 19.x    |
