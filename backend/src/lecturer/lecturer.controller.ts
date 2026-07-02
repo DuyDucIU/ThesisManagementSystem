@@ -7,7 +7,7 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
+  ParseUUIDPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -42,13 +42,13 @@ export class LecturerController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.lecturerService.findOne(id);
   }
 
   @Patch(':id/account')
   toggleAccount(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AccountActionDto,
   ) {
     return this.lecturerService.toggleAccount(id, dto);
@@ -56,7 +56,7 @@ export class LecturerController {
 
   @Patch(':id')
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateLecturerDto,
   ) {
     return this.lecturerService.update(id, dto);
@@ -64,7 +64,7 @@ export class LecturerController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.lecturerService.remove(id);
   }
 }

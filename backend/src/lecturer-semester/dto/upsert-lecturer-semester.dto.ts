@@ -1,11 +1,9 @@
-import { IsInt, Min } from 'class-validator';
+import { IsInt, IsUUID, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpsertLecturerSemesterDto {
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  semesterId: number;
+  @IsUUID('4')
+  semesterId: string;
 
   @Type(() => Number)
   @IsInt()

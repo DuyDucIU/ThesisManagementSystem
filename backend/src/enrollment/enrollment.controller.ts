@@ -6,7 +6,7 @@ import {
   UploadedFile,
   UseInterceptors,
   BadRequestException,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
@@ -39,8 +39,8 @@ export class EnrollmentController {
   async importEnrollments(
     @UploadedFile() file: Express.Multer.File,
     @Query('action') action: 'parse' | 'import',
-    @Query('semesterId', new ParseIntPipe({ optional: true }))
-    semesterId?: number,
+    @Query('semesterId', new ParseUUIDPipe({ optional: true }))
+    semesterId?: string,
   ) {
     if (!file) {
       throw new BadRequestException('Please select a file before parsing.');

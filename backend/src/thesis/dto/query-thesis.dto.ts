@@ -1,27 +1,20 @@
-import { IsOptional, IsInt, IsEnum, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsUUID, IsEnum } from 'class-validator';
 import { ThesisStatus } from '@prisma/client';
 
 export class QueryThesisDto {
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  semesterId?: number;
+  @IsUUID('4')
+  semesterId?: string;
 
   @IsOptional()
   @IsEnum(ThesisStatus)
   status?: ThesisStatus;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  lecturerId?: number;
+  @IsUUID('4')
+  lecturerId?: string;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  topicId?: number;
+  @IsUUID('4')
+  topicId?: string;
 }

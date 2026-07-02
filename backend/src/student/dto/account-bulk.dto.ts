@@ -1,13 +1,11 @@
-import { Type } from 'class-transformer';
-import { IsArray, ArrayNotEmpty, ArrayMaxSize, IsInt, IsBoolean } from 'class-validator';
+import { IsArray, ArrayNotEmpty, ArrayMaxSize, IsUUID, IsBoolean } from 'class-validator';
 
 export class AccountBulkDto {
   @IsArray()
   @ArrayNotEmpty()
   @ArrayMaxSize(100)
-  @IsInt({ each: true })
-  @Type(() => Number)
-  ids: number[];
+  @IsUUID('4', { each: true })
+  ids: string[];
 
   @IsBoolean()
   isActive: boolean;
