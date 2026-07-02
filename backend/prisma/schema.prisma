@@ -63,7 +63,7 @@ enum DocumentStatus {
 // ============================================
 
 model User {
-  id           Int      @id @default(autoincrement())
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   username     String   @unique
   passwordHash String   @map("password_hash")
   role         Role
@@ -85,7 +85,7 @@ model User {
 }
 
 model Semester {
-  id        Int            @id @default(autoincrement())
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code      String         @unique
   name      String
   startDate DateTime       @map("start_date") @db.Date
@@ -102,8 +102,8 @@ model Semester {
 }
 
 model Lecturer {
-  id          Int     @id @default(autoincrement())
-  userId      Int     @unique @map("user_id")
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String  @unique @map("user_id") @db.Uuid
   lecturerId  String  @unique @map("lecturer_id")
   fullName    String  @map("full_name")
   email       String  @unique
@@ -122,9 +122,9 @@ model Lecturer {
 }
 
 model LecturerSemester {
-  id          Int @id @default(autoincrement())
-  lecturerId  Int @map("lecturer_id")
-  semesterId  Int @map("semester_id")
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lecturerId  String @map("lecturer_id") @db.Uuid
+  semesterId  String @map("semester_id") @db.Uuid
   maxStudents Int @default(5) @map("max_students")
 
   lecturer Lecturer @relation(fields: [lecturerId], references: [id])
@@ -135,11 +135,11 @@ model LecturerSemester {
 }
 
 model Student {
-  id        Int    @id @default(autoincrement())
-  userId    Int?   @unique @map("user_id")
-  studentId String @unique @map("student_id")
-  fullName  String @map("full_name")
-  email     String @unique
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String? @unique @map("user_id") @db.Uuid
+  studentId String  @unique @map("student_id")
+  fullName  String  @map("full_name")
+  email     String  @unique
 
   user User? @relation(fields: [userId], references: [id])
 
@@ -149,9 +149,9 @@ model Student {
 }
 
 model Enrollment {
-  id         Int              @id @default(autoincrement())
-  studentId  Int              @map("student_id")
-  semesterId Int              @map("semester_id")
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId  String           @map("student_id") @db.Uuid
+  semesterId String           @map("semester_id") @db.Uuid
   status     EnrollmentStatus @default(AVAILABLE)
 
   student  Student  @relation(fields: [studentId], references: [id])
@@ -164,9 +164,9 @@ model Enrollment {
 }
 
 model Topic {
-  id           Int         @id @default(autoincrement())
-  semesterId   Int         @map("semester_id")
-  lecturerId   Int         @map("lecturer_id")
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  semesterId   String      @map("semester_id") @db.Uuid
+  lecturerId   String      @map("lecturer_id") @db.Uuid
   title        String
   description  String?     @db.Text
   requirements String?     @db.Text
@@ -183,10 +183,10 @@ model Topic {
 }
 
 model Thesis {
-  id           Int          @id @default(autoincrement())
-  enrollmentId Int          @unique @map("enrollment_id")
-  topicId      Int          @map("topic_id")
-  reviewerId   Int?         @map("reviewer_id")
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollmentId String       @unique @map("enrollment_id") @db.Uuid
+  topicId      String       @map("topic_id") @db.Uuid
+  reviewerId   String?      @map("reviewer_id") @db.Uuid
   title        String
   description  String?      @db.Text
   status       ThesisStatus @default(IN_PROGRESS)
@@ -204,8 +204,8 @@ model Thesis {
 }
 
 model Document {
-  id                 Int            @id @default(autoincrement())
-  thesisId           Int            @map("thesis_id")
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  thesisId           String         @map("thesis_id") @db.Uuid
   docType            DocumentType   @map("doc_type")
   originalName       String         @map("original_name")
   s3Key              String         @map("s3_key")
@@ -214,10 +214,10 @@ model Document {
   version            Int            @default(1)
   status             DocumentStatus @default(PENDING)
   lecturerFeedback   String?        @map("lecturer_feedback") @db.Text
-  lecturerReviewedBy Int?           @map("lecturer_reviewed_by")
+  lecturerReviewedBy String?        @map("lecturer_reviewed_by") @db.Uuid
   lecturerReviewedAt DateTime?      @map("lecturer_reviewed_at")
   adminFeedback      String?        @map("admin_feedback") @db.Text
-  adminReviewedBy    Int?           @map("admin_reviewed_by")
+  adminReviewedBy    String?        @map("admin_reviewed_by") @db.Uuid
   adminReviewedAt    DateTime?      @map("admin_reviewed_at")
   createdAt          DateTime       @default(now()) @map("created_at")
 
@@ -229,9 +229,9 @@ model Document {
 }
 
 model ThesisReview {
-  id         Int      @id @default(autoincrement())
-  thesisId   Int      @unique @map("thesis_id")
-  reviewerId Int      @map("reviewer_id")
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  thesisId   String   @unique @map("thesis_id") @db.Uuid
+  reviewerId String   @map("reviewer_id") @db.Uuid
   score      Decimal  @db.Decimal(4, 2)
   comment    String?  @db.Text
   createdAt  DateTime @default(now()) @map("created_at")
@@ -243,13 +243,13 @@ model ThesisReview {
 }
 
 model Notification {
-  id          Int      @id @default(autoincrement())
-  userId      Int      @map("user_id")
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
   type        String
   title       String
   message     String   @db.Text
   isRead      Boolean  @default(false) @map("is_read")
-  relatedId   Int?     @map("related_id")
+  relatedId   String?  @map("related_id") @db.Uuid
   relatedType String?  @map("related_type")
   createdAt   DateTime @default(now()) @map("created_at")
 
