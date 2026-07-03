@@ -5,23 +5,23 @@ import type { LecturerItem } from '../lecturer/api'
 export const accountApi = {
   // ─── Student account actions ──────────────────────────────────────────────
 
-  activateStudent: (id: number) =>
+  activateStudent: (id: string) =>
     api.post<StudentItem>(`/students/${id}/activate`),
 
-  toggleStudentAccount: (id: number, isActive: boolean) =>
+  toggleStudentAccount: (id: string, isActive: boolean) =>
     api.patch<StudentItem>(`/students/${id}/account`, { isActive }),
 
-  activateStudentsBulk: (ids: number[]) =>
+  activateStudentsBulk: (ids: string[]) =>
     api.post<{ activated: number; skipped: number }>('/students/activate-bulk', { ids }),
 
-  toggleStudentsAccountBulk: (ids: number[], isActive: boolean) =>
+  toggleStudentsAccountBulk: (ids: string[], isActive: boolean) =>
     api.patch<{ updated: number; skipped: number }>('/students/account-bulk', { ids, isActive }),
 
   // ─── Lecturer account actions ─────────────────────────────────────────────
 
-  toggleLecturerAccount: (id: number, isActive: boolean) =>
+  toggleLecturerAccount: (id: string, isActive: boolean) =>
     api.patch<LecturerItem>(`/lecturers/${id}/account`, { isActive }),
 
-  toggleLecturersAccountBulk: (ids: number[], isActive: boolean) =>
+  toggleLecturersAccountBulk: (ids: string[], isActive: boolean) =>
     api.patch<{ updated: number; skipped: number }>('/lecturers/account-bulk', { ids, isActive }),
 }

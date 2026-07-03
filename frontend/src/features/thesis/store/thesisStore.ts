@@ -21,8 +21,8 @@ interface ThesisState {
 
   fetchTheses: (query?: ThesisQuery) => Promise<void>
   assignStudent: (dto: CreateThesisDto) => Promise<ThesisItem>
-  unassignStudent: (id: number) => Promise<void>
-  fetchCapacity: (lecturerId: number, semesterId?: number) => Promise<void>
+  unassignStudent: (id: string) => Promise<void>
+  fetchCapacity: (lecturerId: string, semesterId?: string) => Promise<void>
   fetchSemesters: () => Promise<void>
 }
 

@@ -41,7 +41,7 @@ export default function TopicFilters({
         onValueChange={(val) =>
           onChange({
             ...filters,
-            semesterId: val === 'active' ? undefined : Number(val),
+            semesterId: val === 'active' ? undefined : val,
           })
         }
       >
@@ -51,7 +51,7 @@ export default function TopicFilters({
         <SelectContent>
           <SelectItem value="active">Active semester</SelectItem>
           {semesters.map((sem) => (
-            <SelectItem key={sem.id} value={sem.id.toString()}>
+            <SelectItem key={sem.id} value={sem.id}>
               {sem.name}
             </SelectItem>
           ))}

@@ -2,7 +2,7 @@
 import api from '../../lib/axios'
 
 export interface StudentItem {
-  id: number
+  id: string
   studentId: string
   fullName: string
   email: string
@@ -50,8 +50,8 @@ export const studentApi = {
   list: (params?: StudentQuery) =>
     api.get<PaginatedStudentResult>('/students', { params }),
 
-  update: (id: number, dto: UpdateStudentDto) =>
+  update: (id: string, dto: UpdateStudentDto) =>
     api.patch<StudentItem>(`/students/${id}`, dto),
 
-  remove: (id: number) => api.delete<void>(`/students/${id}`),
+  remove: (id: string) => api.delete<void>(`/students/${id}`),
 }

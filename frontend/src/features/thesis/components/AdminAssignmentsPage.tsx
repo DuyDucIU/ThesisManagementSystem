@@ -44,18 +44,18 @@ export default function AdminAssignmentsPage() {
     fetchSemesters,
   } = useThesisStore()
 
-  const [semesterId, setSemesterId] = useState<number | null>(null)
-  const [lecturerFilter, setLecturerFilter] = useState<'all' | number>('all')
+  const [semesterId, setSemesterId] = useState<string | null>(null)
+  const [lecturerFilter, setLecturerFilter] = useState<'all' | string>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | ThesisStatus>('all')
 
   const [lecturers, setLecturers] = useState<LecturerItem[]>([])
   // topicId → lecturer full name, used to render the Lecturer column since the
   // thesis list response does not carry lecturer info.
-  const [topicLecturer, setTopicLecturer] = useState<Record<number, string>>({})
+  const [topicLecturer, setTopicLecturer] = useState<Record<string, string>>({})
   // Unfiltered topicId → assignment count for the assign dialog's "N assigned"
   // hint. Derived from an all-status/all-lecturer thesis fetch so the hint stays
   // correct regardless of the page's active filters.
-  const [topicCounts, setTopicCounts] = useState<Record<number, number>>({})
+  const [topicCounts, setTopicCounts] = useState<Record<string, number>>({})
 
   const [assignOpen, setAssignOpen] = useState(false)
   const [capacityOpen, setCapacityOpen] = useState(false)
@@ -85,17 +85,17 @@ export default function AdminAssignmentsPage() {
   // the current semester. Both are independent of the page's status/lecturer
   // filters, so they key on semesterId alone.
   const loadSemesterMaps = useMemo(
-    () => async (sid: number) => {
+    () => async (sid: string) => {
       try {
         const [topicsRes, allThesesRes] = await Promise.all([
           topicApi.list({ semesterId: sid }),
           thesisApi.list({ semesterId: sid }),
         ])
-        const map: Record<number, string> = {}
+        const map: Record<string, string> = {}
         for (const t of topicsRes.data) map[t.id] = t.lecturer.fullName
         setTopicLecturer(map)
 
-        const counts: Record<number, number> = {}
+        const counts: Record<string, number> = {}
         for (const thesis of allThesesRes.data) {
           counts[thesis.topic.id] = (counts[thesis.topic.id] ?? 0) + 1
         }
@@ -194,15 +194,15 @@ export default function AdminAssignmentsPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <Select
-          value={semesterId !== null ? String(semesterId) : undefined}
-          onValueChange={(v) => setSemesterId(Number(v))}
+          value={semesterId !== null ? semesterId : undefined}
+          onValueChange={(v) => setSemesterId(v)}
         >
           <SelectTrigger className="w-60 font-sans text-sm">
             <SelectValue placeholder="Semester" />
           </SelectTrigger>
           <SelectContent>
             {semesters.map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>
+              <SelectItem key={s.id} value={s.id}>
                 {s.code} — {s.name}
                 {s.status === 'ACTIVE' ? ' (active)' : ''}
               </SelectItem>
@@ -211,9 +211,9 @@ export default function AdminAssignmentsPage() {
         </Select>
 
         <Select
-          value={lecturerFilter === 'all' ? 'all' : String(lecturerFilter)}
+          value={lecturerFilter === 'all' ? 'all' : lecturerFilter}
           onValueChange={(v) =>
-            setLecturerFilter(v === 'all' ? 'all' : Number(v))
+            setLecturerFilter(v === 'all' ? 'all' : v)
           }
         >
           <SelectTrigger className="w-60 font-sans text-sm">
@@ -222,7 +222,7 @@ export default function AdminAssignmentsPage() {
           <SelectContent>
             <SelectItem value="all">All lecturers</SelectItem>
             {lecturers.map((l) => (
-              <SelectItem key={l.id} value={String(l.id)}>
+              <SelectItem key={l.id} value={l.id}>
                 {l.fullName}
               </SelectItem>
             ))}

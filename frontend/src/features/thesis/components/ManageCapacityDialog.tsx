@@ -23,7 +23,7 @@ import { lecturerApi } from '../../lecturer/api'
 const LECTURERS_LIMIT = 100
 
 interface CapacityRow {
-  lecturerId: number
+  lecturerId: string
   lecturer: { fullName: string; email: string }
   /** Effective max for this semester (persisted config or the lecturer default). */
   maxStudents: number
@@ -32,7 +32,7 @@ interface CapacityRow {
 interface ManageCapacityDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  semesterId: number
+  semesterId: string
   /** Called after a successful save so the parent can refresh counts. */
   onSaved?: () => void
 }
@@ -46,12 +46,12 @@ export default function ManageCapacityDialog({
   const [rows, setRows] = useState<CapacityRow[]>([])
   const [loading, setLoading] = useState(false)
   // Current assigned counts keyed by lecturerId.
-  const [assignedCounts, setAssignedCounts] = useState<Record<number, number>>(
+  const [assignedCounts, setAssignedCounts] = useState<Record<string, number>>(
     {},
   )
   // Editable draft of maxStudents keyed by lecturerId.
-  const [drafts, setDrafts] = useState<Record<number, string>>({})
-  const [savingId, setSavingId] = useState<number | null>(null)
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const [savingId, setSavingId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
   // Build a topicId → lecturerId map so we can tally theses by lecturer.
@@ -91,12 +91,12 @@ export default function ManageCapacityDialog({
         )
 
         // The thesis response lacks lecturerId, so resolve via the topic list.
-        const topicToLecturer: Record<number, number> = {}
+        const topicToLecturer: Record<string, string> = {}
         for (const t of topicsRes.data) {
           topicToLecturer[t.id] = t.lecturer.id
         }
 
-        const counts: Record<number, number> = {}
+        const counts: Record<string, number> = {}
         for (const thesis of thesesRes.data) {
           const lecturerId = topicToLecturer[thesis.topic.id]
           if (lecturerId === undefined) continue

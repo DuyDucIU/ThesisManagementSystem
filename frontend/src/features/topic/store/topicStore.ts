@@ -20,11 +20,11 @@ interface TopicState {
   semestersLoading: boolean
 
   fetchBankTopics: (query?: TopicQuery) => Promise<void>
-  fetchMyTopics: (lecturerId: number, semesterId?: number) => Promise<void>
+  fetchMyTopics: (lecturerId: string, semesterId?: string) => Promise<void>
   fetchSemesters: () => Promise<void>
   createTopic: (dto: CreateTopicDto) => Promise<TopicItem>
-  updateTopic: (id: number, dto: UpdateTopicDto) => Promise<TopicItem>
-  deleteTopic: (id: number) => Promise<void>
+  updateTopic: (id: string, dto: UpdateTopicDto) => Promise<TopicItem>
+  deleteTopic: (id: string) => Promise<void>
 }
 
 export const useTopicStore = create<TopicState>((set) => ({

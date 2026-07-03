@@ -35,7 +35,7 @@ export default function EnrollmentListPage() {
     (p: number) => ({
       semesterId:
         semesterIdFilter !== 'active'
-          ? Number(semesterIdFilter)
+          ? semesterIdFilter
           : undefined,
       status: statusFilter !== 'all' ? statusFilter : undefined,
       search: search || undefined,
@@ -130,7 +130,7 @@ export default function EnrollmentListPage() {
           <SelectContent>
             <SelectItem value="active">Current semester</SelectItem>
             {semesters.filter((s) => s.status !== 'ACTIVE').map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>
+              <SelectItem key={s.id} value={s.id}>
                 {s.code} — {s.name} ({s.status})
               </SelectItem>
             ))}

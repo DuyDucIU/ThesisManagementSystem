@@ -10,55 +10,55 @@ export type ThesisStatus =
   | 'REVIEWED'
 
 export interface ThesisStudent {
-  id: number
+  id: string
   studentId: string
   fullName: string
 }
 
 export interface ThesisTopic {
-  id: number
+  id: string
   title: string
 }
 
 export interface ThesisItem {
-  id: number
+  id: string
   title: string
   status: ThesisStatus
   createdAt: string
   topic: ThesisTopic
   student: ThesisStudent
-  enrollment: { id: number; semesterId: number }
+  enrollment: { id: string; semesterId: string }
 }
 
 export interface ThesisQuery {
-  semesterId?: number
+  semesterId?: string
   status?: ThesisStatus
-  lecturerId?: number
-  topicId?: number
+  lecturerId?: string
+  topicId?: string
 }
 
 export interface CreateThesisDto {
-  enrollmentId: number
-  topicId: number
+  enrollmentId: string
+  topicId: string
 }
 
 // ─── Lecturer-Semester types ──────────────────────────────────────────────
 
 export interface LecturerSemesterItem {
-  lecturerId: number
-  semesterId: number
+  lecturerId: string
+  semesterId: string
   maxStudents: number
-  lecturer: { id: number; fullName: string; email: string }
+  lecturer: { id: string; fullName: string; email: string }
 }
 
 export interface LecturerSemesterCapacity {
-  lecturerId: number
-  semesterId: number
+  lecturerId: string
+  semesterId: string
   maxStudents: number
 }
 
 export interface UpsertLecturerSemesterDto {
-  semesterId: number
+  semesterId: string
   maxStudents: number
 }
 
@@ -68,29 +68,29 @@ export const thesisApi = {
   list: (params?: ThesisQuery) =>
     api.get<ThesisItem[]>('/theses', { params }),
 
-  get: (id: number) =>
+  get: (id: string) =>
     api.get<ThesisItem>(`/theses/${id}`),
 
   assign: (dto: CreateThesisDto) =>
     api.post<ThesisItem>('/theses', dto),
 
-  unassign: (id: number) =>
+  unassign: (id: string) =>
     api.delete<void>(`/theses/${id}`),
 }
 
 export const lecturerSemesterApi = {
-  list: (semesterId?: number) =>
+  list: (semesterId?: string) =>
     api.get<LecturerSemesterItem[]>('/lecturer-semesters', {
       params: semesterId ? { semesterId } : undefined,
     }),
 
-  upsert: (lecturerId: number, dto: UpsertLecturerSemesterDto) =>
+  upsert: (lecturerId: string, dto: UpsertLecturerSemesterDto) =>
     api.patch<LecturerSemesterCapacity>(
       `/lecturer-semesters/${lecturerId}`,
       dto,
     ),
 
-  getCapacity: (lecturerId: number, semesterId?: number) =>
+  getCapacity: (lecturerId: string, semesterId?: string) =>
     api.get<LecturerSemesterCapacity>(
       `/lecturer-semesters/capacity/${lecturerId}`,
       { params: semesterId ? { semesterId } : undefined },
