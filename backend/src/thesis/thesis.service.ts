@@ -110,7 +110,7 @@ export class ThesisService {
       const thesis = await this.prisma.$transaction(async (tx) => {
         // Lock the lecturer row so concurrent assign() calls for the same lecturer
         // serialize here rather than racing past the count check below.
-        await tx.$queryRaw`SELECT id FROM lecturers WHERE id = ${topic.lecturerId} FOR UPDATE`;
+        await tx.$queryRaw`SELECT id FROM lecturers WHERE id = ${topic.lecturerId}::uuid FOR UPDATE`;
 
         const currentCount = await tx.thesis.count({
           where: { topic: { lecturerId: topic.lecturerId, semesterId: topic.semesterId } },
