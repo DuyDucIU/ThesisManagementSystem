@@ -7,7 +7,7 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
+  ParseUUIDPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -19,7 +19,7 @@ import { CreateTopicDto } from './dto/create-topic.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
 import { QueryTopicDto } from './dto/query-topic.dto';
 
-type AuthUser = { lecturer: { id: number } | null };
+type AuthUser = { lecturer: { id: string } | null };
 
 @Controller('topics')
 export class TopicController {
@@ -31,7 +31,7 @@ export class TopicController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.topicService.findOne(id);
   }
 
@@ -45,7 +45,7 @@ export class TopicController {
   @Patch(':id')
   @Roles(Role.LECTURER)
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateTopicDto,
     @CurrentUser() user: AuthUser,
   ) {
@@ -55,7 +55,7 @@ export class TopicController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Roles(Role.LECTURER)
-  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthUser) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthUser) {
     return this.topicService.remove(id, user.lecturer!.id);
   }
 }

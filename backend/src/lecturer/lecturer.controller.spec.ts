@@ -6,8 +6,10 @@ describe('LecturerController', () => {
   let controller: LecturerController;
   let service: jest.Mocked<LecturerService>;
 
+  const LECTURER_ID = '11111111-1111-1111-1111-111111111111';
+
   const mockResponse = {
-    id: 1,
+    id: LECTURER_ID,
     lecturerId: 'GV001',
     fullName: 'Nguyen Van A',
     email: 'nguyen@hcmiu.edu.vn',
@@ -51,17 +53,17 @@ describe('LecturerController', () => {
   });
 
   it('delegates findOne to service with id', async () => {
-    await controller.findOne(1);
-    expect(service.findOne).toHaveBeenCalledWith(1);
+    await controller.findOne(LECTURER_ID);
+    expect(service.findOne).toHaveBeenCalledWith(LECTURER_ID);
   });
 
   it('delegates update to service with id and dto', async () => {
-    await controller.update(1, { fullName: 'New' } as any);
-    expect(service.update).toHaveBeenCalledWith(1, { fullName: 'New' });
+    await controller.update(LECTURER_ID, { fullName: 'New' } as any);
+    expect(service.update).toHaveBeenCalledWith(LECTURER_ID, { fullName: 'New' });
   });
 
   it('delegates remove to service with id', async () => {
-    await controller.remove(1);
-    expect(service.remove).toHaveBeenCalledWith(1);
+    await controller.remove(LECTURER_ID);
+    expect(service.remove).toHaveBeenCalledWith(LECTURER_ID);
   });
 });

@@ -16,7 +16,7 @@ const statusColors: Record<string, string> = {
 interface TopicCardProps {
   topic: TopicItem
   /** Current user's lecturer id, if the user is a lecturer */
-  myLecturerId?: number
+  myLecturerId?: string
   /** Called when Copy button clicked — passes the topic as prefill */
   onCopy?: (topic: TopicItem) => void
   /** Called when Edit button clicked (My Topics only) */

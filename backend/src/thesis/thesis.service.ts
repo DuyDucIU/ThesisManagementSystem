@@ -12,7 +12,7 @@ import { LecturerSemesterService } from '../lecturer-semester/lecturer-semester.
 import { CreateThesisDto } from './dto/create-thesis.dto';
 import { QueryThesisDto } from './dto/query-thesis.dto';
 
-type AuthUser = { role: Role; lecturer: { id: number } | null };
+type AuthUser = { role: Role; lecturer: { id: string } | null };
 
 type ThesisWithRelations = Prisma.ThesisGetPayload<{
   include: {
@@ -55,8 +55,8 @@ export class ThesisService {
   // capacity is resolved outside the transaction and passed in to avoid a non-tx read inside.
   private async recomputeTopicStatuses(
     tx: Prisma.TransactionClient,
-    lecturerId: number,
-    semesterId: number,
+    lecturerId: string,
+    semesterId: string,
     capacity: number,
   ) {
     const assignedCount = await tx.thesis.count({
@@ -110,7 +110,7 @@ export class ThesisService {
       const thesis = await this.prisma.$transaction(async (tx) => {
         // Lock the lecturer row so concurrent assign() calls for the same lecturer
         // serialize here rather than racing past the count check below.
-        await tx.$queryRaw`SELECT id FROM lecturers WHERE id = ${topic.lecturerId} FOR UPDATE`;
+        await tx.$queryRaw`SELECT id FROM lecturers WHERE id = ${topic.lecturerId}::uuid FOR UPDATE`;
 
         const currentCount = await tx.thesis.count({
           where: { topic: { lecturerId: topic.lecturerId, semesterId: topic.semesterId } },
@@ -152,7 +152,7 @@ export class ThesisService {
     }
   }
 
-  async unassign(id: number, currentUser: AuthUser): Promise<void> {
+  async unassign(id: string, currentUser: AuthUser): Promise<void> {
     const thesis = await this.prisma.thesis.findUnique({
       where: { id },
       include: { topic: { select: { lecturerId: true, semesterId: true } } },
@@ -225,7 +225,7 @@ export class ThesisService {
     return theses.map((t) => this.toResponse(t));
   }
 
-  async findOne(id: number, currentUser: AuthUser) {
+  async findOne(id: string, currentUser: AuthUser) {
     const thesis = await this.prisma.thesis.findUnique({
       where: { id },
       include: this.includeClause,

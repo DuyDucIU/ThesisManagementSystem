@@ -3,7 +3,7 @@ import api from '../../lib/axios'
 export type SemesterStatus = 'INACTIVE' | 'ACTIVE' | 'CLOSED'
 
 export interface Semester {
-  id: number
+  id: string
   code: string
   name: string
   startDate: string   // ISO string — use toDateInput() to get YYYY-MM-DD
@@ -45,24 +45,24 @@ export const semesterApi = {
   list: (params?: SemesterQuery) =>
     api.get<Semester[]>('/semesters', { params }),
 
-  get: (id: number) =>
+  get: (id: string) =>
     api.get<Semester>(`/semesters/${id}`),
 
   create: (dto: CreateSemesterDto) =>
     api.post<Semester>('/semesters', dto),
 
-  update: (id: number, dto: UpdateSemesterDto) =>
+  update: (id: string, dto: UpdateSemesterDto) =>
     api.patch<Semester>(`/semesters/${id}`, dto),
 
-  remove: (id: number) =>
+  remove: (id: string) =>
     api.delete<void>(`/semesters/${id}`),
 
-  activate: (id: number) =>
+  activate: (id: string) =>
     api.post<Semester>(`/semesters/${id}/activate`),
 
-  deactivate: (id: number) =>
+  deactivate: (id: string) =>
     api.post<Semester>(`/semesters/${id}/deactivate`),
 
-  close: (id: number) =>
+  close: (id: string) =>
     api.post<Semester>(`/semesters/${id}/close`),
 }

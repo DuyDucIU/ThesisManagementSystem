@@ -6,7 +6,7 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
+  ParseUUIDPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -17,7 +17,7 @@ import { ThesisService } from './thesis.service';
 import { CreateThesisDto } from './dto/create-thesis.dto';
 import { QueryThesisDto } from './dto/query-thesis.dto';
 
-type AuthUser = { role: Role; lecturer: { id: number } | null };
+type AuthUser = { role: Role; lecturer: { id: string } | null };
 
 @Controller('theses')
 @Roles(Role.LECTURER, Role.ADMIN)
@@ -30,7 +30,7 @@ export class ThesisController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthUser) {
+  findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthUser) {
     return this.thesisService.findOne(id, user);
   }
 
@@ -42,7 +42,7 @@ export class ThesisController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  unassign(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthUser) {
+  unassign(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthUser) {
     return this.thesisService.unassign(id, user);
   }
 }

@@ -1,7 +1,7 @@
 import api from '../../lib/axios'
 
 export interface LecturerItem {
-  id: number
+  id: string
   lecturerId: string
   fullName: string
   email: string
@@ -52,12 +52,12 @@ export const lecturerApi = {
   list: (params?: LecturerQuery) =>
     api.get<PaginatedLecturerResult>('/lecturers', { params }),
 
-  get: (id: number) =>
+  get: (id: string) =>
     api.get<LecturerItem>(`/lecturers/${id}`),
 
-  update: (id: number, dto: UpdateLecturerDto) =>
+  update: (id: string, dto: UpdateLecturerDto) =>
     api.patch<LecturerItem>(`/lecturers/${id}`, dto),
 
-  remove: (id: number) =>
+  remove: (id: string) =>
     api.delete<void>(`/lecturers/${id}`),
 }

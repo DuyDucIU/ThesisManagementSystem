@@ -72,7 +72,7 @@ export class TopicService {
     return topics.map((t) => this.toResponse(t));
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const topic = await this.prisma.topic.findUnique({
       where: { id },
       include: this.includeClause,
@@ -81,7 +81,7 @@ export class TopicService {
     return this.toResponse(topic);
   }
 
-  async create(dto: CreateTopicDto, lecturerId: number) {
+  async create(dto: CreateTopicDto, lecturerId: string) {
     const active = await this.prisma.semester.findFirst({
       where: { status: SemesterStatus.ACTIVE },
     });
@@ -102,7 +102,7 @@ export class TopicService {
     return this.toResponse(topic);
   }
 
-  async update(id: number, dto: UpdateTopicDto, lecturerId: number) {
+  async update(id: string, dto: UpdateTopicDto, lecturerId: string) {
     const topic = await this.prisma.topic.findUnique({ where: { id } });
     if (!topic) throw new NotFoundException(`Topic #${id} not found`);
     if (topic.lecturerId !== lecturerId) throw new ForbiddenException('You do not own this topic');
@@ -133,7 +133,7 @@ export class TopicService {
     }
   }
 
-  async remove(id: number, lecturerId: number): Promise<void> {
+  async remove(id: string, lecturerId: string): Promise<void> {
     const topic = await this.prisma.topic.findUnique({ where: { id } });
     if (!topic) throw new NotFoundException(`Topic #${id} not found`);
     if (topic.lecturerId !== lecturerId) throw new ForbiddenException('You do not own this topic');

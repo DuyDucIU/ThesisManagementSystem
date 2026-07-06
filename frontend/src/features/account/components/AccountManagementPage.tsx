@@ -35,8 +35,8 @@ type LecturerStatusFilter = 'all' | 'active' | 'inactive'
 type ConfirmState =
   | { kind: 'activate-single'; item: StudentItem }
   | { kind: 'deactivate-single'; item: StudentItem | LecturerItem; tab: Tab }
-  | { kind: 'activate-bulk'; ids: number[] }
-  | { kind: 'deactivate-bulk'; ids: number[]; tab: Tab }
+  | { kind: 'activate-bulk'; ids: string[] }
+  | { kind: 'deactivate-bulk'; ids: string[]; tab: Tab }
   | null
 
 // ─── Status badges (defined outside to avoid re-creating on every render) ──
@@ -96,7 +96,7 @@ export default function AccountManagementPage() {
   const [search, setSearch] = useState('')
   const [studentStatus, setStudentStatus] = useState<StudentStatusFilter>('all')
   const [lecturerStatus, setLecturerStatus] = useState<LecturerStatusFilter>('all')
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [confirmDialog, setConfirmDialog] = useState<ConfirmState>(null)
   const [actionLoading, setActionLoading] = useState(false)
 
@@ -207,7 +207,7 @@ export default function AccountManagementPage() {
     setSelectedIds(allSelected ? new Set() : new Set(currentIds))
   }
 
-  function toggleSelect(id: number) {
+  function toggleSelect(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -256,7 +256,7 @@ export default function AccountManagementPage() {
     }
   }
 
-  async function handleActivateBulk(ids: number[]) {
+  async function handleActivateBulk(ids: string[]) {
     setActionLoading(true)
     try {
       const res = await accountApi.activateStudentsBulk(ids)
@@ -276,7 +276,7 @@ export default function AccountManagementPage() {
     }
   }
 
-  async function handleToggleBulk(ids: number[], tab: Tab, isActive: boolean) {
+  async function handleToggleBulk(ids: string[], tab: Tab, isActive: boolean) {
     setActionLoading(true)
     try {
       let updated: number, skipped: number

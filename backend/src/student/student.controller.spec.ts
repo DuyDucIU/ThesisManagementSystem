@@ -14,7 +14,7 @@ describe('StudentController', () => {
           provide: StudentService,
           useValue: {
             create: jest.fn().mockResolvedValue({
-              id: 10,
+              id: '11111111-1111-1111-1111-111111111110',
               studentId: 'S1',
               fullName: 'Name',
               email: 'e@x.com',
@@ -24,7 +24,7 @@ describe('StudentController', () => {
               .fn()
               .mockResolvedValue({ data: [], total: 0, page: 1, limit: 20 }),
             update: jest.fn().mockResolvedValue({
-              id: 1,
+              id: '11111111-1111-1111-1111-111111111111',
               studentId: 'S1',
               fullName: 'Name',
               email: 'e@x.com',
@@ -55,12 +55,12 @@ describe('StudentController', () => {
   });
 
   it('delegates update to service with id and dto', async () => {
-    await controller.update(1, { fullName: 'New' } as any);
-    expect(service.update).toHaveBeenCalledWith(1, { fullName: 'New' });
+    await controller.update('11111111-1111-1111-1111-111111111111', { fullName: 'New' } as any);
+    expect(service.update).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111', { fullName: 'New' });
   });
 
   it('delegates remove to service with id', async () => {
-    await controller.remove(1);
-    expect(service.remove).toHaveBeenCalledWith(1);
+    await controller.remove('11111111-1111-1111-1111-111111111111');
+    expect(service.remove).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111');
   });
 });

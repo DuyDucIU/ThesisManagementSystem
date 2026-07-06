@@ -31,7 +31,7 @@ export default function TopicPickerDialog({
   semesters,
   onSelect,
 }: TopicPickerDialogProps) {
-  const [semesterId, setSemesterId] = useState<number | undefined>(undefined)
+  const [semesterId, setSemesterId] = useState<string | undefined>(undefined)
   const [search, setSearch] = useState('')
   const [topics, setTopics] = useState<TopicItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -84,9 +84,9 @@ export default function TopicPickerDialog({
 
         <div className="flex gap-2 mt-2">
           <Select
-            value={semesterId?.toString() ?? 'all'}
+            value={semesterId ?? 'all'}
             onValueChange={(val) =>
-              setSemesterId(val === 'all' ? undefined : Number(val))
+              setSemesterId(val === 'all' ? undefined : val)
             }
           >
             <SelectTrigger className="w-48 font-sans text-sm">
@@ -95,7 +95,7 @@ export default function TopicPickerDialog({
             <SelectContent>
               <SelectItem value="all">All semesters</SelectItem>
               {semesters.map((sem) => (
-                <SelectItem key={sem.id} value={sem.id.toString()}>
+                <SelectItem key={sem.id} value={sem.id}>
                   {sem.name}
                 </SelectItem>
               ))}

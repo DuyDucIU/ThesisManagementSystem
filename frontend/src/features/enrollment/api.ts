@@ -4,7 +4,7 @@ import api from '../../lib/axios'
 // ─── Shared ────────────────────────────────────────────────────────────────
 
 export interface SemesterSummary {
-  id: number
+  id: string
   code: string
   name: string
 }
@@ -54,7 +54,7 @@ export type EnrollmentStatus =
   | 'FAILED'
 
 export interface EnrollmentStudent {
-  id: number
+  id: string
   studentId: string
   fullName: string
   email: string
@@ -62,13 +62,13 @@ export interface EnrollmentStudent {
 }
 
 export interface EnrollmentItem {
-  enrollmentId: number
+  enrollmentId: string
   status: EnrollmentStatus
   student: EnrollmentStudent
 }
 
 export interface EnrollmentQuery {
-  semesterId?: number
+  semesterId?: string
   status?: EnrollmentStatus
   search?: string
   page?: number
@@ -89,7 +89,7 @@ export const enrollmentApi = {
   list: (params?: EnrollmentQuery) =>
     api.get<PaginatedEnrollmentResult>('/enrollments', { params }),
 
-  parseImport: (file: File, semesterId?: number) => {
+  parseImport: (file: File, semesterId?: string) => {
     const form = new FormData()
     form.append('file', file)
     const qs = new URLSearchParams({ action: 'parse' })
@@ -100,7 +100,7 @@ export const enrollmentApi = {
     )
   },
 
-  importEnrollments: (file: File, semesterId?: number) => {
+  importEnrollments: (file: File, semesterId?: string) => {
     const form = new FormData()
     form.append('file', file)
     const qs = new URLSearchParams({ action: 'import' })

@@ -1,13 +1,13 @@
 import { create } from 'zustand'
 
 export interface UserProfile {
-  id: number
+  id: string
   username: string
   role: 'ADMIN' | 'LECTURER' | 'STUDENT'
   fullName: string | null
   email: string | null
-  lecturer: { id: number; maxStudents: number } | null
-  student: { id: number; studentId: string } | null
+  lecturer: { id: string; maxStudents: number } | null
+  student: { id: string; studentId: string } | null
 }
 
 interface AuthState {

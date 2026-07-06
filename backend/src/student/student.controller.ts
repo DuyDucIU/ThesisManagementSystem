@@ -7,7 +7,7 @@ import {
   Query,
   Body,
   Param,
-  ParseIntPipe,
+  ParseUUIDPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -43,26 +43,26 @@ export class StudentController {
 
   @Post(':id/activate')
   @HttpCode(HttpStatus.CREATED)
-  activateAccount(@Param('id', ParseIntPipe) id: number) {
+  activateAccount(@Param('id', ParseUUIDPipe) id: string) {
     return this.studentService.activateAccount(id);
   }
 
   @Patch(':id/account')
   toggleAccount(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AccountActionDto,
   ) {
     return this.studentService.toggleAccount(id, dto);
   }
 
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStudentDto) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateStudentDto) {
     return this.studentService.update(id, dto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.studentService.remove(id);
   }
 

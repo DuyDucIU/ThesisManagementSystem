@@ -40,7 +40,7 @@ export default function ThesisDetailPage() {
     if (!id) return
     setLoading(true)
     thesisApi
-      .get(Number(id))
+      .get(id)
       .then((res) => setThesis(res.data))
       .catch((err) => {
         toast.error(extractErrorMessage(err))

@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   Query,
-  ParseIntPipe,
+  ParseUUIDPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -30,7 +30,7 @@ export class SemesterController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.semesterService.findOne(id);
   }
 
@@ -41,7 +41,7 @@ export class SemesterController {
 
   @Patch(':id')
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateSemesterDto,
   ) {
     return this.semesterService.update(id, dto);
@@ -49,25 +49,25 @@ export class SemesterController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.semesterService.remove(id);
   }
 
   @Post(':id/activate')
   @HttpCode(HttpStatus.OK)
-  activate(@Param('id', ParseIntPipe) id: number) {
+  activate(@Param('id', ParseUUIDPipe) id: string) {
     return this.semesterService.activate(id);
   }
 
   @Post(':id/deactivate')
   @HttpCode(HttpStatus.OK)
-  deactivate(@Param('id', ParseIntPipe) id: number) {
+  deactivate(@Param('id', ParseUUIDPipe) id: string) {
     return this.semesterService.deactivate(id);
   }
 
   @Post(':id/close')
   @HttpCode(HttpStatus.OK)
-  close(@Param('id', ParseIntPipe) id: number) {
+  close(@Param('id', ParseUUIDPipe) id: string) {
     return this.semesterService.close(id);
   }
 }

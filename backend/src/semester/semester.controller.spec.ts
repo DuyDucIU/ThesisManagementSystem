@@ -3,8 +3,10 @@ import { SemesterStatus } from '@prisma/client';
 import { SemesterController } from './semester.controller';
 import { SemesterService } from './semester.service';
 
+const SEMESTER_ID = '11111111-1111-1111-1111-111111111111';
+
 const mockSemester = {
-  id: 1,
+  id: SEMESTER_ID,
   code: 'HK1-2025',
   name: 'Học kỳ 1 năm 2025-2026',
   startDate: new Date('2025-09-01'),
@@ -55,8 +57,8 @@ describe('SemesterController', () => {
 
   it('findOne delegates to service with parsed id', async () => {
     service.findOne.mockResolvedValue(mockSemester);
-    const result = await controller.findOne(1);
-    expect(service.findOne).toHaveBeenCalledWith(1);
+    const result = await controller.findOne(SEMESTER_ID);
+    expect(service.findOne).toHaveBeenCalledWith(SEMESTER_ID);
     expect(result).toEqual(mockSemester);
   });
 
@@ -75,15 +77,15 @@ describe('SemesterController', () => {
 
   it('update delegates to service with id and dto', async () => {
     service.update.mockResolvedValue(mockSemester);
-    const result = await controller.update(1, { name: 'Updated' });
-    expect(service.update).toHaveBeenCalledWith(1, { name: 'Updated' });
+    const result = await controller.update(SEMESTER_ID, { name: 'Updated' });
+    expect(service.update).toHaveBeenCalledWith(SEMESTER_ID, { name: 'Updated' });
     expect(result).toEqual(mockSemester);
   });
 
   it('remove delegates to service with id', async () => {
     service.remove.mockResolvedValue(mockSemester);
-    const result = await controller.remove(1);
-    expect(service.remove).toHaveBeenCalledWith(1);
+    const result = await controller.remove(SEMESTER_ID);
+    expect(service.remove).toHaveBeenCalledWith(SEMESTER_ID);
     expect(result).toEqual(mockSemester);
   });
 
@@ -92,15 +94,15 @@ describe('SemesterController', () => {
       ...mockSemester,
       status: SemesterStatus.ACTIVE,
     });
-    const result = await controller.activate(1);
-    expect(service.activate).toHaveBeenCalledWith(1);
+    const result = await controller.activate(SEMESTER_ID);
+    expect(service.activate).toHaveBeenCalledWith(SEMESTER_ID);
     expect(result.status).toBe(SemesterStatus.ACTIVE);
   });
 
   it('deactivate delegates to service with id', async () => {
     service.deactivate.mockResolvedValue(mockSemester);
-    const result = await controller.deactivate(1);
-    expect(service.deactivate).toHaveBeenCalledWith(1);
+    const result = await controller.deactivate(SEMESTER_ID);
+    expect(service.deactivate).toHaveBeenCalledWith(SEMESTER_ID);
     expect(result).toEqual(mockSemester);
   });
 
@@ -109,8 +111,8 @@ describe('SemesterController', () => {
       ...mockSemester,
       status: SemesterStatus.CLOSED,
     });
-    const result = await controller.close(1);
-    expect(service.close).toHaveBeenCalledWith(1);
+    const result = await controller.close(SEMESTER_ID);
+    expect(service.close).toHaveBeenCalledWith(SEMESTER_ID);
     expect(result.status).toBe(SemesterStatus.CLOSED);
   });
 });

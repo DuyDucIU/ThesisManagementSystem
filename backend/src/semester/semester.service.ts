@@ -41,7 +41,7 @@ export class SemesterService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const semester = await this.prisma.semester.findUnique({ where: { id } });
     if (!semester) throw new NotFoundException(`Semester #${id} not found`);
     return semester;
@@ -74,7 +74,7 @@ export class SemesterService {
     }
   }
 
-  async update(id: number, dto: UpdateSemesterDto) {
+  async update(id: string, dto: UpdateSemesterDto) {
     const semester = await this.findOne(id);
 
     if (semester.status !== SemesterStatus.INACTIVE) {
@@ -119,7 +119,7 @@ export class SemesterService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const semester = await this.findOne(id);
 
     if (semester.status !== SemesterStatus.INACTIVE) {
@@ -140,7 +140,7 @@ export class SemesterService {
     return this.prisma.semester.delete({ where: { id } });
   }
 
-  async activate(id: number) {
+  async activate(id: string) {
     const semester = await this.findOne(id);
 
     if (semester.status !== SemesterStatus.INACTIVE) {
@@ -161,7 +161,7 @@ export class SemesterService {
     });
   }
 
-  async deactivate(id: number) {
+  async deactivate(id: string) {
     const semester = await this.findOne(id);
 
     if (semester.status !== SemesterStatus.ACTIVE) {
@@ -174,7 +174,7 @@ export class SemesterService {
     });
   }
 
-  async close(id: number) {
+  async close(id: string) {
     const semester = await this.findOne(id);
 
     if (semester.status !== SemesterStatus.ACTIVE) {

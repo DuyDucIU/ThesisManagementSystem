@@ -87,7 +87,7 @@ export class StudentService {
     return { data, total, page, limit };
   }
 
-  async activateAccount(id: number) {
+  async activateAccount(id: string) {
     const student = await this.prisma.student.findUnique({ where: { id } });
     if (!student) throw new NotFoundException(`Student #${id} not found`);
     if (student.userId !== null)
@@ -129,7 +129,7 @@ export class StudentService {
     }
   }
 
-  async toggleAccount(id: number, dto: AccountActionDto) {
+  async toggleAccount(id: string, dto: AccountActionDto) {
     const student = await this.prisma.student.findUnique({ where: { id } });
     if (!student) throw new NotFoundException(`Student #${id} not found`);
     if (student.userId === null)
@@ -206,7 +206,7 @@ export class StudentService {
       select: { userId: true },
     });
     const skipped = dto.ids.length - students.length;
-    const userIds = students.map((s) => s.userId).filter((id): id is number => id !== null);
+    const userIds = students.map((s) => s.userId).filter((id): id is string => id !== null);
 
     if (userIds.length > 0) {
       await this.prisma.user.updateMany({
@@ -218,7 +218,7 @@ export class StudentService {
     return { updated: students.length, skipped };
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const student = await this.prisma.student.findUnique({ where: { id } });
     if (!student) throw new NotFoundException(`Student #${id} not found`);
 
@@ -238,7 +238,7 @@ export class StudentService {
     ]);
   }
 
-  async update(id: number, dto: UpdateStudentDto) {
+  async update(id: string, dto: UpdateStudentDto) {
     const student = await this.prisma.student.findUnique({ where: { id } });
     if (!student) throw new NotFoundException(`Student #${id} not found`);
 

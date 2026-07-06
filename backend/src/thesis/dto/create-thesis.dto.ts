@@ -1,14 +1,9 @@
-import { IsInt, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsUUID } from 'class-validator';
 
 export class CreateThesisDto {
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  enrollmentId: number;
+  @IsUUID('4')
+  enrollmentId: string;
 
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  topicId: number;
+  @IsUUID('4')
+  topicId: string;
 }

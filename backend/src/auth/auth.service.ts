@@ -50,7 +50,7 @@ export class AuthService {
   }
 
   async refresh(token: string) {
-    let payload: { sub: number; jti: string };
+    let payload: { sub: string; jti: string };
     try {
       payload = await this.jwtService.verifyAsync(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
@@ -81,14 +81,14 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async logout(userId: number) {
+  async logout(userId: string) {
     await this.prisma.user.update({
       where: { id: userId },
       data: { refreshToken: null },
     });
   }
 
-  async getMe(userId: number) {
+  async getMe(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { lecturer: true, student: true },
@@ -99,7 +99,7 @@ export class AuthService {
     return this.buildProfile(user);
   }
 
-  private async generateTokens(userId: number, username: string, role: Role) {
+  private async generateTokens(userId: string, username: string, role: Role) {
     const jti = randomUUID();
 
     const [accessToken, refreshToken] = await Promise.all([

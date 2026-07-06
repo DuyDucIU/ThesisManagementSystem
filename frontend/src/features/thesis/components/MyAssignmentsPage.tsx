@@ -45,13 +45,13 @@ export default function MyAssignmentsPage() {
     fetchSemesters,
   } = useThesisStore()
 
-  const [semesterId, setSemesterId] = useState<number | null>(null)
+  const [semesterId, setSemesterId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<'all' | ThesisStatus>('all')
   const [assignOpen, setAssignOpen] = useState(false)
   const [unassignTarget, setUnassignTarget] = useState<ThesisItem | null>(null)
   const [unassigning, setUnassigning] = useState(false)
   const [totalAssigned, setTotalAssigned] = useState(0)
-  const [topicCounts, setTopicCounts] = useState<Record<number, number>>({})
+  const [topicCounts, setTopicCounts] = useState<Record<string, number>>({})
 
   // Load semesters once and default to the active one (or the first).
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function MyAssignmentsPage() {
     // Fetch unfiltered totals for accurate capacity count and topic hints
     void thesisApi.list({ lecturerId, semesterId }).then((res) => {
       setTotalAssigned(res.data.length)
-      const counts: Record<number, number> = {}
+      const counts: Record<string, number> = {}
       for (const thesis of res.data) {
         counts[thesis.topic.id] = (counts[thesis.topic.id] ?? 0) + 1
       }
@@ -107,7 +107,7 @@ export default function MyAssignmentsPage() {
     )
     void thesisApi.list({ lecturerId, semesterId }).then((res) => {
       setTotalAssigned(res.data.length)
-      const counts: Record<number, number> = {}
+      const counts: Record<string, number> = {}
       for (const thesis of res.data) {
         counts[thesis.topic.id] = (counts[thesis.topic.id] ?? 0) + 1
       }
@@ -176,15 +176,15 @@ export default function MyAssignmentsPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <Select
-          value={semesterId !== null ? String(semesterId) : undefined}
-          onValueChange={(v) => setSemesterId(Number(v))}
+          value={semesterId !== null ? semesterId : undefined}
+          onValueChange={(v) => setSemesterId(v)}
         >
           <SelectTrigger className="w-60 font-sans text-sm">
             <SelectValue placeholder="Semester" />
           </SelectTrigger>
           <SelectContent>
             {semesters.map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>
+              <SelectItem key={s.id} value={s.id}>
                 {s.code} — {s.name}
                 {s.status === 'ACTIVE' ? ' (active)' : ''}
               </SelectItem>

@@ -17,8 +17,13 @@ function buildExcelBuffer(dataRows: string[][]): Buffer {
   );
 }
 
+const ACTIVE_SEMESTER_ID = '11111111-1111-1111-1111-111111111111';
+const CLOSED_SEMESTER_ID = '22222222-2222-2222-2222-222222222222';
+const INACTIVE_SEMESTER_ID = '33333333-3333-3333-3333-333333333333';
+const NON_EXISTENT_SEMESTER_ID = '99999999-9999-9999-9999-999999999999';
+
 const mockActiveSemester = {
-  id: 1,
+  id: ACTIVE_SEMESTER_ID,
   code: 'HK1-2025',
   name: 'HK1',
   startDate: new Date('2025-09-01'),
@@ -30,12 +35,12 @@ const mockActiveSemester = {
 
 const mockClosedSemester = {
   ...mockActiveSemester,
-  id: 2,
+  id: CLOSED_SEMESTER_ID,
   status: SemesterStatus.CLOSED,
 };
 const mockInactiveSemester = {
   ...mockActiveSemester,
-  id: 3,
+  id: INACTIVE_SEMESTER_ID,
   status: SemesterStatus.INACTIVE,
 };
 
@@ -86,14 +91,14 @@ describe('EnrollmentService', () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
       prisma.enrollment.findMany.mockResolvedValue([
         {
-          id: 10,
+          id: 'e0000000-0000-0000-0000-000000000010',
           status: 'ASSIGNED',
           student: {
-            id: 1,
+            id: 's0000000-0000-0000-0000-000000000001',
             studentId: 'ITITIU20001',
             fullName: 'Nguyen Van A',
             email: 'a@student.hcmiu.edu.vn',
-            userId: 42,
+            userId: 'u0000000-0000-0000-0000-000000000042',
           },
         },
       ]);
@@ -105,16 +110,16 @@ describe('EnrollmentService', () => {
         where: { status: 'ACTIVE' },
       });
       expect(result.semester).toEqual({
-        id: 1,
+        id: ACTIVE_SEMESTER_ID,
         code: 'HK1-2025',
         name: 'HK1',
       });
       expect(result.data).toEqual([
         {
-          enrollmentId: 10,
+          enrollmentId: 'e0000000-0000-0000-0000-000000000010',
           status: 'ASSIGNED',
           student: {
-            id: 1,
+            id: 's0000000-0000-0000-0000-000000000001',
             studentId: 'ITITIU20001',
             fullName: 'Nguyen Van A',
             email: 'a@student.hcmiu.edu.vn',
@@ -132,10 +137,10 @@ describe('EnrollmentService', () => {
       prisma.enrollment.findMany.mockResolvedValue([]);
       prisma.enrollment.count.mockResolvedValue(0);
 
-      await service.findAll({ semesterId: 2 });
+      await service.findAll({ semesterId: CLOSED_SEMESTER_ID });
 
       expect(prisma.semester.findUnique).toHaveBeenCalledWith({
-        where: { id: 2 },
+        where: { id: CLOSED_SEMESTER_ID },
       });
       expect(prisma.semester.findFirst).not.toHaveBeenCalled();
     });
@@ -145,7 +150,7 @@ describe('EnrollmentService', () => {
       prisma.enrollment.findMany.mockResolvedValue([]);
       prisma.enrollment.count.mockResolvedValue(0);
 
-      await expect(service.findAll({ semesterId: 2 })).resolves.toBeDefined();
+      await expect(service.findAll({ semesterId: CLOSED_SEMESTER_ID })).resolves.toBeDefined();
     });
 
     it('throws 400 when no active and no semesterId', async () => {
@@ -161,8 +166,8 @@ describe('EnrollmentService', () => {
     it('throws 404 when semesterId not found', async () => {
       prisma.semester.findUnique.mockResolvedValue(null);
 
-      await expect(service.findAll({ semesterId: 999 })).rejects.toThrow(
-        new NotFoundException('Semester #999 not found'),
+      await expect(service.findAll({ semesterId: NON_EXISTENT_SEMESTER_ID })).rejects.toThrow(
+        new NotFoundException(`Semester #${NON_EXISTENT_SEMESTER_ID} not found`),
       );
     });
 
@@ -177,7 +182,7 @@ describe('EnrollmentService', () => {
         expect.objectContaining({
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           where: expect.objectContaining({
-            semesterId: 1,
+            semesterId: ACTIVE_SEMESTER_ID,
             status: 'ASSIGNED',
           }),
         }),
@@ -195,7 +200,7 @@ describe('EnrollmentService', () => {
         expect.objectContaining({
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           where: expect.objectContaining({
-            semesterId: 1,
+            semesterId: ACTIVE_SEMESTER_ID,
             student: {
               OR: [
                 { fullName: { contains: 'Nguyen' } },
@@ -212,10 +217,10 @@ describe('EnrollmentService', () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
       prisma.enrollment.findMany.mockResolvedValue([
         {
-          id: 10,
+          id: 'e0000000-0000-0000-0000-000000000010',
           status: 'AVAILABLE',
           student: {
-            id: 1,
+            id: 's0000000-0000-0000-0000-000000000001',
             studentId: 'X',
             fullName: 'X',
             email: 'x@x',
@@ -241,7 +246,7 @@ describe('EnrollmentService', () => {
         expect.objectContaining({
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           where: expect.objectContaining({
-            semesterId: 1,
+            semesterId: ACTIVE_SEMESTER_ID,
             status: 'AVAILABLE',
           }),
         }),
@@ -259,7 +264,7 @@ describe('EnrollmentService', () => {
         expect.objectContaining({
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           where: expect.objectContaining({
-            semesterId: 1,
+            semesterId: ACTIVE_SEMESTER_ID,
             status: 'ASSIGNED',
           }),
         }),
@@ -283,7 +288,7 @@ describe('EnrollmentService', () => {
       prisma.semester.findUnique.mockResolvedValue(mockClosedSemester);
       const buffer = buildExcelBuffer([['A', 'B', 'u1', 'S1']]);
 
-      await expect(service.parseImport(buffer, 2)).rejects.toThrow(
+      await expect(service.parseImport(buffer, CLOSED_SEMESTER_ID)).rejects.toThrow(
         new BadRequestException('Cannot import into a closed semester'),
       );
     });
@@ -292,8 +297,8 @@ describe('EnrollmentService', () => {
       prisma.semester.findUnique.mockResolvedValue(null);
       const buffer = buildExcelBuffer([['A', 'B', 'u1', 'S1']]);
 
-      await expect(service.parseImport(buffer, 999)).rejects.toThrow(
-        new NotFoundException('Semester #999 not found'),
+      await expect(service.parseImport(buffer, NON_EXISTENT_SEMESTER_ID)).rejects.toThrow(
+        new NotFoundException(`Semester #${NON_EXISTENT_SEMESTER_ID} not found`),
       );
     });
 
@@ -320,7 +325,7 @@ describe('EnrollmentService', () => {
       expect(result.valid).toBe(2);
       expect(result.invalid).toBe(0);
       expect(result.alreadyEnrolled).toBe(0);
-      expect(result.semester).toEqual({ id: 1, code: 'HK1-2025', name: 'HK1' });
+      expect(result.semester).toEqual({ id: ACTIVE_SEMESTER_ID, code: 'HK1-2025', name: 'HK1' });
     });
 
     it('reports error for row missing last name', async () => {
@@ -376,16 +381,16 @@ describe('EnrollmentService', () => {
     it('detects already-enrolled students in target semester', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
       prisma.student.findUnique.mockResolvedValue({
-        id: 5,
+        id: 's0000000-0000-0000-0000-000000000005',
         studentId: 'ITITIU20001',
         fullName: 'A',
         email: 'a@x',
         userId: null,
       });
       prisma.enrollment.findUnique.mockResolvedValue({
-        id: 20,
-        studentId: 5,
-        semesterId: 1,
+        id: 'e0000000-0000-0000-0000-000000000020',
+        studentId: 's0000000-0000-0000-0000-000000000005',
+        semesterId: ACTIVE_SEMESTER_ID,
         status: 'AVAILABLE',
       });
 
@@ -405,10 +410,10 @@ describe('EnrollmentService', () => {
       prisma.student.findUnique.mockResolvedValue(null);
       const buffer = buildExcelBuffer([['VO', 'KIET', 'u1', 'S1']]);
 
-      const result = await service.parseImport(buffer, 3);
+      const result = await service.parseImport(buffer, INACTIVE_SEMESTER_ID);
 
       expect(result.valid).toBe(1);
-      expect(result.semester.id).toBe(3);
+      expect(result.semester.id).toBe(INACTIVE_SEMESTER_ID);
     });
   });
 
@@ -417,7 +422,7 @@ describe('EnrollmentService', () => {
       prisma.semester.findUnique.mockResolvedValue(mockClosedSemester);
       const buffer = buildExcelBuffer([['A', 'B', 'u', 'S1']]);
 
-      await expect(service.importEnrollments(buffer, 2)).rejects.toThrow(
+      await expect(service.importEnrollments(buffer, CLOSED_SEMESTER_ID)).rejects.toThrow(
         new BadRequestException('Cannot import into a closed semester'),
       );
     });
@@ -425,7 +430,7 @@ describe('EnrollmentService', () => {
     it('creates student and enrollment for new row', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
       prisma.student.upsert.mockResolvedValue({
-        id: 100,
+        id: 's0000000-0000-0000-0000-000000000100',
         studentId: 'ITITIU20002',
         fullName: 'VO KIET',
         email: 'u1@student.hcmiu.edu.vn',
@@ -433,9 +438,9 @@ describe('EnrollmentService', () => {
       });
       prisma.enrollment.findUnique.mockResolvedValue(null);
       prisma.enrollment.create.mockResolvedValue({
-        id: 500,
-        studentId: 100,
-        semesterId: 1,
+        id: 'e0000000-0000-0000-0000-000000000500',
+        studentId: 's0000000-0000-0000-0000-000000000100',
+        semesterId: ACTIVE_SEMESTER_ID,
         status: 'AVAILABLE',
       });
       const buffer = buildExcelBuffer([['VO', 'KIET', 'u1', 'ITITIU20002']]);
@@ -452,26 +457,26 @@ describe('EnrollmentService', () => {
         },
       });
       expect(prisma.enrollment.create).toHaveBeenCalledWith({
-        data: { studentId: 100, semesterId: 1 },
+        data: { studentId: 's0000000-0000-0000-0000-000000000100', semesterId: ACTIVE_SEMESTER_ID },
       });
       expect(result.imported).toBe(1);
       expect(result.skipped).toBe(0);
-      expect(result.semester).toEqual({ id: 1, code: 'HK1-2025', name: 'HK1' });
+      expect(result.semester).toEqual({ id: ACTIVE_SEMESTER_ID, code: 'HK1-2025', name: 'HK1' });
     });
 
     it('skips existing student already enrolled in target semester', async () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
       prisma.student.upsert.mockResolvedValue({
-        id: 100,
+        id: 's0000000-0000-0000-0000-000000000100',
         studentId: 'ITITIU20002',
         fullName: 'VO KIET',
         email: 'u1@student.hcmiu.edu.vn',
         userId: null,
       });
       prisma.enrollment.findUnique.mockResolvedValue({
-        id: 500,
-        studentId: 100,
-        semesterId: 1,
+        id: 'e0000000-0000-0000-0000-000000000500',
+        studentId: 's0000000-0000-0000-0000-000000000100',
+        semesterId: ACTIVE_SEMESTER_ID,
         status: 'AVAILABLE',
       });
       const buffer = buildExcelBuffer([['VO', 'KIET', 'u1', 'ITITIU20002']]);
@@ -507,14 +512,14 @@ describe('EnrollmentService', () => {
       prisma.semester.findFirst.mockResolvedValue(mockActiveSemester);
       prisma.student.upsert
         .mockResolvedValueOnce({
-          id: 1,
+          id: 's0000000-0000-0000-0000-000000000001',
           studentId: 'S1',
           fullName: 'A B',
           email: 'a@x',
           userId: null,
         })
         .mockResolvedValueOnce({
-          id: 2,
+          id: 's0000000-0000-0000-0000-000000000002',
           studentId: 'S2',
           fullName: 'C D',
           email: 'c@x',
@@ -523,15 +528,15 @@ describe('EnrollmentService', () => {
       prisma.enrollment.findUnique
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({
-          id: 99,
-          studentId: 2,
-          semesterId: 1,
+          id: 'e0000000-0000-0000-0000-000000000099',
+          studentId: 's0000000-0000-0000-0000-000000000002',
+          semesterId: ACTIVE_SEMESTER_ID,
           status: 'AVAILABLE',
         });
       prisma.enrollment.create.mockResolvedValue({
-        id: 10,
-        studentId: 1,
-        semesterId: 1,
+        id: 'e0000000-0000-0000-0000-000000000010',
+        studentId: 's0000000-0000-0000-0000-000000000001',
+        semesterId: ACTIVE_SEMESTER_ID,
         status: 'AVAILABLE',
       });
 

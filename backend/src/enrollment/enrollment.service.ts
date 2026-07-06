@@ -36,7 +36,7 @@ export class EnrollmentService {
   constructor(private prisma: PrismaService) {}
 
   private async resolveTargetSemester(
-    semesterId: number | undefined,
+    semesterId: string | undefined,
     { allowClosed }: { allowClosed: boolean },
   ): Promise<Semester> {
     if (semesterId != null) {
@@ -157,7 +157,7 @@ export class EnrollmentService {
 
   async parseImport(
     buffer: Buffer,
-    semesterId: number | undefined,
+    semesterId: string | undefined,
   ): Promise<ParseImportResult> {
     const target = await this.resolveTargetSemester(semesterId, {
       allowClosed: false,
@@ -220,7 +220,7 @@ export class EnrollmentService {
 
   async importEnrollments(
     buffer: Buffer,
-    semesterId: number | undefined,
+    semesterId: string | undefined,
   ): Promise<ImportEnrollmentsResult> {
     const target = await this.resolveTargetSemester(semesterId, {
       allowClosed: false,

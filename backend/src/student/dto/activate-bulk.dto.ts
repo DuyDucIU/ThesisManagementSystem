@@ -1,11 +1,9 @@
-import { Type } from 'class-transformer';
-import { IsArray, ArrayNotEmpty, ArrayMaxSize, IsInt } from 'class-validator';
+import { IsArray, ArrayNotEmpty, ArrayMaxSize, IsUUID } from 'class-validator';
 
 export class ActivateBulkDto {
   @IsArray()
   @ArrayNotEmpty()
   @ArrayMaxSize(100)
-  @IsInt({ each: true })
-  @Type(() => Number)
-  ids: number[];
+  @IsUUID('4', { each: true })
+  ids: string[];
 }

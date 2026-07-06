@@ -54,7 +54,7 @@ export default function EnrollmentImportPage() {
   const activeSemester = semesters.find((s) => s.status === 'ACTIVE')
   const selectableSemesters = semesters.filter((s) => s.status === 'INACTIVE')
   const chosenSemesterId =
-    semesterIdSelect !== 'active' ? Number(semesterIdSelect) : undefined
+    semesterIdSelect !== 'active' ? semesterIdSelect : undefined
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0] ?? null
@@ -165,7 +165,7 @@ export default function EnrollmentImportPage() {
                 : 'Active semester (none available)'}
             </SelectItem>
             {selectableSemesters.map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>
+              <SelectItem key={s.id} value={s.id}>
                 {s.code} — {s.name}
               </SelectItem>
             ))}

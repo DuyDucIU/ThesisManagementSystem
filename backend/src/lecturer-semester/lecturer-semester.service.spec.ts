@@ -3,6 +3,10 @@ import { NotFoundException } from '@nestjs/common';
 import { LecturerSemesterService } from './lecturer-semester.service';
 import { PrismaService } from '../prisma/prisma.service';
 
+const LECTURER_ID = '11111111-1111-1111-1111-111111111111';
+const SEMESTER_ID = '33333333-3333-3333-3333-333333333333';
+const NON_EXISTENT_ID = '99999999-9999-9999-9999-999999999999';
+
 describe('LecturerSemesterService', () => {
   let service: LecturerSemesterService;
   let prisma: {
@@ -39,11 +43,11 @@ describe('LecturerSemesterService', () => {
     it('returns maxStudents from LecturerSemester when record exists for the target semester', async () => {
       prisma.lecturerSemester.findUnique.mockResolvedValue({ maxStudents: 8 });
 
-      const result = await service.resolveCapacity(1, 3);
+      const result = await service.resolveCapacity(LECTURER_ID, SEMESTER_ID);
 
       expect(result).toBe(8);
       expect(prisma.lecturerSemester.findUnique).toHaveBeenCalledWith({
-        where: { lecturerId_semesterId: { lecturerId: 1, semesterId: 3 } },
+        where: { lecturerId_semesterId: { lecturerId: LECTURER_ID, semesterId: SEMESTER_ID } },
       });
     });
 
@@ -52,11 +56,11 @@ describe('LecturerSemesterService', () => {
       prisma.semester.findUnique.mockResolvedValue({ startDate: new Date('2026-06-01') });
       prisma.lecturerSemester.findFirst.mockResolvedValue({ maxStudents: 6 });
 
-      const result = await service.resolveCapacity(1, 3);
+      const result = await service.resolveCapacity(LECTURER_ID, SEMESTER_ID);
 
       expect(result).toBe(6);
       expect(prisma.lecturerSemester.findFirst).toHaveBeenCalledWith({
-        where: { lecturerId: 1, semester: { startDate: { lt: expect.any(Date) } } },
+        where: { lecturerId: LECTURER_ID, semester: { startDate: { lt: expect.any(Date) } } },
         orderBy: { semester: { startDate: 'desc' } },
       });
     });
@@ -67,7 +71,7 @@ describe('LecturerSemesterService', () => {
       prisma.lecturerSemester.findFirst.mockResolvedValue(null);
       prisma.lecturer.findUnique.mockResolvedValue({ maxStudents: 5 });
 
-      const result = await service.resolveCapacity(1, 3);
+      const result = await service.resolveCapacity(LECTURER_ID, SEMESTER_ID);
 
       expect(result).toBe(5);
     });
@@ -76,7 +80,7 @@ describe('LecturerSemesterService', () => {
       prisma.lecturerSemester.findUnique.mockResolvedValue(null);
       prisma.semester.findUnique.mockResolvedValue(null);
 
-      await expect(service.resolveCapacity(1, 999))
+      await expect(service.resolveCapacity(LECTURER_ID, NON_EXISTENT_ID))
         .rejects.toThrow(NotFoundException);
     });
 
@@ -86,32 +90,32 @@ describe('LecturerSemesterService', () => {
       prisma.lecturerSemester.findFirst.mockResolvedValue(null);
       prisma.lecturer.findUnique.mockResolvedValue(null);
 
-      await expect(service.resolveCapacity(999, 3))
+      await expect(service.resolveCapacity(NON_EXISTENT_ID, SEMESTER_ID))
         .rejects.toThrow(NotFoundException);
     });
   });
 
   describe('upsert', () => {
     it('creates or updates a LecturerSemester record', async () => {
-      prisma.lecturer.findUnique.mockResolvedValue({ id: 1 });
+      prisma.lecturer.findUnique.mockResolvedValue({ id: LECTURER_ID });
       prisma.lecturerSemester.upsert.mockResolvedValue({
-        lecturerId: 1, semesterId: 3, maxStudents: 8,
+        lecturerId: LECTURER_ID, semesterId: SEMESTER_ID, maxStudents: 8,
       });
 
-      const result = await service.upsert(1, { semesterId: 3, maxStudents: 8 });
+      const result = await service.upsert(LECTURER_ID, { semesterId: SEMESTER_ID, maxStudents: 8 });
 
-      expect(result).toEqual({ lecturerId: 1, semesterId: 3, maxStudents: 8 });
+      expect(result).toEqual({ lecturerId: LECTURER_ID, semesterId: SEMESTER_ID, maxStudents: 8 });
       expect(prisma.lecturerSemester.upsert).toHaveBeenCalledWith({
-        where: { lecturerId_semesterId: { lecturerId: 1, semesterId: 3 } },
+        where: { lecturerId_semesterId: { lecturerId: LECTURER_ID, semesterId: SEMESTER_ID } },
         update: { maxStudents: 8 },
-        create: { lecturerId: 1, semesterId: 3, maxStudents: 8 },
+        create: { lecturerId: LECTURER_ID, semesterId: SEMESTER_ID, maxStudents: 8 },
       });
     });
 
     it('throws NotFoundException when lecturer does not exist', async () => {
       prisma.lecturer.findUnique.mockResolvedValue(null);
 
-      await expect(service.upsert(999, { semesterId: 3, maxStudents: 5 }))
+      await expect(service.upsert(NON_EXISTENT_ID, { semesterId: SEMESTER_ID, maxStudents: 5 }))
         .rejects.toThrow(NotFoundException);
     });
   });
@@ -119,7 +123,7 @@ describe('LecturerSemesterService', () => {
   describe('findAll', () => {
     it('returns all records when no semesterId filter', async () => {
       prisma.lecturerSemester.findMany.mockResolvedValue([
-        { lecturerId: 1, semesterId: 3, maxStudents: 8, lecturer: { id: 1, fullName: 'Dr. A', email: 'a@u.edu' } },
+        { lecturerId: LECTURER_ID, semesterId: SEMESTER_ID, maxStudents: 8, lecturer: { id: LECTURER_ID, fullName: 'Dr. A', email: 'a@u.edu' } },
       ]);
 
       const result = await service.findAll();
@@ -133,10 +137,10 @@ describe('LecturerSemesterService', () => {
     it('filters by semesterId when provided', async () => {
       prisma.lecturerSemester.findMany.mockResolvedValue([]);
 
-      await service.findAll(3);
+      await service.findAll(SEMESTER_ID);
 
       expect(prisma.lecturerSemester.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { semesterId: 3 } }),
+        expect.objectContaining({ where: { semesterId: SEMESTER_ID } }),
       );
     });
   });

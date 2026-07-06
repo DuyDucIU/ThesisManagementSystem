@@ -1,13 +1,11 @@
 import { Transform, Type } from 'class-transformer';
-import { IsOptional, IsString, IsInt, Min, Max, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsUUID, Min, Max, IsEnum } from 'class-validator';
 import { EnrollmentStatus } from '@prisma/client';
 
 export class QueryEnrollmentDto {
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  semesterId?: number;
+  @IsUUID('4')
+  semesterId?: string;
 
   @IsOptional()
   @IsEnum(EnrollmentStatus)

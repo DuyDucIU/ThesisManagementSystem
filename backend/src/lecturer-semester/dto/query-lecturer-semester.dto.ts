@@ -1,10 +1,7 @@
-import { IsOptional, IsInt, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsUUID } from 'class-validator';
 
 export class QueryLecturerSemesterDto {
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  semesterId?: number;
+  @IsUUID('4')
+  semesterId?: string;
 }

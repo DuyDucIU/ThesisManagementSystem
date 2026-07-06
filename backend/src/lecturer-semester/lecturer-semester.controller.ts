@@ -5,7 +5,7 @@ import {
   Param,
   Query,
   Body,
-  ParseIntPipe,
+  ParseUUIDPipe,
   ForbiddenException,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
@@ -15,7 +15,7 @@ import { LecturerSemesterService } from './lecturer-semester.service';
 import { UpsertLecturerSemesterDto } from './dto/upsert-lecturer-semester.dto';
 import { QueryLecturerSemesterDto } from './dto/query-lecturer-semester.dto';
 
-type AuthUser = { role: Role; lecturer: { id: number } | null };
+type AuthUser = { role: Role; lecturer: { id: string } | null };
 
 @Controller('lecturer-semesters')
 export class LecturerSemesterController {
@@ -30,7 +30,7 @@ export class LecturerSemesterController {
   @Get('capacity/:lecturerId')
   @Roles(Role.ADMIN, Role.LECTURER)
   async getCapacity(
-    @Param('lecturerId', ParseIntPipe) lecturerId: number,
+    @Param('lecturerId', ParseUUIDPipe) lecturerId: string,
     @Query() query: QueryLecturerSemesterDto,
     @CurrentUser() currentUser: AuthUser,
   ) {
@@ -47,7 +47,7 @@ export class LecturerSemesterController {
   @Patch(':lecturerId')
   @Roles(Role.ADMIN)
   upsert(
-    @Param('lecturerId', ParseIntPipe) lecturerId: number,
+    @Param('lecturerId', ParseUUIDPipe) lecturerId: string,
     @Body() dto: UpsertLecturerSemesterDto,
   ) {
     return this.lecturerSemesterService.upsert(lecturerId, dto);

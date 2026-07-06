@@ -26,10 +26,10 @@ interface AssignStudentDialogProps {
    * When omitted, every lecturer's open topics are listed (admin view) and each
    * topic row shows its owning lecturer.
    */
-  lecturerId?: number
-  semesterId: number
+  lecturerId?: string
+  semesterId: string
   /** Map of topicId → current assignment count, used to display topic load. */
-  topicCounts?: Record<number, number>
+  topicCounts?: Record<string, number>
   onAssign: (dto: CreateThesisDto) => Promise<void>
 }
 

@@ -12,15 +12,21 @@ describe('AuthService', () => {
   let prisma: { user: { findUnique: jest.Mock; update: jest.Mock } };
   let jwtService: jest.Mocked<Pick<JwtService, 'signAsync' | 'verifyAsync'>>;
 
+  const mockUserId = '11111111-1111-1111-1111-111111111111';
+  const mockMissingUserId = '99999999-9999-9999-9999-999999999999';
   const mockUser = {
-    id: 1,
+    id: mockUserId,
     username: 'john.doe',
     passwordHash: '$2b$10$hashedpassword',
     role: Role.STUDENT,
     isActive: true,
     refreshToken: null,
     lecturer: null,
-    student: { id: 10, fullName: 'John Doe', email: 'john@uni.edu' },
+    student: {
+      id: '10101010-1010-1010-1010-101010101010',
+      fullName: 'John Doe',
+      email: 'john@uni.edu',
+    },
   };
 
   beforeEach(async () => {
@@ -71,13 +77,13 @@ describe('AuthService', () => {
       expect(result.accessToken).toBe('mock.jwt.token');
       expect(result.refreshToken).toBe('mock.jwt.token');
       expect(result.user).toEqual({
-        id: 1,
+        id: mockUserId,
         username: 'john.doe',
         role: Role.STUDENT,
         fullName: 'John Doe',
         email: 'john@uni.edu',
         lecturer: null,
-        student: { id: 10 },
+        student: { id: '10101010-1010-1010-1010-101010101010' },
       });
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { refreshToken: 'hashed-jti' } }),
@@ -115,7 +121,7 @@ describe('AuthService', () => {
 
   describe('refresh', () => {
     it('returns new tokens for valid refresh token', async () => {
-      jwtService.verifyAsync.mockResolvedValue({ sub: 1, jti: 'test-uuid' });
+      jwtService.verifyAsync.mockResolvedValue({ sub: mockUserId, jti: 'test-uuid' });
       prisma.user.findUnique.mockResolvedValue({
         ...mockUser,
         refreshToken: 'hashed-jti',
@@ -139,7 +145,7 @@ describe('AuthService', () => {
     });
 
     it('throws 401 "Invalid refresh token" when user not found', async () => {
-      jwtService.verifyAsync.mockResolvedValue({ sub: 99, jti: 'test-uuid' });
+      jwtService.verifyAsync.mockResolvedValue({ sub: mockMissingUserId, jti: 'test-uuid' });
       prisma.user.findUnique.mockResolvedValue(null);
 
       await expect(service.refresh('valid.token')).rejects.toThrow(
@@ -148,7 +154,7 @@ describe('AuthService', () => {
     });
 
     it('throws 401 "Invalid refresh token" when no stored token in DB', async () => {
-      jwtService.verifyAsync.mockResolvedValue({ sub: 1, jti: 'test-uuid' });
+      jwtService.verifyAsync.mockResolvedValue({ sub: mockUserId, jti: 'test-uuid' });
       prisma.user.findUnique.mockResolvedValue({
         ...mockUser,
         refreshToken: null,
@@ -160,7 +166,7 @@ describe('AuthService', () => {
     });
 
     it('throws 401 "Invalid refresh token" when jti does not match stored hash', async () => {
-      jwtService.verifyAsync.mockResolvedValue({ sub: 1, jti: 'test-uuid' });
+      jwtService.verifyAsync.mockResolvedValue({ sub: mockUserId, jti: 'test-uuid' });
       prisma.user.findUnique.mockResolvedValue({
         ...mockUser,
         refreshToken: 'hashed-jti',
@@ -177,10 +183,10 @@ describe('AuthService', () => {
     it('sets refreshToken to null in DB', async () => {
       prisma.user.update.mockResolvedValue(mockUser as any);
 
-      await service.logout(1);
+      await service.logout(mockUserId);
 
       expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 1 },
+        where: { id: mockUserId },
         data: { refreshToken: null },
       });
     });
@@ -190,16 +196,16 @@ describe('AuthService', () => {
     it('returns profile for STUDENT user', async () => {
       prisma.user.findUnique.mockResolvedValue(mockUser as any);
 
-      const result = await service.getMe(1);
+      const result = await service.getMe(mockUserId);
 
       expect(result).toEqual({
-        id: 1,
+        id: mockUserId,
         username: 'john.doe',
         role: Role.STUDENT,
         fullName: 'John Doe',
         email: 'john@uni.edu',
         lecturer: null,
-        student: { id: 10 },
+        student: { id: '10101010-1010-1010-1010-101010101010' },
       });
     });
 
@@ -208,14 +214,22 @@ describe('AuthService', () => {
         ...mockUser,
         role: Role.LECTURER,
         student: null,
-        lecturer: { id: 20, fullName: 'Prof. Smith', email: 'smith@uni.edu', maxStudents: 5 },
+        lecturer: {
+          id: '20202020-2020-2020-2020-202020202020',
+          fullName: 'Prof. Smith',
+          email: 'smith@uni.edu',
+          maxStudents: 5,
+        },
       } as any);
 
-      const result = await service.getMe(1);
+      const result = await service.getMe(mockUserId);
 
       expect(result.fullName).toBe('Prof. Smith');
       expect(result.email).toBe('smith@uni.edu');
-      expect(result.lecturer).toEqual({ id: 20, maxStudents: 5 });
+      expect(result.lecturer).toEqual({
+        id: '20202020-2020-2020-2020-202020202020',
+        maxStudents: 5,
+      });
       expect(result.student).toBeNull();
     });
 
@@ -227,7 +241,7 @@ describe('AuthService', () => {
         lecturer: null,
       } as any);
 
-      const result = await service.getMe(1);
+      const result = await service.getMe(mockUserId);
 
       expect(result.fullName).toBeNull();
       expect(result.email).toBeNull();
@@ -238,7 +252,7 @@ describe('AuthService', () => {
     it('throws UnauthorizedException when user does not exist', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.getMe(99)).rejects.toThrow(
+      await expect(service.getMe(mockMissingUserId)).rejects.toThrow(
         new UnauthorizedException('Invalid credentials'),
       );
     });

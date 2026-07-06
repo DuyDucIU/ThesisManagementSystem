@@ -3,28 +3,28 @@ import api from '../../lib/axios'
 export type TopicStatus = 'OPEN' | 'FULL' | 'CLOSED'
 
 export interface TopicLecturer {
-  id: number
+  id: string
   fullName: string
   email: string
   title: string | null
 }
 
 export interface TopicItem {
-  id: number
+  id: string
   title: string
   description: string | null
   requirements: string | null
   note: string | null
   status: TopicStatus
   createdAt: string
-  semesterId: number
+  semesterId: string
   lecturer: TopicLecturer
 }
 
 export interface TopicQuery {
-  semesterId?: number
+  semesterId?: string
   status?: TopicStatus
-  lecturerId?: number
+  lecturerId?: string
   search?: string
 }
 
@@ -48,15 +48,15 @@ export const topicApi = {
   list: (params?: TopicQuery) =>
     api.get<TopicItem[]>('/topics', { params }),
 
-  get: (id: number) =>
+  get: (id: string) =>
     api.get<TopicItem>(`/topics/${id}`),
 
   create: (dto: CreateTopicDto) =>
     api.post<TopicItem>('/topics', dto),
 
-  update: (id: number, dto: UpdateTopicDto) =>
+  update: (id: string, dto: UpdateTopicDto) =>
     api.patch<TopicItem>(`/topics/${id}`, dto),
 
-  remove: (id: number) =>
+  remove: (id: string) =>
     api.delete<void>(`/topics/${id}`),
 }

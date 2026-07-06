@@ -14,7 +14,7 @@ import { AccountActionDto } from './dto/account-action.dto';
 import { AccountBulkDto } from './dto/account-bulk.dto';
 
 type LecturerRow = {
-  id: number;
+  id: string;
   lecturerId: string;
   fullName: string;
   email: string;
@@ -97,13 +97,13 @@ export class LecturerService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const lecturer = await this.prisma.lecturer.findUnique({ where: { id } });
     if (!lecturer) throw new NotFoundException(`Lecturer #${id} not found`);
     return this.toResponse(lecturer);
   }
 
-  async update(id: number, dto: UpdateLecturerDto) {
+  async update(id: string, dto: UpdateLecturerDto) {
     const lecturer = await this.prisma.lecturer.findUnique({ where: { id } });
     if (!lecturer) throw new NotFoundException(`Lecturer #${id} not found`);
 
@@ -132,7 +132,7 @@ export class LecturerService {
     }
   }
 
-  async toggleAccount(id: number, dto: AccountActionDto) {
+  async toggleAccount(id: string, dto: AccountActionDto) {
     const lecturer = await this.prisma.lecturer.findUnique({ where: { id } });
     if (!lecturer) throw new NotFoundException(`Lecturer #${id} not found`);
 
@@ -172,7 +172,7 @@ export class LecturerService {
     return { updated: lecturers.length, skipped };
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     const lecturer = await this.prisma.lecturer.findUnique({ where: { id } });
     if (!lecturer) throw new NotFoundException(`Lecturer #${id} not found`);
 

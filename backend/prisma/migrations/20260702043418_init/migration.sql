@@ -21,7 +21,7 @@ CREATE TYPE "DocumentStatus" AS ENUM ('PENDING', 'LECTURER_APPROVED', 'LECTURER_
 
 -- CreateTable
 CREATE TABLE "users" (
-    "id" SERIAL NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "username" TEXT NOT NULL,
     "password_hash" TEXT NOT NULL,
     "role" "Role" NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE "users" (
 
 -- CreateTable
 CREATE TABLE "semesters" (
-    "id" SERIAL NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "start_date" DATE NOT NULL,
@@ -49,8 +49,8 @@ CREATE TABLE "semesters" (
 
 -- CreateTable
 CREATE TABLE "lecturers" (
-    "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
     "lecturer_id" TEXT NOT NULL,
     "full_name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -62,9 +62,9 @@ CREATE TABLE "lecturers" (
 
 -- CreateTable
 CREATE TABLE "lecturer_semesters" (
-    "id" SERIAL NOT NULL,
-    "lecturer_id" INTEGER NOT NULL,
-    "semester_id" INTEGER NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "lecturer_id" UUID NOT NULL,
+    "semester_id" UUID NOT NULL,
     "max_students" INTEGER NOT NULL DEFAULT 5,
 
     CONSTRAINT "lecturer_semesters_pkey" PRIMARY KEY ("id")
@@ -72,8 +72,8 @@ CREATE TABLE "lecturer_semesters" (
 
 -- CreateTable
 CREATE TABLE "students" (
-    "id" SERIAL NOT NULL,
-    "user_id" INTEGER,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID,
     "student_id" TEXT NOT NULL,
     "full_name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -83,9 +83,9 @@ CREATE TABLE "students" (
 
 -- CreateTable
 CREATE TABLE "enrollments" (
-    "id" SERIAL NOT NULL,
-    "student_id" INTEGER NOT NULL,
-    "semester_id" INTEGER NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "student_id" UUID NOT NULL,
+    "semester_id" UUID NOT NULL,
     "status" "EnrollmentStatus" NOT NULL DEFAULT 'AVAILABLE',
 
     CONSTRAINT "enrollments_pkey" PRIMARY KEY ("id")
@@ -93,9 +93,9 @@ CREATE TABLE "enrollments" (
 
 -- CreateTable
 CREATE TABLE "topics" (
-    "id" SERIAL NOT NULL,
-    "semester_id" INTEGER NOT NULL,
-    "lecturer_id" INTEGER NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "semester_id" UUID NOT NULL,
+    "lecturer_id" UUID NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
     "requirements" TEXT,
@@ -108,10 +108,10 @@ CREATE TABLE "topics" (
 
 -- CreateTable
 CREATE TABLE "theses" (
-    "id" SERIAL NOT NULL,
-    "enrollment_id" INTEGER NOT NULL,
-    "topic_id" INTEGER NOT NULL,
-    "reviewer_id" INTEGER,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "enrollment_id" UUID NOT NULL,
+    "topic_id" UUID NOT NULL,
+    "reviewer_id" UUID,
     "title" TEXT NOT NULL,
     "description" TEXT,
     "status" "ThesisStatus" NOT NULL DEFAULT 'IN_PROGRESS',
@@ -123,8 +123,8 @@ CREATE TABLE "theses" (
 
 -- CreateTable
 CREATE TABLE "documents" (
-    "id" SERIAL NOT NULL,
-    "thesis_id" INTEGER NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "thesis_id" UUID NOT NULL,
     "doc_type" "DocumentType" NOT NULL,
     "original_name" TEXT NOT NULL,
     "s3_key" TEXT NOT NULL,
@@ -133,10 +133,10 @@ CREATE TABLE "documents" (
     "version" INTEGER NOT NULL DEFAULT 1,
     "status" "DocumentStatus" NOT NULL DEFAULT 'PENDING',
     "lecturer_feedback" TEXT,
-    "lecturer_reviewed_by" INTEGER,
+    "lecturer_reviewed_by" UUID,
     "lecturer_reviewed_at" TIMESTAMP(3),
     "admin_feedback" TEXT,
-    "admin_reviewed_by" INTEGER,
+    "admin_reviewed_by" UUID,
     "admin_reviewed_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -145,9 +145,9 @@ CREATE TABLE "documents" (
 
 -- CreateTable
 CREATE TABLE "thesis_reviews" (
-    "id" SERIAL NOT NULL,
-    "thesis_id" INTEGER NOT NULL,
-    "reviewer_id" INTEGER NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "thesis_id" UUID NOT NULL,
+    "reviewer_id" UUID NOT NULL,
     "score" DECIMAL(4,2) NOT NULL,
     "comment" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -157,13 +157,13 @@ CREATE TABLE "thesis_reviews" (
 
 -- CreateTable
 CREATE TABLE "notifications" (
-    "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
     "type" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "message" TEXT NOT NULL,
     "is_read" BOOLEAN NOT NULL DEFAULT false,
-    "related_id" INTEGER,
+    "related_id" UUID,
     "related_type" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
